@@ -1,6 +1,37 @@
 #ifndef __MSG_H__
 #define __MSG_H__
 
+typedef struct _rfb_client
+{
+	int tcp_fd;
+	int udp_fd;
+	int port;
+	
+	struct sockaddr_in recv_addr;
+	struct sockaddr_in send_addr;
+	
+	/* ip */
+	char client_ip[126];
+	
+	/* is play state */
+	int state;	
+	
+	unsigned char *head_buf;
+	/* has read msg head or not ,0 :not 1: yes */
+	int has_read_head;
+		
+	unsigned char *data_buf;
+	/* current data position */
+	int data_pos;
+	/* current data size */
+	int data_size;
+
+	unsigned char frame_buf[1024 * 1024];
+	int frame_pos;
+	int frame_size; 
+
+}rfb_client;
+
 
 typedef struct _rfb_head
 {

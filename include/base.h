@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <math.h>
+#include <stdlib.h>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -91,6 +92,13 @@
 
 #define HEAD_LEN 8
 
+/* queue */
+#define MAX_VIDSBUFSIZE 1024 * 1024
+#define DATA_SIZE 1452
 
+#ifndef __cplusplus
+#define max(a,b)    (((a) > (b)) ? (a) : (b))
+#define min(a,b)    (((a) < (b)) ? (a) : (b))
+#endif
 
 #endif

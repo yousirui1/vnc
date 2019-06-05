@@ -9,6 +9,7 @@
 #include <libswscale/swscale.h>
 
 #include "base.h"
+#include "queue.h"
 
 static SDL_Window      *pWindow = NULL;
 static SDL_Renderer    *pRenderer = NULL;
@@ -29,6 +30,9 @@ typedef struct _rfb_vid
 rfb_vid *vids = NULL;
 pthread_t *pthread_displays = NULL;
 pthread_mutex_t renderer_mutex;
+
+QUEUE *vids_queue = NULL;
+unsigned char vids_buf[MAX_VIDSBUFSIZE] = {0};
 
 void create_display(int window_size, int window_flag)
 {
@@ -74,14 +78,28 @@ void create_display(int window_size, int window_flag)
         DIE("pTexture is NULL");
     }  
 	
+	if(window_size <= 0)    //不显示窗口
+    {
+
+        vids_width = width;
+        vids_height = height;
+        pTexture = SDL_CreateTexture(pRenderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, vids_width, vids_height);
+        if (NULL == pTexture)
+        {
+            DIE("pTexture is NULL");
+        }
+
 		/* 隐藏窗口 */
-	//SDL_HideWindow(pWindow);
-	//SDL_ShowWindow();
+        SDL_HideWindow(pWindow);
+		//SDL_ShowWindow();
+        return ;
+    }
 
 	pthread_mutex_init(&renderer_mutex, NULL);
 
 	vids = (rfb_vid *)malloc(sizeof(rfb_vid) * window_size * window_size);
 	pthread_displays = (pthread_t *)malloc(sizeof(pthread_t) * window_size * window_size);
+	vids_queue = (QUEUE *)malloc(sizeof(QUEUE) * window_size * window_size);
 	//pthread_sockets = (pthread_t *)malloc(sizeof(pthread_t) * window_size);   //数据接收线程已行为单位
 	
 	for(i = 0; i < window_size; i++)
@@ -96,25 +114,25 @@ void create_display(int window_size, int window_flag)
 			vids[id].rect.w = vids_width;
 			vids[id].rect.h = vids_height;
 
+			/* 创建对应窗口的显示线程 */
 			ret = pthread_create(&(pthread_displays[id]), NULL, thread_display, &(vids[id]));
 			if(0 != ret)
 			{
 				DIE("ThreadDisp err %d,  %s",ret , strerror(ret));
 			}
+			/* 创建窗口的对应队列 */
+			//init_queue(&(vids_queue[id]), vids_buf, MAX_VIDSBUFSIZE);
 		}
-#if 0
-		ret = pthread_create(&(pthread_sockets[i]), NULL, thread_display, &(vids[id]));
-		if(0 != ret)
-		{
-			DIE("ThreadDisp err %d,  %s",ret , strerror(ret));
-		}
-#endif
 	}
+	init_queue(&(vids_queue[0]), vids_buf, MAX_VIDSBUFSIZE);
 }
 
 void *thread_display(void *param)
 {
 	rfb_vid vid = *(rfb_vid *)param;
+
+	if(vid.id != 0)
+		sleep(100000);
 
 	uint8_t *cur_ptr;
     int cur_size;
@@ -180,16 +198,16 @@ void *thread_display(void *param)
     pFrame = av_frame_alloc();
     av_init_packet(&packet);
 	
-	//QUEUE_INDEX *index;
+	QUEUE_INDEX *index;
     while(1)
     {
-#if 0
-        if(empty_queue(&vids_queue))
+#if 1
+        if(empty_queue(&vids_queue[vid.id]))
         {
             usleep(20000);
             continue;
         }
-        index = de_queue(&vids_queue);
+        index = de_queue(&vids_queue[vid.id]);
 
         cur_ptr = index->pBuf;
         cur_size = index->uiSize;

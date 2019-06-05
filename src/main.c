@@ -72,31 +72,3 @@ void parse_options(int argc, char **argv, char *file)
 	}
 	DEBUG("server_flag %d, client_port %d, control_port %d, h264_port %d, window_flag %d, window_size %d, server_ip %s, server_port %d", server_flag, client_port, control_port, h264_port, window_flag, window_size, server_ip, server_port);
 }
-
-void init_client()
-{
-	int ret;
-	pthread_t pthread_socket, pthread_decode;
-	
-#if 0
-	ret = pthread_create(&pthread_socket, NULL, client_socket, NULL);
-    if(0 != ret)
-    {   
-        DIE("ThreadDisp err %d,  %s",ret , strerror(ret));
-    }   
-
-    ret = pthread_create(&pthread_decode, NULL, thread_encode, NULL);
-    if(0 != ret)
-    {   
-        DIE("ThreadDisp err %d,  %s",ret , strerror(ret));
-    }  
-#endif
-	int ** tret;
-  	pthread_join(pthread_socket, (void**)tret);  //等待线程同步
-}
-
-void init_server()
-{
-	
-
-}

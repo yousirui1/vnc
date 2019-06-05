@@ -1,6 +1,8 @@
 #ifndef __GLOBAL_H__
 #define __GLOBAL_H__
 
+#include "queue.h"
+
 /* main.c */
 extern int server_flag;
 extern int client_port, control_port, h264_port, window_flag, window_size, server_port;
@@ -9,6 +11,7 @@ extern char server_ip[126];
 
 /* display.c */
 extern int width,height, vids_width, vids_height;
+extern QUEUE *vids_queue;
 
 /* inirw.h */
 int read_profile_string( const char *section, const char *key,char *value, int size,const char *default_value, const char *file); 
