@@ -19,6 +19,8 @@ int main(int argc, char *argv[])
 
 	create_display(window_size);
 
+	return 0;
+
 	pthread_attr_t st_attr;
     struct sched_param sched;
        
@@ -41,8 +43,6 @@ int main(int argc, char *argv[])
 		init_client();
 	}
 
-	while(1);
-	
 }
 
 
