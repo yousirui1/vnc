@@ -41,8 +41,8 @@ void create_display(int window_size, int window_flag)
 		DIE("SDL_Init err");
 	}   	
 	/* 创建窗口 */
-	//pWindow = SDL_CreateWindow("vnc", 320, 180, 1280 , 720, 0);//SDL_WINDOW_FULLSCREEN_DESKTOP);  //设置全屏
-	pWindow = SDL_CreateWindow("vnc", 0, 0, 0 , 0, SDL_WINDOW_FULLSCREEN_DESKTOP);  //设置全屏
+	pWindow = SDL_CreateWindow("vnc", 320, 180, 1280 , 720, 0);//SDL_WINDOW_FULLSCREEN_DESKTOP);  //设置全屏
+	//pWindow = SDL_CreateWindow("vnc", 0, 0, 0 , 0, SDL_WINDOW_FULLSCREEN_DESKTOP);  //设置全屏
 	if (NULL == pWindow)   
 	{
 		DIE("SDL_CreateWindow is NULL");
@@ -57,16 +57,17 @@ void create_display(int window_size, int window_flag)
 	SDL_GetDisplayBounds(0, &fullRect);	
 	
 
-	width = fullRect.w;
-	height = fullRect.h;
-	//width  = 1280;
-	//height = 720;
+	//width = fullRect.w;
+	//height = fullRect.h;
+	width  = 1280;
+	height = 720;
 
 	DEBUG(" width %d height %d", width, height);
+
 	vids_width = width / window_size;
 	vids_height = height / window_size;
 	
-
+	
 	pTexture = SDL_CreateTexture(pRenderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, vids_width, vids_height);
 	if (NULL == pTexture)
     {   
@@ -81,7 +82,7 @@ void create_display(int window_size, int window_flag)
 
 	vids = (rfb_vid *)malloc(sizeof(rfb_vid) * window_size * window_size);
 	pthread_displays = (pthread_t *)malloc(sizeof(pthread_t) * window_size * window_size);
-	
+	//pthread_sockets = (pthread_t *)malloc(sizeof(pthread_t) * window_size);   //数据接收线程已行为单位
 	
 	for(i = 0; i < window_size; i++)
 	{
@@ -101,8 +102,14 @@ void create_display(int window_size, int window_flag)
 				DIE("ThreadDisp err %d,  %s",ret , strerror(ret));
 			}
 		}
+#if 0
+		ret = pthread_create(&(pthread_sockets[i]), NULL, thread_display, &(vids[id]));
+		if(0 != ret)
+		{
+			DIE("ThreadDisp err %d,  %s",ret , strerror(ret));
+		}
+#endif
 	}
-	sleep(1000);
 }
 
 void *thread_display(void *param)

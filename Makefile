@@ -21,7 +21,7 @@ outdir = ./bin
 
 exeobj = vnc
 
-mainobj =  main.o inirw.o display.o
+mainobj =  main.o inirw.o display.o server.o
 
 cppobj = 
 
