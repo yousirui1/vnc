@@ -1,6 +1,8 @@
 #ifndef __MSG_H__
 #define __MSG_H__
 
+#include <SDL2/SDL.h>
+
 typedef struct _rfb_client
 {
 	int tcp_fd;
@@ -29,9 +31,16 @@ typedef struct _rfb_client
 	unsigned char frame_buf[1024 * 1024];
 	int frame_pos;
 	int frame_size; 
+	unsigned short current_count;
 
 }rfb_client;
 
+typedef struct _rfb_vid
+{
+	int id;
+	int fd;
+	SDL_Rect rect;
+}rfb_vid;
 
 typedef struct _rfb_head
 {

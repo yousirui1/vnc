@@ -3,6 +3,8 @@
 
 #include "queue.h"
 
+#define MAX_VIDSBUFSIZE 1024 * 1024
+
 /* main.c */
 extern int server_flag;
 extern int client_port, control_port, h264_port, window_flag, window_size, server_port;

@@ -2,7 +2,7 @@ VERSION = 0.1
 
 CROSS_COMPILE = #arm-
 
-TARGET_ARCH = arm
+TARGET_ARCH = x86
 
 DEBUG = -g #-O2
 
@@ -21,7 +21,7 @@ outdir = ./bin
 
 exeobj = vnc
 
-mainobj =  main.o inirw.o display.o socket.o queue.o server.o client.o
+mainobj =  main.o inirw.o queue.o  display.o socket.o server.o client.o
 
 cppobj = 
 

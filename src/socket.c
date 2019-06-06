@@ -3,12 +3,24 @@
 
 void create_udp(char *ip, int port, rfb_client *client)
 {
-
     int ret = -1; 
     int sockfd;
     struct sockaddr_in send_addr,recv_addr;
-        
+	
+	DEBUG("ip  %s, port %d", ip, port);
+
+#ifdef _WIN32
+    WSADATA wsData = {0};
+    if(0 != WSAStartup(0x202, &wsData))
+    {
+        printf("WSAStartup  fail\n");
+        WSACleanup();
+        return -1;
+    }
+    int socklen =  sizeof (struct sockaddr_in);
+#else
     socklen_t socklen = sizeof (struct sockaddr_in);
+#endif
 
     int opt = 0;
     /* 创建 socket 用于UDP通讯 */

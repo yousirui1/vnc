@@ -32,9 +32,7 @@
     #include <netdb.h>
 #endif
 
-
 #include "global.h"
-
 
 #define __DEBUG__
 

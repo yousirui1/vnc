@@ -32,50 +32,6 @@ void init_server(int window_size)
 	}	
 	sever_loop();
 }
-#if 0
-void create_udp(int port, rfb_client *client)
-{
-
-    int ret = -1; 
-    int sockfd;
-    struct sockaddr_in send_addr,recv_addr;
-    
-    socklen_t socklen = sizeof (struct sockaddr_in);
-
-    int opt = 0;
-    /* 创建 socket 用于UDP通讯 */
-    sockfd = socket (AF_INET, SOCK_DGRAM, 0); 
-    if (sockfd < 0)
-    {   
-        printf ("socket creating err in udptalk\n");
-        exit (1);
-    }   
-    opt = 32*1024;//设置为32K
-    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (char *)&opt, sizeof (opt)) == -1) 
-    {   
-        printf("IP_MULTICAST_LOOP set fail!\n");
-    }   
-
-    memset(&recv_addr, 0, sizeof(recv_addr));
-    recv_addr.sin_family = AF_INET;
-    recv_addr.sin_addr.s_addr = htonl (INADDR_ANY);
-    recv_addr.sin_port = htons(port);
-
-    /* 绑定自己的端口和IP信息到socket上 */
-    if (bind(sockfd, (struct sockaddr *) &recv_addr,sizeof (struct sockaddr_in)) == -1) 
-    {   
-        perror("Bind error");
-        exit (0);
-    }   
-
-    client->udp_fd = sockfd;
-    client->port =  port;
-    client->recv_addr = recv_addr;
-
-    client->frame_size = 1024 * 1024 - 1;
-}
-#endif
-
 
 
 #define REQUEST_TIMEOUT 10
@@ -91,9 +47,22 @@ void sever_loop()
 	int sockfd = -1;
 	socklen_t socklen = sizeof (struct sockaddr_in);
 
+#if 0
 	unsigned int total_size = 0;
 	unsigned pos = 0;
 	unsigned char *tmp = NULL;
+#endif
+
+	    unsigned int total_size = 0;
+    unsigned int tmp_size = 0;
+    unsigned char buf[MAX_VIDSBUFSIZE] = {0};
+    unsigned int offset = 0;
+    unsigned char *tmp;
+
+
+    unsigned short count = 0;
+    unsigned short current_count = 0;
+
 
 	for(;;)
 	{
@@ -109,13 +78,58 @@ void sever_loop()
 				continue;
 			if(FD_ISSET(sockfd, &fds))
 			{
+			ret = recvfrom(sockfd, (char *)clients[i].frame_buf + clients[i].frame_pos, clients[i].frame_size - clients[i].frame_pos, 0,
+					(struct sockaddr*)&(clients[i].recv_addr), &socklen);
+
+            tmp = &(clients[i].frame_buf[clients[i].frame_pos]);
+            clients[i].frame_pos += ret;
+            if(errno == EINTR || errno == EAGAIN)
+            {   
+                continue;
+            }   
+            else
+            {   
+                //emit sigNoRecv();  //发送信号
+                //break;
+            }   
+
+             if(tmp[0] == 0xff && tmp[1] == 0xff)
+            {   
+                count = *((unsigned short *)&tmp[2]);
+                if(count != clients[i].current_count)
+                {   
+                    if(clients[i].current_count == 0)
+                    {   
+                        clients[i].current_count = count;
+                        continue;
+                    }   
+                    total_size = *((unsigned int *)&tmp[4]);
+                    en_queue(&vids_queue[i], clients[i].frame_buf + 8,  clients[i].frame_pos - ret - 8, 0x0);
+                    memcpy(clients[i].frame_buf, tmp, ret);
+                    clients[i].frame_pos = ret;
+                    clients[i].current_count = count;   
+                }   
+                else
+                {   
+                    if(clients[i].frame_pos == clients[i].frame_size + 8)
+                    {   
+                        en_queue(&vids_queue[i], clients[i].frame_buf + 8, offset - 8, 0x0);
+                        clients[i].frame_pos = 0;
+                        clients[i].frame_size = 0;
+                        clients[i].current_count = 0;
+                    }   
+                }   
+            }   
+
+		
+
+#if 0
 				ret = recvfrom(sockfd, (char *)clients[i].frame_buf, clients[i].frame_size - clients[i].frame_pos, 0,
 							 (struct sockaddr*)&(clients[i].recv_addr), &socklen);
 				if(ret < 0)
 				{
 					continue;
 				}
-						
 				tmp = &(clients[i].frame_buf[clients[i].frame_pos]);
 				clients[i].frame_pos += ret;
 				
@@ -144,6 +158,7 @@ void sever_loop()
 					clients[i].frame_pos = 0;
 					clients[i].frame_size = 0;
 				}
+#endif
 				if(--nready <= 0)
 					break;
 			} 	

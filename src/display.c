@@ -9,7 +9,7 @@
 #include <libswscale/swscale.h>
 
 #include "base.h"
-#include "queue.h"
+#include "msg.h"
 
 static SDL_Window      *pWindow = NULL;
 static SDL_Renderer    *pRenderer = NULL;
@@ -20,24 +20,19 @@ int width,height, vids_width, vids_height;
 
 void *thread_display(void *param);
 
-typedef struct _rfb_vid
-{
-	int id;
-	int fd;
-	SDL_Rect rect;
-}rfb_vid;
-
 rfb_vid *vids = NULL;
 pthread_t *pthread_displays = NULL;
 pthread_mutex_t renderer_mutex;
 
-QUEUE *vids_queue = NULL;
-unsigned char vids_buf[MAX_VIDSBUFSIZE] = {0};
+//unsigned char vids_buf[MAX_VIDSBUFSIZE];
+unsigned char **vids_buf;
+QUEUE *vids_queue; 
 
 void create_display(int window_size, int window_flag)
 {
 	int i, j, id, ret;
 	pthread_t pthread_display;
+	pthread_mutex_init(&renderer_mutex, NULL);
 
 	/* 初始化SDL */
 	if(SDL_Init(SDL_INIT_VIDEO) < 0) 
@@ -45,8 +40,8 @@ void create_display(int window_size, int window_flag)
 		DIE("SDL_Init err");
 	}   	
 	/* 创建窗口 */
-	pWindow = SDL_CreateWindow("vnc", 320, 180, 1280 , 720, 0);//SDL_WINDOW_FULLSCREEN_DESKTOP);  //设置全屏
-	//pWindow = SDL_CreateWindow("vnc", 0, 0, 0 , 0, SDL_WINDOW_FULLSCREEN_DESKTOP);  //设置全屏
+	//pWindow = SDL_CreateWindow("vnc", 320, 180, 1280 , 720, 0);//SDL_WINDOW_FULLSCREEN_DESKTOP);  //设置全屏
+	pWindow = SDL_CreateWindow("vnc", 0, 0, 0 , 0, SDL_WINDOW_FULLSCREEN_DESKTOP);  //设置全屏
 	if (NULL == pWindow)   
 	{
 		DIE("SDL_CreateWindow is NULL");
@@ -59,25 +54,14 @@ void create_display(int window_size, int window_flag)
 	}
 
 	SDL_GetDisplayBounds(0, &fullRect);	
-	
 
-	//width = fullRect.w;
-	//height = fullRect.h;
-	width  = 1280;
-	height = 720;
+	width = fullRect.w;
+	height = fullRect.h;
+	//width = 1280;
+	//height = 720;
 
 	DEBUG(" width %d height %d", width, height);
-
-	vids_width = width / window_size;
-	vids_height = height / window_size;
-	
-	
-	pTexture = SDL_CreateTexture(pRenderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, vids_width, vids_height);
-	if (NULL == pTexture)
-    {   
-        DIE("pTexture is NULL");
-    }  
-	
+#if 0
 	if(window_size <= 0)    //不显示窗口
     {
 
@@ -94,12 +78,23 @@ void create_display(int window_size, int window_flag)
 		//SDL_ShowWindow();
         return ;
     }
+#endif
+	vids_width = width / window_size;
+	vids_height = height / window_size;
+	
+	
+	pTexture = SDL_CreateTexture(pRenderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, vids_width, vids_height);
+	if (NULL == pTexture)
+    {   
+        DIE("pTexture is NULL");
+    } 
 
-	pthread_mutex_init(&renderer_mutex, NULL);
 
 	vids = (rfb_vid *)malloc(sizeof(rfb_vid) * window_size * window_size);
 	pthread_displays = (pthread_t *)malloc(sizeof(pthread_t) * window_size * window_size);
 	vids_queue = (QUEUE *)malloc(sizeof(QUEUE) * window_size * window_size);
+	//vids_buf = (unsigned char *)malloc(sizeof(unsigned char) * window_size * window_size);
+	vids_buf = (unsigned char **)malloc(window_size * window_size * sizeof(unsigned char *));
 	//pthread_sockets = (pthread_t *)malloc(sizeof(pthread_t) * window_size);   //数据接收线程已行为单位
 	
 	for(i = 0; i < window_size; i++)
@@ -120,19 +115,17 @@ void create_display(int window_size, int window_flag)
 			{
 				DIE("ThreadDisp err %d,  %s",ret , strerror(ret));
 			}
+			vids_buf[id] = (unsigned char *)malloc(MAX_VIDSBUFSIZE * sizeof(unsigned char));
+			memset(vids_buf[id], 0, MAX_VIDSBUFSIZE);
 			/* 创建窗口的对应队列 */
-			//init_queue(&(vids_queue[id]), vids_buf, MAX_VIDSBUFSIZE);
+			init_queue(&(vids_queue[id]), vids_buf[id], MAX_VIDSBUFSIZE);
 		}
 	}
-	init_queue(&(vids_queue[0]), vids_buf, MAX_VIDSBUFSIZE);
 }
 
 void *thread_display(void *param)
 {
 	rfb_vid vid = *(rfb_vid *)param;
-
-	if(vid.id != 0)
-		sleep(100000);
 
 	uint8_t *cur_ptr;
     int cur_size;
@@ -201,6 +194,7 @@ void *thread_display(void *param)
 	QUEUE_INDEX *index;
     while(1)
     {
+#if 0
 #if 1
         if(empty_queue(&vids_queue[vid.id]))
         {
@@ -217,6 +211,26 @@ void *thread_display(void *param)
         cur_ptr = in_buffer;
 
 #endif
+#endif
+		if(vid.id == 0 || vid.id == 1)
+		{
+			if(empty_queue(&vids_queue[vid.id]))
+        	{
+            	usleep(20000);
+            	continue;
+        	}
+        	index = de_queue(&vids_queue[vid.id]);
+
+        	cur_ptr = index->pBuf;
+        	cur_size = index->uiSize;
+			//DEBUG("cur_size %d", cur_size);
+        	de_queuePos(&vids_queue[vid.id]);
+		}
+		else
+		{
+        	cur_size = fread(in_buffer, 1, in_buffer_size, fp_in);
+        	cur_ptr = in_buffer;
+		}
         if(cur_size == 0)
             sleep(3);
 

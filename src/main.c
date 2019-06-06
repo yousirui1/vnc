@@ -1,4 +1,5 @@
 #include "base.h"
+#include "queue.h"
 
 #if 0
 time_t current_time;
@@ -16,7 +17,6 @@ int main(int argc, char *argv[])
 	char *opt_input_file;
 
 	parse_options(argc, argv, opt_input_file);
-
 	create_display(window_size);
 
 	pthread_attr_t st_attr;
