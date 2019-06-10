@@ -1,83 +1,71 @@
 #ifndef __MSG_H__
 #define __MSG_H__
 
+#define HEAD_LEN 8
+
 #include <SDL2/SDL.h>
 
-typedef struct _rfb_client
+
+struct rfb_request
 {
-	int tcp_fd;
-	int udp_fd;
+    int fd;                     /* client's socket fd */
+    int status;                 /* see #defines.h */
+    time_t time_last;           /* time of last succ. op. */
+    struct rfb_request *next;       /* next */
+    struct rfb_request *prev;       /* previous */
+
+    unsigned char head_buf[HEAD_LEN];
+    /* has read msg head or not ,0 :not 1: yes */
+    int has_read_head;
+
+    unsigned char *data_buf;
+    /* current data position */
+    int data_pos;
+    /* current data size */
+    int data_size;
+    char ip[16];
+    int display_id;
+};
+
+typedef struct rfb_request rfb_request;
+
+
+typedef struct _rfb_display
+{
+	int id;					//diplay[id]
+	int fd;					//udp h264 data fd
 	int port;
-	
+
+	SDL_Rect rect;
+
 	struct sockaddr_in recv_addr;
-	struct sockaddr_in send_addr;
-	
-	/* ip */
-	char client_ip[126];
-	
-	/* is play state */
-	int state;	
-	
-	unsigned char *head_buf;
-	/* has read msg head or not ,0 :not 1: yes */
-	int has_read_head;
+    struct sockaddr_in send_addr;
 		
-	unsigned char *data_buf;
-	/* current data position */
-	int data_pos;
-	/* current data size */
-	int data_size;
+    rfb_request *req;
+    int play_flag;
 
 	unsigned char frame_buf[1024 * 1024];
-	int frame_pos;
-	int frame_size; 
+    int frame_pos;
+    int frame_size;
 	unsigned short current_count;
+}rfb_display;
 
-}rfb_client;
+typedef struct _rfb_format
+{
+    unsigned int width;
+    unsigned int height;
+    unsigned int code;
+    unsigned int data_port;
+    unsigned char play_flag;
+    unsigned char vnc_flag;     //打开flag  代表主码流,用于全屏显示控制, 否则副码流 480*320
+}rfb_format;
 
 typedef struct _rfb_vid
 {
-	int id;
-	int fd;
-	SDL_Rect rect;
+    int id;
+    int fd;
+    SDL_Rect rect;
 }rfb_vid;
-
-typedef struct _rfb_head
-{
-    char syn;
-    char entry;
-    short cmd;
-    int size;
-}rfb_head;
-
-typedef struct _rfb_filemsg
-{
-    char flags;
-    short datasize;
-    char path[128];
-}rfb_filemsg;    
-
-typedef struct _rfb_textmsg
-{
-    short pad1;
-    short pad2;
-    int length;
-}rfb_textmsg;
-
-typedef struct _rfb_key_event
-{
-    char down;
-    char key;
-}rfb_keyevent;
-
-typedef struct _rfb_pointer_evnet
-{
-    short mask;
-    short x;
-    short y;
-}rfb_pointevent;
-
-
 
 
 #endif

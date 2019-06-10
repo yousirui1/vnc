@@ -1,4 +1,45 @@
+#include "base.h"
+#include "msg.h"
 #include "queue.h"
+
+
+/*
+ * Name: dequeue
+ *
+ * Description: Removes a request from its current queue
+ */
+
+void dequeue(rfb_request ** head,rfb_request * req)
+{   
+    if (*head == req)
+        *head = req->next;
+    
+    if (req->prev)
+        req->prev->next = req->next;
+    if (req->next)
+        req->next->prev = req->prev;
+    
+    req->next = NULL;
+    req->prev = NULL;
+}
+
+/*
+ * Name: enqueue
+ *
+ * Description: Adds a request to the head of a queue
+ */
+
+void enqueue(rfb_request ** head,rfb_request * req)
+{
+    if (*head)
+        (*head)->prev = req;    /* previous head's prev is us */
+
+    req->next = *head;          /* our next is previous head */
+    req->prev = NULL;           /* first in list */
+
+    *head = req;                /* now we are head */
+}
+     
 
 void init_queue(QUEUE *pQueue,unsigned char *pucBuf,unsigned int uiMaxBufSize)
 {
@@ -61,3 +102,4 @@ unsigned char full_queue(QUEUE *pQueue)
   else
     return 1;
 }
+

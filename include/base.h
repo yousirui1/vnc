@@ -38,8 +38,9 @@
 
 #ifdef __DEBUG__
 #define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__)
-#define DIE(format,...) fprintf(stderr, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__); \
+//#define DIE(format,...) fprintf(stderr, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__); \
         exit(1) 
+#define DIE(format,...) DEBUG(format); exit(1)
 #else
 #define DEBUG(format,...)
 #define DIE(format,...) DEBUG(format);exit(1)
@@ -75,9 +76,27 @@
 #define DEFAULT_PORT_VALUE 22000
 
 
-/* packet */
-#define SCHED_PRIORITY_DATAPROC 1
+/* sock */
+#define VERSIONFORMAT "RFB %03d.%03d\n"
 
+#define REQUEST_TIMEOUT             60
+
+/* req->status */
+#define READ_HEADER             0
+#define LOGIN                   1
+#define OPTIONS                 2
+#define DONE                    3
+#define DEAD                    4
+
+
+
+/* pthread level */
+#define SCHED_PRIORITY_TCP 1
+#define SCHED_PRIORITY_UDP 2
+#define SCHED_PRIORITY_DISPLAY 3
+
+
+/* packet */
 #define MAX_CLIENT_NR 1024*1024
 #define HEAD_LEN 8
 #define CLIENT_BUF 1024*20

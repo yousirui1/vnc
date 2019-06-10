@@ -33,7 +33,7 @@ CFLAGS = -I. -I./include/ -I./SDL/include -I./ffmpeg/include \
 else ifeq ($(TARGET_ARCH), x86)
 CFLAGS = -I. -I./include/ -I./SDL/include/win -I./ffmpeg/include \
          -L./ffmpeg/lib/win -lavcodec -lavformat -lswscale -lavutil -lavdevice \
-         -L./SDL/lib/win -lSDL2 -lmingw32  -lm -lws2_32  -lpthreadGC2
+         -L./SDL/lib/win -lSDL2 -lmingw32 -lm -lws2_32  -lpthreadGC2
 else 
 endif
 

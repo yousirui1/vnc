@@ -12,15 +12,15 @@
 
 void init_client()
 {
-	rfb_client server;
-	memset(&server, 0, sizeof(rfb_client));
+	//rfb_client server;
+	//memset(&server, 0, sizeof(rfb_client));
 
 
-	create_udp(NULL, 23002,  &server);
-	init_ffmpeg(&server);	
+	//create_udp(NULL, 23002,  &server);
+	//init_ffmpeg(&server);	
 }
 
-
+#if 0
 void init_ffmpeg(rfb_client *ser)
 {
    	AVFormatContext *pFormatCtx;
@@ -273,3 +273,4 @@ void select_loop()
 
 #endif
 
+#endif

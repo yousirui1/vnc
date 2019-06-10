@@ -1,169 +1,180 @@
 #include "base.h"
 #include "msg.h"
 
-rfb_client *clients = NULL;
+int display_size = 0;
 
-fd_set fds;
-fd_set _fds;
-int max_fd;
-int maxi;
-	
+void *thread_tcp(void *param);
+void *thread_udp(void *param);
+
 void init_server(int window_size)
 {
-	int i, j, ret, id;
+    int ret;
+    pthread_t pthread_tcp, pthread_udp;
 
-	clients = (rfb_client *)malloc(sizeof(rfb_client) * window_size * window_size);
-	memset(clients, 0, sizeof(rfb_client) * window_size * window_size);
+    display_size = window_size * window_size;
 
-	FD_ZERO(&_fds);
-	FD_ZERO(&fds);
-	max_fd = -1;
-	maxi = window_size * window_size;
-	
-	for(i = 0; i < window_size; i++)
-	{
-		for(j = 0; j < window_size; j++)
-		{
-			id = i + j * window_size;
-			create_udp(NULL, id + h264_port + 1,  &(clients[id]));
-	    	FD_SET(clients[id].udp_fd, &_fds);      //加入select 轮训队列
-    		max_fd = max_fd > clients[id].udp_fd ? max_fd : clients[id].udp_fd;
-		}
-	}	
-	sever_loop();
+    ret = pthread_create(&pthread_tcp, NULL, thread_tcp, NULL);
+    if(0 != ret)
+    {
+        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+    }
+
+ 	ret = pthread_create(&pthread_udp, NULL, thread_udp, NULL);
+    if(0 != ret)
+    {
+        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+    }
+
+    sleep(10000);
+}
+
+void *thread_tcp(void *param)
+{
+    int ret, c;
+    /* 设置线程优先级 */
+    pthread_attr_t attr;
+    struct sched_param sched;
+
+    ret = pthread_attr_init(&attr);
+    if(ret)
+        DEBUG("thread_tcp attr init error");
+    ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+    if(ret)
+        DEBUG("thread tcp set SCHED_FIFO error");
+    sched.sched_priority = SCHED_PRIORITY_TCP;
+    ret = pthread_attr_setschedparam(&attr, &sched);
+    if(ret)
+        DEBUG("Set sched_priority 2 error");
+
+    int server_s = create_server_socket();
+	max_connections = 100;
+#if 0
+    if(max_connections < 1)
+    {
+        struct rlimit rl;
+        /* has not been set explicitly */
+        c = getrlimit(RLIMIT_NOFILE, &rl);
+        if(c < 0)
+        {
+            DIE("getrlimit");
+        }
+        max_connections = rl.rlim_cur;
+    }
+#endif
+    DEBUG("max_connections %d tcp_loop %d", max_connections, server_s);
+    tcp_loop(server_s);
+}
+
+void *thread_udp(void *param)
+{
+    int ret, i;
+    /* 设置线程优先级 */
+    pthread_attr_t attr;
+    struct sched_param sched;
+
+    ret = pthread_attr_init(&attr);
+    if(ret)
+        DEBUG("thread_tcp attr init error");
+    ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+    if(ret)
+        DEBUG("thread tcp set SCHED_FIFO error");
+    sched.sched_priority = SCHED_PRIORITY_UDP;
+    ret = pthread_attr_setschedparam(&attr, &sched);
+    if(ret)
+        DEBUG("Set sched_priority 2 error");
+ 
+	create_h264_socket(display_size, displays);
 }
 
 
-#define REQUEST_TIMEOUT 10
 
-void sever_loop()
+
+
+int process_msg(rfb_request *req)
 {
-	int i, ret, nready;
-	struct timeval tv;
-		
-	tv.tv_sec = REQUEST_TIMEOUT;
-	tv.tv_usec = 0l;
 
-	int sockfd = -1;
-	socklen_t socklen = sizeof (struct sockaddr_in);
+    int ret = 0;
 
-#if 0
-	unsigned int total_size = 0;
-	unsigned pos = 0;
-	unsigned char *tmp = NULL;
-#endif
+    switch(req->status)
+    {
+        case READ_HEADER:
+        case LOGIN:
+            ret = read_login(req);
+            break;
+        case OPTIONS:
+            ret = read_options(req);
+            break;
+        case DONE:
 
-	    unsigned int total_size = 0;
-    unsigned int tmp_size = 0;
-    unsigned char buf[MAX_VIDSBUFSIZE] = {0};
-    unsigned int offset = 0;
-    unsigned char *tmp;
+        case DEAD:
+        default:
+            break;
+    }
+	//return 1;
 
-
-    unsigned short count = 0;
-    unsigned short current_count = 0;
+	return 0;
+}
 
 
-	for(;;)
+int read_login(rfb_request *req)
+{
+    if(read_msg_order(req->head_buf) == 0x01)
+    {
+        int server_major, server_minor;
+
+        if (sscanf(req->data_buf, VERSIONFORMAT,
+                    &server_major, &server_minor) != 2)
+                ;
+        sprintf(req->data_buf, VERSIONFORMAT, 3, server_minor + 1);
+        send_request(req);
+        req->status = OPTIONS;
+		return 0;
+    }      
+    else
+    {
+        DEBUG("read_login %d", read_msg_order(req->head_buf));
+		return 1;
+    }
+}
+
+int read_options(rfb_request *req)
+{
+   	if(read_msg_order(req->head_buf) == 0x02)
+   	{
+       	int i ;
+       	rfb_format *fmt = (rfb_format *)&req->data_buf[0];
+       	DEBUG("fmt->width %d, fmt->height %d fmt->code %d fmt->data_port %d", fmt->width, fmt->height, fmt->code, fmt->data_port);
+
+       	fmt->play_flag = 0;
+       	fmt->data_port = 0;
+       	for(i = 0; i < display_size; i++)   //ready play
+       	{
+           	if(!displays[i].play_flag)      //存在空闲的分屏, 发送play命令
+           	{
+               	displays[i].req = req;
+               	displays[i].play_flag = 1;
+               	fmt->width = 480;
+               	fmt->height = 320;
+               	fmt->play_flag = 0x01;
+               	fmt->vnc_flag = 0x00;       //副码流
+               	fmt->data_port = i + h264_port + 1;
+               	req->display_id = i;
+               	DEBUG("req->display_id %d", i);
+               	break;
+           	}
+       	}
+       	send_request(req);
+       	req->status = DONE;
+		return 0;
+    }
+	else
 	{
-		fds = _fds;
-		ret = select(max_fd + 1, &fds, NULL, NULL, &tv);
-		if(ret <= 0)
-			continue;
-
-		nready = ret;
-		for(i = 0; i < maxi; i++)
-		{
-			if((sockfd = clients[i].udp_fd) < 0)
-				continue;
-			if(FD_ISSET(sockfd, &fds))
-			{
-			ret = recvfrom(sockfd, (char *)clients[i].frame_buf + clients[i].frame_pos, clients[i].frame_size - clients[i].frame_pos, 0,
-					(struct sockaddr*)&(clients[i].recv_addr), &socklen);
-
-            tmp = &(clients[i].frame_buf[clients[i].frame_pos]);
-            clients[i].frame_pos += ret;
-            if(errno == EINTR || errno == EAGAIN)
-            {   
-                continue;
-            }   
-            else
-            {   
-                //emit sigNoRecv();  //发送信号
-                //break;
-            }   
-
-             if(tmp[0] == 0xff && tmp[1] == 0xff)
-            {   
-                count = *((unsigned short *)&tmp[2]);
-                if(count != clients[i].current_count)
-                {   
-                    if(clients[i].current_count == 0)
-                    {   
-                        clients[i].current_count = count;
-                        continue;
-                    }   
-                    total_size = *((unsigned int *)&tmp[4]);
-                    en_queue(&vids_queue[i], clients[i].frame_buf + 8,  clients[i].frame_pos - ret - 8, 0x0);
-                    memcpy(clients[i].frame_buf, tmp, ret);
-                    clients[i].frame_pos = ret;
-                    clients[i].current_count = count;   
-                }   
-                else
-                {   
-                    if(clients[i].frame_pos == clients[i].frame_size + 8)
-                    {   
-                        en_queue(&vids_queue[i], clients[i].frame_buf + 8, offset - 8, 0x0);
-                        clients[i].frame_pos = 0;
-                        clients[i].frame_size = 0;
-                        clients[i].current_count = 0;
-                    }   
-                }   
-            }   
-
-		
-
-#if 0
-				ret = recvfrom(sockfd, (char *)clients[i].frame_buf, clients[i].frame_size - clients[i].frame_pos, 0,
-							 (struct sockaddr*)&(clients[i].recv_addr), &socklen);
-				if(ret < 0)
-				{
-					continue;
-				}
-				tmp = &(clients[i].frame_buf[clients[i].frame_pos]);
-				clients[i].frame_pos += ret;
-				
-				if(tmp[0] == 0xff && tmp[1] == 0xff)
-				{
-					total_size = *((unsigned int *)&tmp[4]);	
-					if(clients[i].frame_size == 0)		//开头包
-					{
-						clients[i].frame_size = total_size;
-					}
-					else
-					{
-						if(total_size != clients[i].frame_size)		//之前包丢失,把收到的数据入队列
-						{
-							clients[i].frame_size = total_size;
-							en_queue(&vids_queue, clients[i].frame_buf + 8, clients[i].frame_pos - ret - 8, 0x0);	
-							memcpy(clients[i].frame_buf, tmp, ret);
-							clients[i].frame_pos = ret;
-						}	
-					}	
-				}
-				
-				if(clients[i].frame_pos == clients[i].frame_size + 8)
-				{
-					en_queue(&vids_queue, clients[i].frame_buf + 8, clients[i].frame_pos - 8, 0x0);
-					clients[i].frame_pos = 0;
-					clients[i].frame_size = 0;
-				}
-#endif
-				if(--nready <= 0)
-					break;
-			} 	
-		}
+        DEBUG("read_login %d", read_msg_order(req->head_buf));
+		return 1;
 	}
 }
+
+
+
 
 

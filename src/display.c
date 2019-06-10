@@ -10,6 +10,7 @@
 
 #include "base.h"
 #include "msg.h"
+#include "queue.h"
 
 static SDL_Window      *pWindow = NULL;
 static SDL_Renderer    *pRenderer = NULL;
@@ -17,123 +18,94 @@ static SDL_Texture     *pTexture;
 static SDL_Rect fullRect;
 
 int width,height, vids_width, vids_height;
-
-void *thread_display(void *param);
-
-rfb_vid *vids = NULL;
+rfb_display *displays = NULL;
 pthread_t *pthread_displays = NULL;
 pthread_mutex_t renderer_mutex;
 
-//unsigned char vids_buf[MAX_VIDSBUFSIZE];
-unsigned char **vids_buf;
-QUEUE *vids_queue; 
+void *thread_display(void *param);
+
 
 void create_display(int window_size, int window_flag)
 {
-	int i, j, id, ret;
-	pthread_t pthread_display;
-	pthread_mutex_init(&renderer_mutex, NULL);
+    int i, j, id, ret;
+    pthread_t pthread_display;
+    pthread_mutex_init(&renderer_mutex, NULL);
 
-	/* 初始化SDL */
-	if(SDL_Init(SDL_INIT_VIDEO) < 0) 
-	{
-		DIE("SDL_Init err");
-	}   	
-	/* 创建窗口 */
-	//pWindow = SDL_CreateWindow("vnc", 320, 180, 1280 , 720, 0);//SDL_WINDOW_FULLSCREEN_DESKTOP);  //设置全屏
-	pWindow = SDL_CreateWindow("vnc", 0, 0, 0 , 0, SDL_WINDOW_FULLSCREEN_DESKTOP);  //设置全屏
-	if (NULL == pWindow)   
-	{
-		DIE("SDL_CreateWindow is NULL");
-	}
-	/* 创建Renderer 画板 */
-	pRenderer = SDL_CreateRenderer(pWindow, -1, 0);	
-	if (NULL == pRenderer)
-	{ 
-       DIE("pTexture is NULL");
-	}
-
-	SDL_GetDisplayBounds(0, &fullRect);	
-
-	width = fullRect.w;
-	height = fullRect.h;
-	//width = 1280;
-	//height = 720;
-
-	DEBUG(" width %d height %d", width, height);
-#if 0
-	if(window_size <= 0)    //不显示窗口
+    /* 初始化SDL */
+    if(SDL_Init(SDL_INIT_VIDEO) < 0)
     {
-
-        vids_width = width;
-        vids_height = height;
-        pTexture = SDL_CreateTexture(pRenderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, vids_width, vids_height);
-        if (NULL == pTexture)
-        {
-            DIE("pTexture is NULL");
-        }
-
-		/* 隐藏窗口 */
-        SDL_HideWindow(pWindow);
-		//SDL_ShowWindow();
-        return ;
+        DIE("SDL_Init err");
     }
-#endif
-	vids_width = width / window_size;
-	vids_height = height / window_size;
-	
-	
-	pTexture = SDL_CreateTexture(pRenderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, vids_width, vids_height);
-	if (NULL == pTexture)
-    {   
+    /* 创建窗口 */
+    pWindow = SDL_CreateWindow("vnc", 320, 180, 1280 , 720, 0);//SDL_WINDOW_FULLSCREEN_DESKTOP);  //设置全屏
+    //pWindow = SDL_CreateWindow("vnc", 0, 0, 0 , 0, SDL_WINDOW_FULLSCREEN_DESKTOP);  //设置全屏
+    if (NULL == pWindow)
+    {
+        DIE("SDL_CreateWindow is NULL");
+    }
+    /* 创建Renderer 画板 */
+    pRenderer = SDL_CreateRenderer(pWindow, -1, 0);
+    if (NULL == pRenderer)
+    {
+       DIE("pTexture is NULL");
+    }
+
+    SDL_GetDisplayBounds(0, &fullRect);
+
+    //width = fullRect.w;
+    //height = fullRect.h;
+    width = 1280;
+    height = 720;
+
+    DEBUG(" width %d height %d", width, height);
+    vids_width = width / window_size;
+    vids_height = height / window_size;
+
+
+    pTexture = SDL_CreateTexture(pRenderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, vids_width, vids_height);
+    if (NULL == pTexture)
+    {
         DIE("pTexture is NULL");
-    } 
+    }
 
 
-	vids = (rfb_vid *)malloc(sizeof(rfb_vid) * window_size * window_size);
-	pthread_displays = (pthread_t *)malloc(sizeof(pthread_t) * window_size * window_size);
-	vids_queue = (QUEUE *)malloc(sizeof(QUEUE) * window_size * window_size);
-	//vids_buf = (unsigned char *)malloc(sizeof(unsigned char) * window_size * window_size);
-	vids_buf = (unsigned char **)malloc(window_size * window_size * sizeof(unsigned char *));
-	//pthread_sockets = (pthread_t *)malloc(sizeof(pthread_t) * window_size);   //数据接收线程已行为单位
-	
-	for(i = 0; i < window_size; i++)
-	{
-		for(j = 0; j < window_size; j++)
-		{
-			id = i + j * window_size;
-			vids[id].id = id;
-			vids[id].fd = i + j;
-			vids[id].rect.x = i * vids_width;
-			vids[id].rect.y = j * vids_height;
-			vids[id].rect.w = vids_width;
-			vids[id].rect.h = vids_height;
+    displays = (rfb_display *)malloc(sizeof(rfb_display) * window_size * window_size);
+	memset(displays, 0, sizeof(rfb_display) * window_size * window_size);
+    pthread_displays = (pthread_t *)malloc(sizeof(pthread_t) * window_size * window_size);
 
-			/* 创建对应窗口的显示线程 */
-			ret = pthread_create(&(pthread_displays[id]), NULL, thread_display, &(vids[id]));
-			if(0 != ret)
-			{
-				DIE("ThreadDisp err %d,  %s",ret , strerror(ret));
-			}
-			vids_buf[id] = (unsigned char *)malloc(MAX_VIDSBUFSIZE * sizeof(unsigned char));
-			memset(vids_buf[id], 0, MAX_VIDSBUFSIZE);
-			/* 创建窗口的对应队列 */
-			init_queue(&(vids_queue[id]), vids_buf[id], MAX_VIDSBUFSIZE);
-		}
-	}
+    for(i = 0; i < window_size; i++)
+    {
+        for(j = 0; j < window_size; j++)
+        {
+            id = i + j * window_size;
+            displays[id].id = id;
+            displays[id].fd = i + j;
+            displays[id].rect.x = i * vids_width;
+            displays[id].rect.y = j * vids_height;
+            displays[id].rect.w = vids_width;
+            displays[id].rect.h = vids_height;
+
+            /* 创建对应窗口的显示线程 */
+            ret = pthread_create(&(pthread_displays[id]), NULL, thread_display, &(displays[id]));
+            if(0 != ret)
+            {
+                DIE("ThreadDisp err %d,  %s",ret , strerror(ret));
+            }
+        }
+    }
 }
 
 void *thread_display(void *param)
 {
-	rfb_vid vid = *(rfb_vid *)param;
+    rfb_display vid = *(rfb_display *)param;
 
-	uint8_t *cur_ptr;
+    uint8_t *cur_ptr;
     int cur_size;
 
     int first_time = 1;
-	char filename[16] = {0};
+    char filename[16] = {0};
 
-	char *buf = NULL;
+    char *buf = NULL;
     int buf_len = 0;
 
     AVCodec *pCodec;
@@ -153,21 +125,20 @@ void *thread_display(void *param)
     int ret, got_picture;
 
     struct SwsContext *img_convert_ctx;
-	
-	pCodec = avcodec_find_decoder(AV_CODEC_ID_H264);
-    if (!pCodec) 
-	{
+
+    pCodec = avcodec_find_decoder(AV_CODEC_ID_H264);
+    if (!pCodec)
+    {
         DIE("Codec not found");
     }
     pCodecCtx = avcodec_alloc_context3(pCodec);
     if (!pCodecCtx)
-	{
+    {
         DIE("Could not allocate video codec context");
     }
-
     pCodecParserCtx = av_parser_init(AV_CODEC_ID_H264);
     if (!pCodecParserCtx)
-	{
+    {   
         DIE("Could not allocate video parser context");
     }
 
@@ -175,12 +146,12 @@ void *thread_display(void *param)
         pCodecCtx->flags |= AV_CODEC_FLAG_TRUNCATED; /* we do not send complete frames */
 
     if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0)
-	 {
+     {
         DIE("Could not open codec");
     }
 
-	sprintf(filename, "../h264/%d.h264", vid.id);
-	DEBUG("filename %s", filename);
+    sprintf(filename, "../h264/%d.h264", vid.id);
+    DEBUG("filename %s", filename);
 #if 1
     fp_in = fopen(filename, "rb");
     if (!fp_in) {
@@ -190,51 +161,32 @@ void *thread_display(void *param)
 
     pFrame = av_frame_alloc();
     av_init_packet(&packet);
-	
-	QUEUE_INDEX *index;
+
+    QUEUE_INDEX *index;
     while(1)
-    {
-#if 0
-#if 1
-        if(empty_queue(&vids_queue[vid.id]))
+	{
+        if(vid.play_flag == 1)
         {
-            usleep(20000);
-            continue;
+            if(empty_queue(&vids_queue[vid.id]))
+            {
+                usleep(20000);
+                continue;
+            }
+            index = de_queue(&vids_queue[vid.id]);
+
+            cur_ptr = index->pBuf;
+            cur_size = index->uiSize;
+            //DEBUG("cur_size %d", cur_size);
+            de_queuePos(&vids_queue[vid.id]);
         }
-        index = de_queue(&vids_queue[vid.id]);
-
-        cur_ptr = index->pBuf;
-        cur_size = index->uiSize;
-        de_queuePos(&vids_queue);
-#else
-        cur_size = fread(in_buffer, 1, in_buffer_size, fp_in);
-        cur_ptr = in_buffer;
-
-#endif
-#endif
-		if(vid.id == 0 || vid.id == 1)
-		{
-			if(empty_queue(&vids_queue[vid.id]))
-        	{
-            	usleep(20000);
-            	continue;
-        	}
-        	index = de_queue(&vids_queue[vid.id]);
-
-        	cur_ptr = index->pBuf;
-        	cur_size = index->uiSize;
-			//DEBUG("cur_size %d", cur_size);
-        	de_queuePos(&vids_queue[vid.id]);
-		}
-		else
-		{
-        	cur_size = fread(in_buffer, 1, in_buffer_size, fp_in);
-        	cur_ptr = in_buffer;
-		}
+        else
+        {
+            cur_size = fread(in_buffer, 1, in_buffer_size, fp_in);
+            cur_ptr = in_buffer;
+        }
         if(cur_size == 0)
             sleep(3);
-
-		while (cur_size>0)
+        while (cur_size>0)
         {
 
             int len = av_parser_parse2(
@@ -284,9 +236,8 @@ void *thread_display(void *param)
             //SDL_Delay(40);
             }
         }
-	    packet.data = NULL;
+        packet.data = NULL;
         packet.size = 0;
-
     }
     sws_freeContext(img_convert_ctx);
     av_parser_close(pCodecParserCtx);
@@ -299,24 +250,12 @@ void *thread_display(void *param)
     return 0;
 }
 
-
-	
-
-
-
-
-
-
-	//create_ffmpeg();
-
-
-
-
 void close_display()
 {
-	SDL_DestroyWindow(pWindow);
+    SDL_DestroyWindow(pWindow);
     SDL_DestroyRenderer(pRenderer);
     SDL_DestroyTexture(pTexture);
     SDL_Quit();
 }
+
 

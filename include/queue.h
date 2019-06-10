@@ -1,5 +1,5 @@
-#ifndef QUEUE_H
-#define QUEUE_H
+#ifndef __QUEUE_H__
+#define __QUEUE_H__
 #include <stdio.h>
 #include <string.h>
 
@@ -7,14 +7,16 @@
 #define MAX_QUEUESIZE 128
 
 
-typedef struct {
+typedef struct 
+{
   unsigned int uiSize;
   unsigned char *pBuf;
   unsigned char ucType;
 }QUEUE_INDEX;
 
 
-typedef struct {
+typedef struct 
+{
   unsigned int uiFront;
   unsigned int uiRear;
   unsigned int uiMaxBufSize;
