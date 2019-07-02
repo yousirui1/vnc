@@ -3,90 +3,53 @@
 
 int display_size = 0;
 
-void *thread_tcp(void *param);
-void *thread_udp(void *param);
-
 void init_server(int window_size)
 {
-    int ret;
-    pthread_t pthread_tcp, pthread_udp;
+    int ret, server_s;
+    pthread_t pthread_tcp, pthread_udp , pthread_event;
 
-    display_size = window_size * window_size;
-
-    ret = pthread_create(&pthread_tcp, NULL, thread_tcp, NULL);
-    if(0 != ret)
-    {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-    }
-
- 	ret = pthread_create(&pthread_udp, NULL, thread_udp, NULL);
-    if(0 != ret)
-    {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-    }
-
-    sleep(10000);
-}
-
-void *thread_tcp(void *param)
-{
-    int ret, c;
-    /* 设置线程优先级 */
-    pthread_attr_t attr;
-    struct sched_param sched;
-
-    ret = pthread_attr_init(&attr);
-    if(ret)
-        DEBUG("thread_tcp attr init error");
-    ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
-    if(ret)
-        DEBUG("thread tcp set SCHED_FIFO error");
-    sched.sched_priority = SCHED_PRIORITY_TCP;
-    ret = pthread_attr_setschedparam(&attr, &sched);
-    if(ret)
-        DEBUG("Set sched_priority 2 error");
-
-    int server_s = create_server_socket();
-	max_connections = 100;
+    create_display();
 #if 0
-    if(max_connections < 1)
+    server_s = create_tcp();
+    if(server_s == -1) 
+    {   
+        DIE("create socket err");
+    }   
+
+    if(bind_server(server_s, client_port) == -1) 
+    {   
+        DIE("bind port %d err", client_port);
+    }   
+#endif
+    
+#if 0
+    ret = pthread_create(&pthread_tcp, NULL, thread_server_tcp, &server_s);
+    if(0 != ret)
+    {   
+        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+    }   
+#endif
+
+#if 0
+    ret = pthread_create(&pthread_udp, NULL, thread_server_udp, &server_s);
+    if(0 != ret)
     {
-        struct rlimit rl;
-        /* has not been set explicitly */
-        c = getrlimit(RLIMIT_NOFILE, &rl);
-        if(c < 0)
-        {
-            DIE("getrlimit");
-        }
-        max_connections = rl.rlim_cur;
+        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
     }
 #endif
-    DEBUG("max_connections %d tcp_loop %d", max_connections, server_s);
-    tcp_loop(server_s);
+
+#if 0
+    ret = pthread_create(&pthread_event, NULL, thread_event, NULL);
+    if(0 != ret)
+    {   
+        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+    }   
+#endif
+
+	sleep(100000);
+    int **tret = NULL;
+    pthread_join(pthread_tcp, (void**)tret);  //等待线程同步  
 }
-
-void *thread_udp(void *param)
-{
-    int ret, i;
-    /* 设置线程优先级 */
-    pthread_attr_t attr;
-    struct sched_param sched;
-
-    ret = pthread_attr_init(&attr);
-    if(ret)
-        DEBUG("thread_tcp attr init error");
-    ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
-    if(ret)
-        DEBUG("thread tcp set SCHED_FIFO error");
-    sched.sched_priority = SCHED_PRIORITY_UDP;
-    ret = pthread_attr_setschedparam(&attr, &sched);
-    if(ret)
-        DEBUG("Set sched_priority 2 error");
- 
-	create_h264_socket(display_size, displays);
-}
-
-
 
 
 
@@ -110,9 +73,7 @@ int process_msg(rfb_request *req)
         default:
             break;
     }
-	//return 1;
-
-	return 0;
+	return ret;
 }
 
 

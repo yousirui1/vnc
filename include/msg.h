@@ -1,10 +1,12 @@
 #ifndef __MSG_H__
 #define __MSG_H__
 
-#define HEAD_LEN 8
 
 #include <SDL2/SDL.h>
 
+
+#define HEAD_LEN 8
+#define sz_verformat 20
 
 struct rfb_request
 {
@@ -30,25 +32,26 @@ struct rfb_request
 typedef struct rfb_request rfb_request;
 
 
-typedef struct _rfb_display
+typedef struct _rfb_head
+{   
+    unsigned char syn;
+    unsigned char encrypt_flag;
+    unsigned short cmd;
+    unsigned int data_size;
+}rfb_head;
+
+#pragma pack(2)
+typedef struct _rfb_packet
 {
-	int id;					//diplay[id]
-	int fd;					//udp h264 data fd
-	int port;
+    char b_keyFrame;
+    char encodec;
+    short width;
+    short height;
+    short total_num;
+    short num;
+    short length;
+}rfb_packet;
 
-	SDL_Rect rect;
-
-	struct sockaddr_in recv_addr;
-    struct sockaddr_in send_addr;
-		
-    rfb_request *req;
-    int play_flag;
-
-	unsigned char frame_buf[1024 * 1024];
-    int frame_pos;
-    int frame_size;
-	unsigned short current_count;
-}rfb_display;
 
 typedef struct _rfb_format
 {
@@ -57,15 +60,58 @@ typedef struct _rfb_format
     unsigned int code;
     unsigned int data_port;
     unsigned char play_flag;
-    unsigned char vnc_flag;     //´ò¿ªflag  ´ú±íÖ÷ÂëÁ÷,ÓÃÓÚÈ«ÆÁÏÔÊ¾¿ØÖÆ, ·ñÔò¸±ÂëÁ÷ 480*320
+    unsigned char vnc_flag;     //¿¿flag  ¿¿¿¿¿,¿¿¿¿¿¿¿¿, ¿¿¿¿¿
+	unsigned char fps;
+	unsigned char quality;
 }rfb_format;
 
-typedef struct _rfb_vid
+typedef struct _rfb_display
 {
-    int id;
-    int fd;
-    SDL_Rect rect;
-}rfb_vid;
+    int id;                 //diplay[id]
+    int fd;                 //udp h264 data fd
+    int port;
 
+    SDL_Rect rect;
+
+    struct sockaddr_in recv_addr;
+    struct sockaddr_in send_addr;
+            
+    rfb_request *req;
+    int play_flag;
+
+    unsigned char frame_buf[1024 * 1024];
+    int frame_pos;
+    int frame_size;
+    unsigned short current_count;
+}rfb_display;
+
+
+
+typedef struct _rfb_filemsg
+{
+    char flags;
+    short datasize;
+    char path[128];
+}rfb_filemsg;
+
+typedef struct _rfb_textmsg
+{   
+    short pad1;
+    short pad2;
+    int length;
+}rfb_textmsg;
+    
+typedef struct _rfb_key_event
+{   
+    char down;
+    char key;
+}rfb_keyevent;
+    
+typedef struct _rfb_pointer_evnet
+{   
+    short mask;
+    short x;
+    short y;
+}rfb_pointevent;
 
 #endif

@@ -35,17 +35,17 @@
 #include "global.h"
 
 #define __DEBUG__
-
 #ifdef __DEBUG__
-#define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__)
-//#define DIE(format,...) fprintf(stderr, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__); \
-        exit(1) 
-#define DIE(format,...) DEBUG(format); exit(1)
+#define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__);\
+                        log_msg("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__);
+
+#define DIE(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__);\
+                        err_msg("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__);\
+                        exit(1)
 #else
 #define DEBUG(format,...)
 #define DIE(format,...) DEBUG(format);exit(1)
 #endif
-
 
 /* config */
 #define CONFIG_FILE "config.ini"
@@ -58,11 +58,13 @@
 #define SERVER_CONTROL_PORT_KEY "control_port"
 #define SERVER_H264_PORT_KEY "h264_port"
 #define SERVER_WINDOW_FLAG_KEY "window_flag"
-#define SERVER_WINDOW_SIZE_KEY "window_size"			//2 = 2 * 2 4个窗口显示
+#define SERVER_WINDOW_SIZE_KEY "window_size"            //2 = 2 * 2 4个窗口显示
 
 #define CLIENT_SECTION "client"
 #define CLIENT_IP_KEY "server_ip"
 #define CLIENT_PORT_KEY "server_port"
+#define CLIENT_QUALITY_KEY "quality"
+#define CLIENT_FPS_KEY "fps"
 
 #define DEFAULT_TYPE "client"
 
@@ -70,11 +72,13 @@
 #define DEFAULT_CONTROL_PORT_VALUE 23000
 #define DEFAULT_H264_PORT_VALUE 23001
 #define DEFAULT_WINDOW_FLAG_VALUE 0
-#define DEFAULT_WINDOW_SIZE_VALUE 1				//2 = 2 * 2 4个窗口显示
+#define DEFAULT_WINDOW_SIZE_VALUE 1             //2 = 2 * 2 4个窗口显示
+
+#define DEFAULT_QUALITY_VALUE 60
+#define DEFAULT_FPS_VALUE 25
 
 #define DEFAULT_IP_VALUE "192.169.27.164"
 #define DEFAULT_PORT_VALUE 22000
-
 
 /* sock */
 #define VERSIONFORMAT "RFB %03d.%03d\n"
