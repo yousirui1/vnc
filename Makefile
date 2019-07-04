@@ -28,6 +28,7 @@ cppobj =
 
 ifeq ($(TARGET_ARCH), arm)
 CFLAGS = -I. -I./include/ -I./SDL/include -I./ffmpeg/include \
+		 -L./SDL/lib -lSDL2 -lpthread -lX11 -lXtst \
 		 -L./ffmpeg/lib/arm -lavcodec -lavformat -lswscale -lavutil -lavdevice \
 		 -L./SDL/lib -lSDL2 -lpthread 
 else ifeq ($(TARGET_ARCH), x86)
@@ -58,7 +59,7 @@ else ifeq ($(TARGET_ARCH), x86)
 	$(CP) ./ffmpeg/bin/*.dll ./bin
 	$(CP) ./SDL/bin/*.dll ./bin
 endif
-	@echo "Build $(TARGET_ARCH) programe  OK"
+	@echo "Build $(TARGET_ARCH) program  OK"
 	
 
 

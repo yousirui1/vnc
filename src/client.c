@@ -1,33 +1,36 @@
 #include "base.h"
 #include "msg.h"
 
+rfb_display client_display = {0};
+
 void init_client()
 {
 	int ret;
 	pthread_t pthread_tcp;
 	rfb_format fmt = {0};
 
-	int server_s = create_tcp();
-	if(!server_s)
-	{
-		DIE("create tcp err");
-	}	
-	connect_server(server_s, server_ip, server_port);
+    int server_s = create_tcp();
+    if(!server_s)
+    {   
+        DIE("create tcp err");
+    }   
+    connect_server(server_s, server_ip, server_port);
 
-	ret = login_server(server_s, &fmt);
-	if(0 != ret)
-	{
-		close_socket(server_s);
-		DIE("login_server err");
-	}
-	
-	ret = init_dev();
-	if(0 != ret)
-	{
-		close_socket(server_s);
+    ret = login_server(server_s, &fmt);
+    if(0 != ret)
+    {   
+        close_socket(server_s);
+        DIE("login_server err");
+    }   
+    
+#if 0
+    ret = init_dev();
+    if(0 != ret)
+    {   
+        close_socket(server_s);
         DIE("init device err %d,  %s",ret,strerror(ret));
-	}
-
+    }   
+#endif
     ret = pthread_create(&pthread_tcp, NULL, thread_client_tcp, NULL);
     if(0 != ret)
     {   

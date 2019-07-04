@@ -8,7 +8,6 @@ int default_quality = 0, default_fps = 0;
 int max_connections = -1; 
 char server_ip[126] = {0};
 
-
 #ifdef _WIN32
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
 #else
@@ -18,7 +17,7 @@ int main(int argc, char *argv[])
    	int ret;
     char *opt_input_file;
 
-	init_logs();
+    init_logs();
     /* config */
     parse_options(opt_input_file);
     if(server_flag)
@@ -35,7 +34,7 @@ int main(int argc, char *argv[])
 
 
 
-void parse_options(char *file)
+void parse_options(const char *file)
 {  
     /* arg > file */
     int ret;

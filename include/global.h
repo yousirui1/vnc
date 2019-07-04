@@ -38,11 +38,17 @@ int init_dev();
 
 
 /* display.c */
-void *thread_event(void *param);
+void *thread_display(void *param);
 extern rfb_display *displays;
 extern int width,height, vids_width, vids_height;
 
 extern unsigned char **vids_buf;
 extern QUEUE *vids_queue;
+
+extern int display_size;
+
+extern rfb_display client_display ;
+
+
 #endif
 

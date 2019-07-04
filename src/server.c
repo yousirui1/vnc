@@ -3,14 +3,14 @@
 
 int display_size = 0;
 
-void init_server(int window_size)
+void init_server()
 {
     int ret, server_s;
-    pthread_t pthread_tcp, pthread_udp , pthread_event;
+    pthread_t pthread_tcp, pthread_udp , pthread_display, pthread_decode;
 
-    create_display();
-#if 0
     server_s = create_tcp();
+
+	display_size = window_size * window_size;
     if(server_s == -1) 
     {   
         DIE("create socket err");
@@ -20,35 +20,30 @@ void init_server(int window_size)
     {   
         DIE("bind port %d err", client_port);
     }   
-#endif
-    
-#if 0
-    ret = pthread_create(&pthread_tcp, NULL, thread_server_tcp, &server_s);
-    if(0 != ret)
-    {   
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-    }   
-#endif
+	DEBUG("server_s %d", server_s);
 
-#if 0
-    ret = pthread_create(&pthread_udp, NULL, thread_server_udp, &server_s);
+	ret = pthread_create(&pthread_display, NULL, thread_display, NULL);
     if(0 != ret)
     {
         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
     }
-#endif
 
-#if 0
-    ret = pthread_create(&pthread_event, NULL, thread_event, NULL);
+    ret = pthread_create(&pthread_tcp, NULL, thread_server_tcp, &server_s);
     if(0 != ret)
-    {   
+    {
         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-    }   
-#endif
+    }
 
-	sleep(100000);
+    ret = pthread_create(&pthread_udp, NULL, thread_server_udp, NULL);
+    if(0 != ret)
+    {
+        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+    }
+
     int **tret = NULL;
-    pthread_join(pthread_tcp, (void**)tret);  //等待线程同步  
+    pthread_join(pthread_tcp, (void**)tret);  //等待线程同步
+
+
 }
 
 
@@ -114,8 +109,8 @@ int read_options(rfb_request *req)
            	{
                	displays[i].req = req;
                	displays[i].play_flag = 1;
-               	fmt->width = 480;
-               	fmt->height = 320;
+                fmt->width = vids_width;
+                fmt->height = vids_height;
                	fmt->play_flag = 0x01;
                	fmt->vnc_flag = 0x00;       //副码流
                	fmt->data_port = i + h264_port + 1;

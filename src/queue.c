@@ -39,6 +39,7 @@ void enqueue(rfb_request ** head,rfb_request * req)
 
     *head = req;                /* now we are head */
 }
+
      
 
 void init_queue(QUEUE *pQueue,unsigned char *pucBuf,unsigned int uiMaxBufSize)

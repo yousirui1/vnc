@@ -2,17 +2,14 @@
 #include "msg.h"
 #include "queue.h"
 
+/* h264 data queue */
+unsigned char **vids_buf;
+QUEUE *vids_queue;
 static int sockfd = 0;
 static struct sockaddr_in send_addr,recv_addr;
 static int total_connections = 0;
 
-/* h264 data queue */
-unsigned char **vids_buf = NULL;
-QUEUE *vids_queue = NULL;
-
 rfb_request *request_ready = NULL;   //ready list head
-
-
 
 unsigned char read_msg_syn(unsigned char* buf)
 {
@@ -77,12 +74,13 @@ int send_msg(const int fd, const char *buf, const int len)
 }
 
 
-void create_udp(char *ip, int port, int flag)
+void create_udp(char *ip, int port, rfb_display *display)
 {
-    DEBUG("ip %s, port %d", ip, port);
     int ret = -1;
-    struct ip_mreq mreq;
-    int opt = 0;
+    int sockfd;
+    struct sockaddr_in send_addr,recv_addr;
+
+    DEBUG("ip  %s, port %d", ip, port);
 
 #ifdef _WIN32
     WSADATA wsData = {0};
@@ -96,65 +94,61 @@ void create_udp(char *ip, int port, int flag)
 #else
     socklen_t socklen = sizeof (struct sockaddr_in);
 #endif
+
+    int opt = 0;
     /* 创建 socket 用于UDP通讯 */
     sockfd = socket (AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0)
     {
         DIE("socket creating err in udptalk");
     }
-    if(flag) //组播flag
+
+    if(NULL != ip)
     {
-        /* 设置要加入组播的地址 */
-        memset(&mreq, 0, sizeof (struct ip_mreq));
-        mreq.imr_multiaddr.s_addr = inet_addr(ip);
-        /* 设置发送组播消息的源主机的地址信息 */
-        mreq.imr_interface.s_addr = htonl (INADDR_ANY);
-
-        /* 把本机加入组播地址，即本机网卡作为组播成员，只有加入组才能收到组播消息 */
-        if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP , (char *)&mreq,sizeof (struct ip_mreq)) == -1)
-        {
-            //DIE("IP_ADD_MEMBERSHIP");
-            DIE ("setsockopt");
-        }
-
-        opt = 1;
-        if (setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_LOOP, (char *)&opt,sizeof (opt)) == -1)
-        {
-            DEBUG("IP_MULTICAST_LOOP set fail!\n");
-        }
+        memset (&send_addr, 0, socklen);
+        send_addr.sin_family = AF_INET;
+        send_addr.sin_port = htons (port);
+        send_addr.sin_addr.s_addr = inet_addr(ip);
     }
-    memset (&send_addr, 0, socklen);
-    send_addr.sin_family = AF_INET;
-    send_addr.sin_port = htons (port);
-    send_addr.sin_addr.s_addr = inet_addr(ip);
-
     opt = 1;
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR , (char *)&opt, sizeof(opt)) < 0)
     {
-        DIE("setsockopt");
+        DIE("setsockopt SO_REUSEADDR");
     }
 
-    opt = 512*1024;//设置为32K
+    opt = 521 * 1024;//设置为512K
     if (setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, (char *)&opt, sizeof (opt)) == -1)
     {
-        DEBUG("IP_MULTICAST_LOOP set fail!\n");
+        DEBUG("IP_MULTICAST_LOOP set fail!");
     }
 
-    opt = 512*1024;//设置为32K
+    opt = 512 * 1024;//设置为512K
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (char *)&opt, sizeof (opt)) == -1)
     {
-        DEBUG("IP_MULTICAST_LOOP set fail!\n");
+        DEBUG("IP_MULTICAST_LOOP set fail!");
     }
 
     memset(&recv_addr, 0, sizeof(recv_addr));
     recv_addr.sin_family = AF_INET;
     recv_addr.sin_addr.s_addr = htonl (INADDR_ANY);
     recv_addr.sin_port = htons(port);
+
     /* 绑定自己的端口和IP信息到socket上 */
     if (bind(sockfd, (struct sockaddr *) &recv_addr,sizeof (struct sockaddr_in)) == -1)
     {
-        DIE("Bind error");
+        DIE("bind port %d err", port);
     }
+
+	if(display)
+	{
+    	display->fd = sockfd;
+    	display->port =  port;
+    	display->recv_addr = recv_addr;
+    	display->send_addr = send_addr;
+
+    	display->frame_size = 1024 * 1024 - 1;
+    	display->frame_pos = 0;
+	}
 }
 
 
@@ -208,6 +202,8 @@ end_out:
 
 void bind_server(int fd, int port)
 {
+	DEBUG("server bind port %d", port);
+	
     struct sockaddr_in server_sockaddr;
     memset(&server_sockaddr, 0, sizeof server_sockaddr);
 
@@ -241,16 +237,9 @@ void connect_server(int fd, const char *ip, int port)
     memset(&client_sockaddr, 0, sizeof client_sockaddr);
 
     client_sockaddr.sin_family = AF_INET;
-    //client_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    client_sockaddr.sin_addr.s_addr = inet_addr(ip);
     client_sockaddr.sin_port = htons(port);
 
-#if 0
-    if(inet_aton(ip, (struct in_addr *)&client_sockaddr.sin_addr.s_addr) == 0)
-    {
-        DIE("inet_aton err");
-        return ;
-    }
-#endif
 
     while(connect(fd, (struct sockaddr *)&client_sockaddr, sizeof(client_sockaddr)) != 0)
     {
@@ -292,13 +281,11 @@ static rfb_request* remove_request(rfb_request *req)
         free(req->data_buf);
     req->data_buf = NULL;
 
-#if 0
     if(req->display_id != -1)
     {
         displays[req->display_id].req = NULL;
         displays[req->display_id].play_flag = 0;
     }
-#endif
 
     dequeue(&request_ready, req);
 
@@ -327,6 +314,7 @@ int send_request(rfb_request *req)
     free(tmp);
 }
 
+static int frame_count = 0;
 
 void h264_send_data(char *data, int len, int key_flag)
 {
@@ -334,22 +322,35 @@ void h264_send_data(char *data, int len, int key_flag)
     int pending = len;
     int dataLen = 0;
     char *ptr = data;
-    char buf [DATA_SIZE + sizeof(rfb_packet)] = {0};
-    rfb_packet *head = (rfb_packet *)&buf[0];
-    short index = 0;
-    head->total_num = num;
-    head->b_keyFrame = key_flag;
-
+    char buf[DATA_SIZE + 8] = {0};
+    buf[0] = 0xff;
+    buf[1] = 0xff;
+    //buf[2] = 0xff;
+    //buf[3] = 0xff;
+    *(unsigned short *)(&buf[2]) = frame_count++;
+    *(unsigned int *)(&buf[4]) = len;
+    int first = 1;
     while(pending > 0)
-    {
+    {   
         dataLen = min(pending, DATA_SIZE);
-        memcpy(buf + sizeof(rfb_packet), ptr, dataLen);
-        head->num = index++;
-        head->length = dataLen;
-        ptr += dataLen;
-        sendto(sockfd, buf,  dataLen + sizeof(rfb_packet), 0, (struct  sockaddr *)&send_addr, sizeof (send_addr));
+
+        if(first)  //+8个字节头 1 flag 4 datalen
+        {   
+            memcpy(buf + 8, ptr, dataLen);
+            ptr += dataLen;
+            sendto(client_display.fd, buf,  dataLen + 8, 0, 
+					(struct  sockaddr *)&(client_display.send_addr), sizeof (client_display.send_addr));
+            first = 0;
+        }   
+        else
+        {   
+            memcpy(buf, ptr, dataLen);
+            ptr += dataLen;
+            sendto(client_display.fd, buf,  dataLen, 0, 
+				(struct sockaddr *)&(client_display.send_addr), sizeof (client_display.send_addr));
+        }   
         pending -= dataLen;
-    }
+    }    
 }
 
 
@@ -376,7 +377,8 @@ void *thread_client_udp(void *param)
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
-    create_udp(server_ip, fmt->data_port, 0x0);
+
+    create_udp(server_ip, fmt->data_port, &client_display);
     client_udp_loop();
 }
 
@@ -440,7 +442,7 @@ void client_tcp_loop()
 /***************server **************************/
 void *thread_server_tcp(void *param)
 {
-    int ret, listenfd;
+    int ret, listenfd = -1;
     pthread_attr_t st_attr;
     struct sched_param sched;
 
@@ -466,11 +468,9 @@ void *thread_server_tcp(void *param)
 
 void *thread_server_udp(void *param)
 {
-    int ret, listenfd;
+    int ret;
     pthread_attr_t st_attr;
     struct sched_param sched;
-
-    listenfd = *(int *)param;
 
     ret = pthread_attr_init(&st_attr);
     if(ret)
@@ -485,7 +485,110 @@ void *thread_server_udp(void *param)
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
-    server_tcp_loop(listenfd);
+	create_h264_socket();
+}
+
+
+void create_h264_socket()
+{
+    int i, maxfd = -1;
+    fd_set allset;
+    FD_ZERO(&allset);
+    vids_queue = (QUEUE *)malloc(sizeof(QUEUE) * display_size);
+    vids_buf = (unsigned char **)malloc(display_size * sizeof(unsigned char *));
+    DEBUG("display_size %d", display_size);
+
+	while(!displays)
+	{
+		usleep(10000);
+	}
+
+    for(i = 0; i < display_size; i++)
+    {
+        create_udp(NULL, i + 1 + h264_port, &displays[i]);
+
+        FD_SET(displays[i].fd, &allset);
+        maxfd = maxfd > displays[i].fd ? maxfd : displays[i].fd;
+
+        vids_buf[i] = (unsigned char *)malloc(MAX_VIDSBUFSIZE * sizeof(unsigned char));
+        memset(vids_buf[i], 0, MAX_VIDSBUFSIZE);
+        /* 创建窗口的对应队列 */
+        init_queue(&(vids_queue[i]), vids_buf[i], MAX_VIDSBUFSIZE);
+    }
+    server_udp_loop(display_size, maxfd, allset, displays);
+}
+
+void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *clients)
+{
+    int i, ret, nready;
+    struct timeval tv;
+    fd_set fds;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+    int sockfd = -1;
+    socklen_t socklen = sizeof (struct sockaddr_in);
+    unsigned int total_size = 0;
+    unsigned int tmp_size = 0;
+    unsigned char buf[MAX_VIDSBUFSIZE] = {0};
+    unsigned int offset = 0;
+    unsigned char *tmp;
+    unsigned short count = 0;
+    unsigned short current_count = 0;
+
+    for(;;)
+    {
+        fds = allset;
+        ret = select(maxfd + 1, &fds, NULL, NULL, NULL);
+
+        if(ret <= 0)
+            continue;
+        nready = ret;
+        for(i = 0; i < display_size; i++)
+        {
+            if((sockfd = clients[i].fd) < 0)
+                continue;
+            if(FD_ISSET(sockfd, &fds))
+            {
+            	ret = recvfrom(sockfd, (char *)clients[i].frame_buf + clients[i].frame_pos, clients[i].frame_size - clients[i].frame_pos, 0,
+                    (struct sockaddr*)&(clients[i].recv_addr), &socklen);
+
+				if(ret < 0)
+					continue;
+	
+	            tmp = &(clients[i].frame_buf[clients[i].frame_pos]);
+	            clients[i].frame_pos += ret;
+	            if(tmp[0] == 0xff && tmp[1] == 0xff)
+	            {
+	               count = *((unsigned short *)&tmp[2]);
+	               if(count != clients[i].current_count)
+	               {
+	                   if(clients[i].current_count == 0)
+	                   {
+	                       clients[i].current_count = count;
+	                       continue;
+	                   }
+	                   total_size = *((unsigned int *)&tmp[4]);
+	                   en_queue(&vids_queue[i], clients[i].frame_buf + 8,  clients[i].frame_pos - ret - 8, 0x0);
+	                   memcpy(clients[i].frame_buf, tmp, ret);
+	                   clients[i].frame_pos = ret;
+	                   clients[i].current_count = count;
+	               }
+	               else
+	               {
+	                   if(clients[i].frame_pos == clients[i].frame_size + 8)
+	                   {
+	                       en_queue(&vids_queue[i], clients[i].frame_buf + 8, offset - 8, 0x0);
+	                       clients[i].frame_pos = 0;
+	                       clients[i].frame_size = 0;
+	                       clients[i].current_count = 0;
+	                   }
+	               }
+	          }
+	          if(--nready <= 0)
+	             break;
+            }
+        }
+    }
 }
 
 
