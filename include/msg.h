@@ -1,9 +1,7 @@
 #ifndef __MSG_H__
 #define __MSG_H__
 
-
 #include <SDL2/SDL.h>
-
 
 #define HEAD_LEN 8
 #define sz_verformat 20
@@ -60,7 +58,7 @@ typedef struct _rfb_format
     unsigned int code;
     unsigned int data_port;
     unsigned char play_flag;
-    unsigned char vnc_flag;     //¿¿flag  ¿¿¿¿¿,¿¿¿¿¿¿¿¿, ¿¿¿¿¿
+    unsigned char vnc_flag;     //??flag  ?????,????????, ?????
 	unsigned char fps;
 	unsigned char quality;
 }rfb_format;

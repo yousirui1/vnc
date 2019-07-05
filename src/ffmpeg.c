@@ -11,64 +11,11 @@
 #include "base.h"
 #include "queue.h"
 
-void *thread_encode(void *param)
-{
-    int ret;
-    pthread_attr_t st_attr;
-    struct sched_param sched;
-    
-    rfb_format *fmt = (rfb_format *)param;
-
-    ret = pthread_attr_init(&st_attr);
-    if(ret)
-    {   
-        DEBUG("ThreadMain attr init error ");
-    }   
-    ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
-    if(ret)
-    {   
-        DEBUG("ThreadMain set SCHED_FIFO error");
-    }   
-    sched.sched_priority = SCHED_PRIORITY_UDP;
-    ret = pthread_attr_setschedparam(&st_attr, &sched);
-    
-    ffmpeg_encode(fmt);
-}
-void *thread_decode(void *param)
-{
-	int ret;
-    pthread_attr_t st_attr;
-    struct sched_param sched;
-
-    rfb_display *vid = (rfb_display *)param;
-
-    ret = pthread_attr_init(&st_attr);
-    if(ret)
-    {
-        DEBUG("ThreadMain attr init error ");
-    }
-    ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
-    if(ret)
-    {
-        DEBUG("ThreadMain set SCHED_FIFO error");
-    }
-    sched.sched_priority = SCHED_PRIORITY_UDP;
-    ret = pthread_attr_setschedparam(&st_attr, &sched);
-
-    ffmpeg_decode(vid);
-}
-
-
-
-
-
-
-
 void ffmpeg_encode(rfb_format *fmt)
 {
     int  i, videoindex, ret, quality, fps, bps, got_picture;
     int width = 0; height = 0;
-    char *decode_speed = NULL;
+    const char *decode_speed = NULL;
     uint8_t *out_buffer = NULL;
 
     AVFormatContext *format_ctx = NULL;
@@ -119,7 +66,7 @@ void ffmpeg_encode(rfb_format *fmt)
     AVInputFormat *ifmt=av_find_input_format("gdigrab");
     if(avformat_open_input(&format_ctx,"desktop",ifmt, &options)!=0)
     {
-        DIE("Couldn't open input stream. ");
+        DEBUG("Couldn't open input stream. ");
     }
 #else
 	char video_size[8] = {0};
@@ -133,13 +80,15 @@ void ffmpeg_encode(rfb_format *fmt)
     AVInputFormat *ifmt=av_find_input_format("x11grab");
     if(avformat_open_input(&format_ctx,":0.0+0,0",ifmt, &options)!=0)
 	{
-		DIE("Couldn't open input stream. ");
+		DEBUG("Couldn't open input stream. ");
+		goto run_end;
     }   
 #endif
 
     if(avformat_find_stream_info(format_ctx,NULL)<0)
     {
-        DIE("Couldn't find stream information.");
+        DEBUG("Couldn't find stream information.");
+		goto run_end;
     }
     videoindex=-1;
     for(i=0; i<format_ctx->nb_streams; i++)
@@ -151,19 +100,22 @@ void ffmpeg_encode(rfb_format *fmt)
     }
     if(videoindex==-1)
     {
-        DIE("Couldn't find a video stream.");
+        DEBUG("Couldn't find a video stream.");
+		goto run_end;
     }
     /* 根据视频中的流打开选择解码器 */
     codec_ctx=format_ctx->streams[videoindex]->codec;
     codec=avcodec_find_decoder(codec_ctx->codec_id);
     if(codec==NULL)
     {
-        DIE("Couldn't find a video stream.");
+        DEBUG("Couldn't find a video stream.");
+		goto run_end;
     }
     //打开解码器
     if(avcodec_open2(codec_ctx, codec,NULL)<0)
     {
-        DIE("Could not open codec.");
+        DEBUG("Could not open codec.");
+		goto run_end;
     }
     frame=av_frame_alloc();
     frame->width = codec_ctx->width;
@@ -188,7 +140,8 @@ void ffmpeg_encode(rfb_format *fmt)
     h264codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     if(!h264codec)
     {
-         DIE("---------h264 codec not found----");
+        DEBUG("---------h264 codec not found----");
+		goto run_end;
     }
 
     h264codec_ctx = avcodec_alloc_context3(h264codec);
@@ -214,17 +167,18 @@ void ffmpeg_encode(rfb_format *fmt)
 
     if (avcodec_open2(h264codec_ctx, h264codec,&param) < 0)
     {
-        printf("Failed to open video encoder1! 编码器打开失败！\n");
-        return -1;
+        DEBUG("Failed to open video encoder");
+		goto run_end;
     }
-    for(;;)
+	while(run_flag)
     {
         /* 读取截屏中的数据--->packet  */
         if(av_read_frame(format_ctx, packet) < 0)
         {
             DEBUG(" av_read_frame no data");
-            break;
+			goto run_end;
         }
+
         if(packet->stream_index==videoindex)
         {
             ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, packet);
@@ -246,6 +200,8 @@ void ffmpeg_encode(rfb_format *fmt)
         }
         av_free_packet(packet);
     }
+
+run_end:
     if(img_convert_ctx)
         sws_freeContext(img_convert_ctx);
     if(out_buffer)
@@ -260,18 +216,13 @@ void ffmpeg_encode(rfb_format *fmt)
         avcodec_close(h264codec_ctx);
     if(format_ctx)
         avformat_close_input(&format_ctx);
+	if(run_flag)
+		run_flag = 0;
 }
 
 void ffmpeg_decode(rfb_display *vid)
 {
-	uint8_t *cur_ptr = NULL;
-    int cur_size = 0;
-    int first_time = 1;
-    char filename[16] = {0};
-    FILE *fp_in;
     uint8_t *out_buffer;
-    const int in_buffer_size = 800000;
-    uint8_t in_buffer[in_buffer_size];
     int ret, got_picture;
 
  	AVCodec *codec = NULL;
@@ -310,7 +261,7 @@ void ffmpeg_decode(rfb_display *vid)
     frame = av_frame_alloc();
     av_init_packet(&packet);
  
-    for(;;)
+	while(run_flag)
     {
 		if(vid->play_flag)
 		{
@@ -355,3 +306,54 @@ void ffmpeg_decode(rfb_display *vid)
     if(codec_ctx)
         avcodec_close(codec_ctx);
 }
+
+void *thread_encode(void *param)
+{
+    int ret;
+    pthread_attr_t st_attr;
+    struct sched_param sched;
+    
+    rfb_format *fmt = (rfb_format *)param;
+
+    ret = pthread_attr_init(&st_attr);
+    if(ret)
+    {   
+        DEBUG("ThreadMain attr init error ");
+    }   
+    ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+    if(ret)
+    {   
+        DEBUG("ThreadMain set SCHED_FIFO error");
+    }   
+    sched.sched_priority = SCHED_PRIORITY_UDP;
+    ret = pthread_attr_setschedparam(&st_attr, &sched);
+    
+    ffmpeg_encode(fmt);
+	return (void *)0;
+}
+void *thread_decode(void *param)
+{
+	int ret;
+    pthread_attr_t st_attr;
+    struct sched_param sched;
+
+    rfb_display *vid = (rfb_display *)param;
+
+    ret = pthread_attr_init(&st_attr);
+    if(ret)
+    {
+        DEBUG("ThreadMain attr init error ");
+    }
+    ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+    if(ret)
+    {
+        DEBUG("ThreadMain set SCHED_FIFO error");
+    }
+    sched.sched_priority = SCHED_PRIORITY_UDP;
+    ret = pthread_attr_setschedparam(&st_attr, &sched);
+
+    ffmpeg_decode(vid);
+	return (void *)0;
+}
+
+

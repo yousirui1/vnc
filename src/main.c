@@ -7,45 +7,18 @@ int client_port = -1, control_port = -1, h264_port = -1, server_port = -1, windo
 int default_quality = 0, default_fps = 0;
 int max_connections = -1; 
 char server_ip[126] = {0};
+int run_flag = 0;
 
-#ifdef _WIN32
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
-#else
-int main(int argc, char *argv[])
-#endif
-{
-   	int ret;
-    char *opt_input_file;
-
-    init_logs();
-    /* config */
-    parse_options(opt_input_file);
-    if(server_flag)
-    {
-        init_server();
-    }
-    else
-    {
-        init_client();
-    }
-	close_logs();
-	return 0;
-}
-
-
-
-void parse_options(const char *file)
+void parse_options()
 {  
-    /* arg > file */
-    int ret;
-    char buf[126];
-
+	/* arg > file */
+    int ret = 0;
+    char buf[126] = {0};
     ret = read_profile_string(BASE_SECTION, BASE_TYPE_KEY, buf, sizeof(buf), DEFAULT_TYPE, CONFIG_FILE);
-    if(!strncmp(buf, "server", 6))
+    if(ret && !strncmp(buf, "server", 6))
     {   
         server_flag = 1;
     }
-
     /* 读取对应所需要的配置信息 */
     if(server_flag)     //服务端程序
     {   
@@ -67,5 +40,48 @@ void parse_options(const char *file)
                 server_ip, server_port, window_flag, default_quality, default_fps);
     }
 }
-    
 
+void sig_quit_listen(int e)
+{
+    char s = 'S';
+
+    //write( pipeid[1], &s,  sizeof(s));
+    DEBUG("recv stop msg");
+    return;
+}
+
+    
+#ifdef _WIN32
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
+#else
+int main(int argc, char *argv[])
+#endif
+{
+    init_logs();
+
+    signal(SIGPIPE, SIG_IGN);
+    signal(SIGINT, SIG_IGN);
+    signal(SIGILL, SIG_IGN);
+    signal(SIGTERM, SIG_IGN);
+    signal(SIGSEGV, SIG_IGN);
+    signal(SIGABRT, SIG_IGN);
+    struct sigaction act;
+    act.sa_handler =  sig_quit_listen;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = 0;
+    sigaction(SIGUSR1, &act, 0); 
+
+
+    /* config */
+    parse_options();
+    if(server_flag)
+    {
+        init_server();
+    }
+    else
+    {
+        init_client();
+    }
+	close_logs();
+	return 0;
+}

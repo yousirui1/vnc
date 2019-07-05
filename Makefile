@@ -2,7 +2,7 @@ VERSION = 0.1
 
 CROSS_COMPILE = #arm-
 
-TARGET_ARCH = x86
+TARGET_ARCH = arm
 
 DEBUG = -g #-O2
 
@@ -36,7 +36,6 @@ CFLAGS = -I. -I./include/ -I./SDL/include/win -I./ffmpeg/include \
          -L./ffmpeg/lib/win -lavcodec -lavformat -lswscale -lavutil -lavdevice \
          -L./SDL/lib/win -lSDL2 -lmingw32 -lm -lws2_32  -lpthreadGC2  \
 		 #-mwindows
-			
 else 
 endif
 
@@ -45,7 +44,6 @@ endif
 CXXFLAGS = $(CFLAGS)
 
 VPATH = .:./include:./lib:./src:./tools:.
-
 
 
 $(exeobj):$(mainobj) $(cppobj) 

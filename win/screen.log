@@ -1,0 +1,8 @@
+File: ./src/main.c, Line: 00067: 
+programe client: 
+ server_ip 192.168.43.1, server_port 22000, window_flag 0, default_quality 60 default_fps 25
+File: ./src/client.c, Line: 00070: RFB 000.000
+
+File: ./src/client.c, Line: 00094: fmt->width 1280 fmt->height 720 fmt->code 0, fmt->data_port 0 fmt->play_flag 0  fmt->vnc_flag 0 fmt->quality 60 fmt->fps25
+File: ./src/client.c, Line: 00041: fmt.play_flag 0
+File: ./src/socket.c, Line: 00400: ThreadMain set SCHED_FIFO error

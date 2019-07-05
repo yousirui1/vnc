@@ -5,8 +5,6 @@
 /* h264 data queue */
 unsigned char **vids_buf;
 QUEUE *vids_queue;
-static int sockfd = 0;
-static struct sockaddr_in send_addr,recv_addr;
 static int total_connections = 0;
 
 rfb_request *request_ready = NULL;   //ready list head
@@ -76,7 +74,6 @@ int send_msg(const int fd, const char *buf, const int len)
 
 void create_udp(char *ip, int port, rfb_display *display)
 {
-    int ret = -1;
     int sockfd;
     struct sockaddr_in send_addr,recv_addr;
 
@@ -200,7 +197,7 @@ end_out:
 }
 
 
-void bind_server(int fd, int port)
+int bind_server(int fd, int port)
 {
 	DEBUG("server bind port %d", port);
 	
@@ -223,7 +220,7 @@ void bind_server(int fd, int port)
         DEBUG("listen err");
         goto end_out;
     }
-    return fd;
+    return 0;
 
 end_out:
     close(fd);
@@ -296,6 +293,9 @@ static rfb_request* remove_request(rfb_request *req)
     return next;
 }
 
+
+
+
 int send_request(rfb_request *req)
 {
     if(!req || !req->fd)
@@ -312,13 +312,14 @@ int send_request(rfb_request *req)
     DEBUG("send_request %d fd", req->status, req->fd);
 
     free(tmp);
+	return 1;
 }
 
 static int frame_count = 0;
 
 void h264_send_data(char *data, int len, int key_flag)
 {
-    int num = (len + DATA_SIZE - 1)/ DATA_SIZE;
+    //int num = (len + DATA_SIZE - 1)/ DATA_SIZE;
     int pending = len;
     int dataLen = 0;
     char *ptr = data;
@@ -356,6 +357,177 @@ void h264_send_data(char *data, int len, int key_flag)
 
 
 /**************client *******************/
+void client_tcp_loop(int sockfd)
+{
+	int ret;    
+    fd_set fds;
+	rfb_request *current = (rfb_request *)malloc(sizeof(rfb_request));
+	if(!current)
+	{
+		goto run_end;
+	}
+
+	memset(current, 0, sizeof(rfb_request));
+	current->fd = sockfd;
+
+	while(run_flag)
+    {   
+        FD_ZERO(&fds);
+        FD_SET(sockfd, &fds);
+        ret = select(sockfd + 1, &fds, NULL, NULL, NULL);
+
+		if(ret == -1)
+		{
+			if(errno == EINTR)
+				continue;
+			else if(errno != EBADF)
+				DIE();
+		}		
+		if(FD_ISSET(sockfd, &fds))
+		{
+			if(current->has_read_head == 0)
+            {   
+                if((ret = recv(current->fd, current->head_buf+current->data_pos,HEAD_LEN - current ->data_pos, 0)) <= 0)
+                {   
+                    if(ret < 0)
+                    {   
+                        if(errno == EINTR || errno == EAGAIN)
+                            continue;
+                    }
+                    DEBUG("close fd %d", sockfd);
+					goto run_end;
+                }
+                current->data_pos += ret;
+                if(current->data_pos != HEAD_LEN)
+                    continue;
+                if(read_msg_syn(current->head_buf) != DATA_SYN)
+                {   
+					current->data_pos = 0;
+                    current->has_read_head = 0;
+                    continue;
+                }
+                
+                current->has_read_head = 1;
+                current->data_size = read_msg_size(current->head_buf);
+                current->data_pos = 0;
+                
+                if(current->data_size < 0 || current->data_size > CLIENT_BUF)
+                {   
+					current->data_pos = 0;
+                    current->has_read_head = 0;
+                    continue;
+                }
+                else
+                {
+                    current->data_buf = (unsigned char*)malloc(current->data_size + 1);
+                   if(!current->data_buf)
+                    {
+						goto run_end;
+                    }
+                    memset(current->data_buf, 0, current->data_size + 1);
+                }
+            }
+            if(current->has_read_head == 1)
+			{
+                if((ret = recv(current->fd, current->data_buf + current->data_pos, current->data_size - current ->data_pos,0)) <= 0)                
+                {   
+                    if(ret < 0)
+                    {   
+                        if(errno == EINTR || errno == EAGAIN)
+                            continue;
+                    }
+                    DEBUG("close fd %d", sockfd);
+					goto run_end;
+                }
+                current->data_pos += ret;
+                if(current->data_pos == current->data_size)
+                {   
+                    process_msg(current);
+                    memset(current->head_buf, 0, HEAD_LEN);
+                    current->data_size = 0;
+                    current->data_pos = 0;
+                    free(current->data_buf);
+                    current->data_buf = NULL;
+                    current->has_read_head = 0;
+                }
+                
+                if(current->data_pos > current->data_size)
+                {   
+					current->data_pos = 0;
+					current->has_read_head = 0;
+                    continue;
+                }
+            }
+        }
+    }    
+
+run_end:
+	if(run_flag)
+		run_flag = 0;
+	if(current)
+		free(current);
+	close(sockfd);
+}
+
+
+void *thread_client_tcp(void *param)
+{
+    int ret,fd;
+    pthread_attr_t st_attr;
+    struct sched_param sched;
+
+	fd = *(int *)param;	
+
+    ret = pthread_attr_init(&st_attr);
+    if(ret)
+    {
+        DEBUG("ThreadMain attr init error ");
+    }
+    ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+    if(ret)
+    {
+        DEBUG("ThreadMain set SCHED_FIFO error");
+    }
+    sched.sched_priority = SCHED_PRIORITY_UDP;
+    ret = pthread_attr_setschedparam(&st_attr, &sched);
+
+    client_tcp_loop(fd);
+	return (void *)0;
+}
+
+
+void client_udp_loop()
+{
+#if 0
+    int ret;    
+    fd_set fds;
+    socklen_t socklen = sizeof (struct sockaddr_in);
+	int sockfd = client_display.fd;
+
+	rfb_display *client = &client_display;
+	
+	while(run_flag)
+    {   
+        FD_ZERO(&fds);
+        FD_SET(sockfd, &fds);
+        ret = select(sockfd + 1, &fds, NULL, NULL, NULL);
+    
+        if(ret < 0)
+            continue;
+   #if 0 
+        if(FD_ISSET(sockfd, &fds))
+        {   
+			ret = recvfrom(sockfd, (char *)client->frame_buf + client->frame_pos, clients->frame_size -> clients[i].f    rame_pos, 0,
+492                     (struct sockaddr*)&(clients[i].recv_addr), &socklen);
+
+    
+        }   
+#endif
+    }    
+	close(sockfd);
+#endif
+}
+
 void *thread_client_udp(void *param)
 {
     int ret;
@@ -377,147 +549,13 @@ void *thread_client_udp(void *param)
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
-
     create_udp(server_ip, fmt->data_port, &client_display);
     client_udp_loop();
-}
-
-
-void *thread_client_tcp(void *param)
-{
-    int ret;
-    pthread_attr_t st_attr;
-    struct sched_param sched;
-
-    ret = pthread_attr_init(&st_attr);
-    if(ret)
-    {
-        DEBUG("ThreadMain attr init error ");
-    }
-    ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
-    if(ret)
-    {
-        DEBUG("ThreadMain set SCHED_FIFO error");
-    }
-    sched.sched_priority = SCHED_PRIORITY_UDP;
-    ret = pthread_attr_setschedparam(&st_attr, &sched);
-
-    client_tcp_loop();
-}
-
-
-
-void client_udp_loop()
-{
-    int ret;    
-    fd_set fds;
-    socklen_t socklen = sizeof (struct sockaddr_in);
-
-    for(;;)
-    {   
-        FD_ZERO(&fds);
-        FD_SET(sockfd, &fds);
-        ret = select(sockfd + 1, &fds, NULL, NULL, NULL);
-    
-        if(ret < 0)
-            continue;
-    
-        if(FD_ISSET(sockfd, &fds))
-        {   
-            //ret = recvfrom(sockfd, );
-    
-        }   
-    }    
-}
-
-void client_tcp_loop()
-{
-    for(;;)
-    {   
-
-    }   
+	return (void *)0;
 }
 
 
 /***************server **************************/
-void *thread_server_tcp(void *param)
-{
-    int ret, listenfd = -1;
-    pthread_attr_t st_attr;
-    struct sched_param sched;
-
-    listenfd = *(int *)param;
-
-    ret = pthread_attr_init(&st_attr);
-    if(ret)
-    {
-        DEBUG("ThreadMain attr init error ");
-    }
-    ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
-    if(ret)
-    {
-        DEBUG("ThreadMain set SCHED_FIFO error");
-    }
-    sched.sched_priority = SCHED_PRIORITY_UDP;
-    ret = pthread_attr_setschedparam(&st_attr, &sched);
-
-    server_tcp_loop(listenfd);
-}
-
-
-
-void *thread_server_udp(void *param)
-{
-    int ret;
-    pthread_attr_t st_attr;
-    struct sched_param sched;
-
-    ret = pthread_attr_init(&st_attr);
-    if(ret)
-    {
-        DEBUG("ThreadMain attr init error ");
-    }
-    ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
-    if(ret)
-    {
-        DEBUG("ThreadMain set SCHED_FIFO error");
-    }
-    sched.sched_priority = SCHED_PRIORITY_UDP;
-    ret = pthread_attr_setschedparam(&st_attr, &sched);
-
-	create_h264_socket();
-}
-
-
-void create_h264_socket()
-{
-    int i, maxfd = -1;
-    fd_set allset;
-    FD_ZERO(&allset);
-    vids_queue = (QUEUE *)malloc(sizeof(QUEUE) * display_size);
-    vids_buf = (unsigned char **)malloc(display_size * sizeof(unsigned char *));
-    DEBUG("display_size %d", display_size);
-
-	while(!displays)
-	{
-		usleep(10000);
-	}
-
-    for(i = 0; i < display_size; i++)
-    {
-        create_udp(NULL, i + 1 + h264_port, &displays[i]);
-
-        FD_SET(displays[i].fd, &allset);
-        maxfd = maxfd > displays[i].fd ? maxfd : displays[i].fd;
-
-        vids_buf[i] = (unsigned char *)malloc(MAX_VIDSBUFSIZE * sizeof(unsigned char));
-        memset(vids_buf[i], 0, MAX_VIDSBUFSIZE);
-        /* 创建窗口的对应队列 */
-        init_queue(&(vids_queue[i]), vids_buf[i], MAX_VIDSBUFSIZE);
-    }
-    server_udp_loop(display_size, maxfd, allset, displays);
-}
-
 void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *clients)
 {
     int i, ret, nready;
@@ -528,17 +566,14 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
     int sockfd = -1;
     socklen_t socklen = sizeof (struct sockaddr_in);
     unsigned int total_size = 0;
-    unsigned int tmp_size = 0;
-    unsigned char buf[MAX_VIDSBUFSIZE] = {0};
     unsigned int offset = 0;
     unsigned char *tmp;
-    unsigned short count = 0;
-    unsigned short current_count = 0;
+    //unsigned short count = 0;
 
-    for(;;)
+	while(run_flag)
     {
         fds = allset;
-        ret = select(maxfd + 1, &fds, NULL, NULL, NULL);
+        ret = select(maxfd + 1, &fds, NULL, NULL, &tv);
 
         if(ret <= 0)
             continue;
@@ -557,8 +592,31 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 	
 	            tmp = &(clients[i].frame_buf[clients[i].frame_pos]);
 	            clients[i].frame_pos += ret;
+				DEBUG("ret %d",ret);
 	            if(tmp[0] == 0xff && tmp[1] == 0xff)
 	            {
+#if 0
+					if(total_size == 0)
+					{
+	                   	total_size = *((unsigned int *)&tmp[4]);
+						//continue;
+					}	
+					if(clients[i].frame_pos == total_size + 8)
+					{
+						total_size = 0;
+						en_queue(&vids_queue[i], clients[i].frame_buf + 8, offset - 8, 0x0);
+	                    clients[i].frame_pos = 0;
+	                    //clients[i].frame_size = 0;
+	                    clients[i].current_count = 0;
+					}
+					if(clients[i].frame_pos > total_size + 8)
+					{
+						total_size = 0;
+	                    clients[i].frame_pos = 0;
+	                    //clients[i].frame_size = 0;
+	                    clients[i].current_count = 0;
+					}
+#else
 	               count = *((unsigned short *)&tmp[2]);
 	               if(count != clients[i].current_count)
 	               {
@@ -583,13 +641,56 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 	                       clients[i].current_count = 0;
 	                   }
 	               }
+#endif
 	          }
 	          if(--nready <= 0)
 	             break;
             }
         }
     }
+
+	for(i = 0; i< display_size; i++)
+	{
+		if(vids_buf[i])
+			free(vids_buf[i]);
+		if(clients[i].fd)
+			close(clients[i].fd);
+	}
+
+	if(vids_queue)
+		free(vids_queue);
+	if(vids_buf)
+		free(vids_buf);
 }
+
+void create_h264_socket()
+{
+    int i, maxfd = -1;
+    fd_set allset;
+    FD_ZERO(&allset);
+    vids_queue = (QUEUE *)malloc(sizeof(QUEUE) * display_size);
+    vids_buf = (unsigned char **)malloc(display_size * sizeof(unsigned char *));
+    DEBUG("display_size %d", display_size);
+
+	while(!displays)
+	{
+		usleep(10000);
+	}
+
+    for(i = 0; i < display_size; i++)
+    {
+        create_udp(NULL, i + 1 + h264_port, &displays[i]);
+        FD_SET(displays[i].fd, &allset);
+        maxfd = maxfd > displays[i].fd ? maxfd : displays[i].fd;
+        vids_buf[i] = (unsigned char *)malloc(MAX_VIDSBUFSIZE * sizeof(unsigned char));
+        memset(vids_buf[i], 0, MAX_VIDSBUFSIZE);
+        /* 创建窗口的对应队列 */
+        init_queue(&(vids_queue[i]), vids_buf[i], MAX_VIDSBUFSIZE);
+    }
+    server_udp_loop(display_size, maxfd, allset, displays);
+	free(displays);	
+}
+
 
 
 void server_tcp_loop(int listenfd)
@@ -598,9 +699,12 @@ void server_tcp_loop(int listenfd)
     int nready, ret;
     fd_set rset, allset;
 
-    struct sockaddr_in cliaddr, servaddr;
+    struct sockaddr_in cliaddr;
     socklen_t clilen = sizeof(cliaddr);
 
+    struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
     maxfd = listenfd;
 
     FD_ZERO(&allset);
@@ -608,11 +712,10 @@ void server_tcp_loop(int listenfd)
 
     rfb_request *conn = NULL;
     rfb_request *current = NULL;
-    rfb_request *temp = NULL;
 
     total_connections = 0;
 
-    for(;;)
+	while(run_flag)
     {
         rset = allset; // structure assignment
         ret = select(maxfd + 1, &rset, NULL, NULL, NULL);
@@ -789,5 +892,59 @@ void server_tcp_loop(int listenfd)
             current = current->next;
         }
     }
+
+run_end:
+	current = request_ready;
+	while(current)
+	{
+		current = remove_request(current);
+	}
 }
 
+void *thread_server_tcp(void *param)
+{
+    int ret, listenfd = -1;
+    pthread_attr_t st_attr;
+    struct sched_param sched;
+
+    listenfd = *(int *)param;
+
+    ret = pthread_attr_init(&st_attr);
+    if(ret)
+    {
+        DEBUG("ThreadMain attr init error ");
+    }
+    ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+    if(ret)
+    {
+        DEBUG("ThreadMain set SCHED_FIFO error");
+    }
+    sched.sched_priority = SCHED_PRIORITY_UDP;
+    ret = pthread_attr_setschedparam(&st_attr, &sched);
+
+    server_tcp_loop(listenfd);
+	return (void *)0;
+}
+
+void *thread_server_udp(void *param)
+{
+    int ret;
+    pthread_attr_t st_attr;
+    struct sched_param sched;
+
+    ret = pthread_attr_init(&st_attr);
+    if(ret)
+    {
+        DEBUG("ThreadMain attr init error ");
+    }
+    ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+    if(ret)
+    {
+        DEBUG("ThreadMain set SCHED_FIFO error");
+    }
+    sched.sched_priority = SCHED_PRIORITY_UDP;
+    ret = pthread_attr_setschedparam(&st_attr, &sched);
+
+	create_h264_socket();
+	return (void *)0;
+}

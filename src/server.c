@@ -3,85 +3,16 @@
 
 int display_size = 0;
 
-void init_server()
-{
-    int ret, server_s;
-    pthread_t pthread_tcp, pthread_udp , pthread_display, pthread_decode;
-
-    server_s = create_tcp();
-
-	display_size = window_size * window_size;
-    if(server_s == -1) 
-    {   
-        DIE("create socket err");
-    }   
-
-    if(bind_server(server_s, client_port) == -1) 
-    {   
-        DIE("bind port %d err", client_port);
-    }   
-	DEBUG("server_s %d", server_s);
-
-	ret = pthread_create(&pthread_display, NULL, thread_display, NULL);
-    if(0 != ret)
-    {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-    }
-
-    ret = pthread_create(&pthread_tcp, NULL, thread_server_tcp, &server_s);
-    if(0 != ret)
-    {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-    }
-
-    ret = pthread_create(&pthread_udp, NULL, thread_server_udp, NULL);
-    if(0 != ret)
-    {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-    }
-
-    int **tret = NULL;
-    pthread_join(pthread_tcp, (void**)tret);  //等待线程同步
-
-
-}
-
-
-
-int process_msg(rfb_request *req)
-{
-
-    int ret = 0;
-
-    switch(req->status)
-    {
-        case READ_HEADER:
-        case LOGIN:
-            ret = read_login(req);
-            break;
-        case OPTIONS:
-            ret = read_options(req);
-            break;
-        case DONE:
-
-        case DEAD:
-        default:
-            break;
-    }
-	return ret;
-}
-
-
 int read_login(rfb_request *req)
 {
     if(read_msg_order(req->head_buf) == 0x01)
     {
         int server_major, server_minor;
 
-        if (sscanf(req->data_buf, VERSIONFORMAT,
+        if (sscanf((char *)req->data_buf, VERSIONFORMAT,
                     &server_major, &server_minor) != 2)
                 ;
-        sprintf(req->data_buf, VERSIONFORMAT, 3, server_minor + 1);
+        sprintf((char *)req->data_buf, VERSIONFORMAT, 3, server_minor + 1);
         send_request(req);
         req->status = OPTIONS;
 		return 0;
@@ -130,7 +61,76 @@ int read_options(rfb_request *req)
 	}
 }
 
+int process_msg(rfb_request *req)
+{
 
+    int ret = 0;
+
+    switch(req->status)
+    {
+        case READ_HEADER:
+        case LOGIN:
+            ret = read_login(req);
+            break;
+        case OPTIONS:
+            ret = read_options(req);
+            break;
+        case DONE:
+
+        case DEAD:
+        default:
+            break;
+    }
+	return ret;
+}
+
+void init_server()
+{
+    int ret, server_s;
+    pthread_t pthread_tcp, pthread_udp , pthread_display;
+
+    server_s = create_tcp();
+	
+	run_flag = 1;
+
+	display_size = window_size * window_size;
+    if(server_s == -1) 
+    {   
+        DIE("create socket err");
+    }   
+
+    if(bind_server(server_s, client_port) == -1) 
+    {   
+        DIE("bind port %d err", client_port);
+    }   
+	DEBUG("server_s %d", server_s);
+
+	ret = pthread_create(&pthread_display, NULL, thread_display, NULL);
+    if(0 != ret)
+    {
+        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+    }
+
+    ret = pthread_create(&pthread_tcp, NULL, thread_server_tcp, &server_s);
+    if(0 != ret)
+    {
+        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+    }
+
+    ret = pthread_create(&pthread_udp, NULL, thread_server_udp, NULL);
+    if(0 != ret)
+    {
+        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+    }
+
+    void *tret = NULL;
+    pthread_join(pthread_display, &tret);  //等待线程同步
+	DEBUG("pthread_join %d", (int)tret);
+    pthread_join(pthread_tcp, &tret);  //等待线程同步
+	DEBUG("pthread_join %d", (int)tret);
+    pthread_join(pthread_udp, &tret);  //等待线程同步
+	DEBUG("pthread_join %d", (int)tret);
+}
 
 
 

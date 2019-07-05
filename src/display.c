@@ -14,21 +14,22 @@
 
 const char program_name[] = "ffplay";
 
-static int default_width  = 1280;
-static int default_height = 720;
-static int screen_width  = 0;
-static int screen_height = 0;
+int screen_width  = 0;
+int screen_height = 0;
+
+static int default_width  = 720;
+static int default_height = 640;
 static int audio_disable = 1;
-static int video_disable = 0;
+//static int video_disable = 0;
 static int display_disable = 0;
 static int borderless = 0;
-static int exit_on_keydown;
-static int exit_on_mousedown;
+//static int exit_on_keydown;
+//static int exit_on_mousedown;
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 static SDL_RendererInfo renderer_info = {0};
-static SDL_AudioDeviceID audio_dev;
+//static SDL_AudioDeviceID audio_dev;
 static SDL_Texture *texture = NULL;
 
 int width,height, vids_width, vids_height;
@@ -38,106 +39,6 @@ pthread_mutex_t renderer_mutex;
 
 int control_mode = 0;
 
-static void do_exit();
-
-
-void *thread_display(void *param)
-{
-	int ret;
-    pthread_attr_t st_attr;
-    struct sched_param sched;
-
-    ret = pthread_attr_init(&st_attr);
-    if(ret)
-    {   
-       	DEBUG("ThreadMain attr init error ");
-    }   
-    ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
-    if(ret)
-    {   
-        DEBUG("ThreadMain set SCHED_FIFO error");
-    }   
-    sched.sched_priority = SCHED_PRIORITY_UDP;
-    ret = pthread_attr_setschedparam(&st_attr, &sched);
-
-	create_display();
-}
-
-
-void create_display()
-{
-    int flags, ret;
-    flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
-    if(audio_disable)
-        flags &= ~SDL_INIT_AUDIO;
-    else
-    {
-        /* Try to work around an occasional ALSA buffer underflow issue when the
-         * period size is NPOT due to ALSA resampling by forcing the buffer size. */
-        if (!SDL_getenv("SDL_AUDIO_ALSA_SET_BUFFER_SIZE"))
-            SDL_setenv("SDL_AUDIO_ALSA_SET_BUFFER_SIZE","1", 1);
-    }
-
-    if(display_disable)
-        flags &= ~SDL_INIT_VIDEO;
-
-    if(SDL_Init(flags))
-    {
-        DIE("Could not initialize SDL - %s", SDL_GetError());
-    }
-    SDL_EventState(SDL_SYSWMEVENT, SDL_IGNORE);
-    SDL_EventState(SDL_USEREVENT, SDL_IGNORE);
-
-    if(!display_disable)
-    {
-        DEBUG("create window ");
-        int flags = SDL_WINDOW_HIDDEN;  //SDL_WINDOW_SHOWN SDL_WINDOW_HIDDEN
-        if(borderless)              //无边框
-            flags |= SDL_WINDOW_BORDERLESS;
-        else
-            flags |= SDL_WINDOW_RESIZABLE;
-
-        window = SDL_CreateWindow(program_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, default_width, default_height, 0);
-		if(!window_flag)
-		{
-			SDL_Rect fullRect;
-			SDL_GetDisplayBounds(0, &fullRect);
-			DEBUG("full_width %d full_height %d", fullRect.w, fullRect.h);
-	    	screen_width = fullRect.w;
-	    	screen_height = fullRect.h;
-			SDL_SetWindowSize(window, screen_width, screen_height);
-			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-		}
-		else
-		{
-	    	screen_width = default_width;
-	    	screen_height = default_height;
-			//SDL_SetWindowPosition(window, fullRect.x, fullRect.y);
-		}
-        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-        if(window)
-        {
-     //       renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-            if(!renderer)
-            {
-                DEBUG("Failed to initialize a hardware accelerated renderer: %s", SDL_GetError());
-                renderer = SDL_CreateRenderer(window, -1, 0);
-            }
-            if(renderer)
-            {
-                if (!SDL_GetRendererInfo(renderer, &renderer_info))
-                    DEBUG("Initialized %s renderer.", renderer_info.name);
-            }
-        }
-        if(!window || !renderer || !renderer_info.num_texture_formats)
-        {
-            DIE("Failed to create window or renderer: %s", SDL_GetError());
-        }
-    }
-	partition_display();
-    atexit(do_exit);
-    event_loop();
-    }
 
 static void do_exit()
 {
@@ -225,21 +126,17 @@ void partition_display()
 }
 
 
+#if 0
 static void refresh_loop_wait_event(SDL_Event *event)
 {
-	double remaining_time = 0.0;
-	QUEUE_INDEX *index = NULL;
+	//double remaining_time = 0.0;
     SDL_PumpEvents();
-	SDL_Rect rect;
-	rect.x = 0;
-	rect.y = 0;
-	rect.w = default_width;
-	rect.h = default_height;
 	while (!SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT))
 	{
 		SDL_PumpEvents();
 	}
 }
+#endif
 
 
 void event_loop()
@@ -298,18 +195,184 @@ void event_loop()
 		}
 	}	
 #endif
-	int done = 0;
     DEBUG("init ok loop start");
-    while(!done)
+    while(run_flag)
     {
         while(SDL_PollEvent(&event))
         {
             if(event.type == SDL_QUIT)
-                done = 1;
+                run_flag = 0;
             break;
         }
     }
+
+	if(pthread_decodes)
+		free(pthread_decodes);
+
     SDL_Quit();
+}
+
+
+
+void control_loop()
+{
+#if 0
+    SDL_Event event;
+    rfb_pointevent point;
+    rfb_keyevent key;
+    for(;;)
+    {
+        while(SDL_PollEvent(&event))
+        {
+            if(event.type == SDL_MOUSEBUTTONDOWN)
+            {
+                if(SDL_BUTTON_LEFT == event.button.button)
+                {
+                    point.mask |= (1<<1);
+                }
+
+                if(SDL_BUTTON_RIGHT == event.button.button)
+                {
+                    point.mask |= (1<<3);
+                }
+            }
+
+            if(event.type == SDL_MOUSEBUTTONUP)
+            {
+                if(SDL_BUTTON_LEFT == event.button.button)
+                {
+                    point.mask |= (1<<2);
+                }
+
+                if(SDL_BUTTON_RIGHT == event.button.button)
+                {
+                    point.mask |= (1<<4);
+                }
+            }
+            if(point.mask != 0 || event.type == SDL_MOUSEMOTION)
+            {
+                point.x = event.motion.x;
+                point.y = event.motion.y;
+                send_control((char *)&point, sizeof(rfb_pointevent), 0x01);
+                point.mask = 0;
+            }
+
+            if (SDL_KEYDOWN == event.type) // SDL_KEYUP
+            {
+                key.key = *(SDL_GetKeyName(event.key.keysym.sym));
+                key.down = 1;
+                send_control((char *)&key, sizeof(rfb_keyevent), 0x02);
+            }
+
+            if(SDL_KEYUP == event.type)
+            {
+                key.key = *(SDL_GetKeyName(event.key.keysym.sym));
+                key.down = 0;
+                send_control((char *)&key, sizeof(rfb_keyevent), 0x02);
+            }
+        }
+    }
+#endif
 
 }
+
+
+void create_display()
+{
+    int flags;
+    flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
+    if(audio_disable)
+        flags &= ~SDL_INIT_AUDIO;
+    else
+    {
+        /* Try to work around an occasional ALSA buffer underflow issue when the
+         * period size is NPOT due to ALSA resampling by forcing the buffer size. */
+        if (!SDL_getenv("SDL_AUDIO_ALSA_SET_BUFFER_SIZE"))
+            SDL_setenv("SDL_AUDIO_ALSA_SET_BUFFER_SIZE","1", 1);
+    }
+
+    if(display_disable)
+        flags &= ~SDL_INIT_VIDEO;
+
+    if(SDL_Init(flags))
+    {
+        DIE("Could not initialize SDL - %s", SDL_GetError());
+    }
+    SDL_EventState(SDL_SYSWMEVENT, SDL_IGNORE);
+    SDL_EventState(SDL_USEREVENT, SDL_IGNORE);
+
+    if(!display_disable)
+    {
+        DEBUG("create window ");
+        int flags = SDL_WINDOW_HIDDEN;  //SDL_WINDOW_SHOWN SDL_WINDOW_HIDDEN
+        if(borderless)              //无边框
+            flags |= SDL_WINDOW_BORDERLESS;
+        else
+            flags |= SDL_WINDOW_RESIZABLE;
+
+        window = SDL_CreateWindow(program_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, default_width, default_height, 0);
+		if(!window_flag)
+		{
+			SDL_Rect fullRect;
+			SDL_GetDisplayBounds(0, &fullRect);
+			DEBUG("full_width %d full_height %d", fullRect.w, fullRect.h);
+	    	screen_width = fullRect.w;
+	    	screen_height = fullRect.h;
+			SDL_SetWindowSize(window, screen_width, screen_height);
+			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+		}
+		else
+		{
+	    	screen_width = default_width;
+	    	screen_height = default_height;
+			//SDL_SetWindowPosition(window, fullRect.x, fullRect.y);
+		}
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+        if(window)
+        {
+     //       renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+            if(!renderer)
+            {
+                DEBUG("Failed to initialize a hardware accelerated renderer: %s", SDL_GetError());
+                renderer = SDL_CreateRenderer(window, -1, 0);
+            }
+            if(renderer)
+            {
+                if (!SDL_GetRendererInfo(renderer, &renderer_info))
+                    DEBUG("Initialized %s renderer.", renderer_info.name);
+            }
+        }
+        if(!window || !renderer || !renderer_info.num_texture_formats)
+        {
+            DIE("Failed to create window or renderer: %s", SDL_GetError());
+        }
+    }
+	partition_display();
+    atexit(do_exit);
+    event_loop();
+}
+
+void *thread_display(void *param)
+{
+	int ret;
+    pthread_attr_t st_attr;
+    struct sched_param sched;
+
+    ret = pthread_attr_init(&st_attr);
+    if(ret)
+    {   
+       	DEBUG("ThreadMain attr init error ");
+    }   
+    ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+    if(ret)
+    {   
+        DEBUG("ThreadMain set SCHED_FIFO error");
+    }   
+    sched.sched_priority = SCHED_PRIORITY_UDP;
+    ret = pthread_attr_setschedparam(&st_attr, &sched);
+
+	create_display();
+	return (void *)0;
+}
+
 

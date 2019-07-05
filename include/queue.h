@@ -6,6 +6,8 @@
 
 #define MAX_QUEUESIZE 128
 
+void dequeue(rfb_request ** head,rfb_request * req);
+void enqueue(rfb_request ** head,rfb_request * req);
 
 
 typedef struct 

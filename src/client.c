@@ -3,55 +3,12 @@
 
 rfb_display client_display = {0};
 
-void init_client()
-{
-	int ret;
-	pthread_t pthread_tcp;
-	rfb_format fmt = {0};
 
-    int server_s = create_tcp();
-    if(!server_s)
-    {   
-        DIE("create tcp err");
-    }   
-    connect_server(server_s, server_ip, server_port);
-
-    ret = login_server(server_s, &fmt);
-    if(0 != ret)
-    {   
-        close_socket(server_s);
-        DIE("login_server err");
-    }   
-    
-#if 0
-    ret = init_dev();
-    if(0 != ret)
-    {   
-        close_socket(server_s);
-        DIE("init device err %d,  %s",ret,strerror(ret));
-    }   
-#endif
-    ret = pthread_create(&pthread_tcp, NULL, thread_client_tcp, NULL);
-    if(0 != ret)
-    {   
-		close_socket(server_s);
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-    } 
-
-	DEBUG("fmt.play_flag %d", fmt.play_flag);
-	if(fmt.play_flag)
-	{
-		start_encode(&fmt);
-	}	
-
-	int **tret = NULL;
-	pthread_join(pthread_tcp, (void**)tret);  //等待线程同步		
-}
 
 int login_server(int fd, rfb_format *fmt)
 {
-	unsigned char buf[1024] = {0};
-	unsigned char *tmp = &buf[8];
+	char buf[1024] = {0};
+	char *tmp = &buf[8];
 	int server_major = 0, server_minor = 0;
 		
 	rfb_head *head = (rfb_head *)&buf[0];
@@ -104,17 +61,57 @@ void start_encode(rfb_format *fmt)
 {
 	int ret;
 	pthread_t pthread_udp, pthread_encode;
-
-
 	ret = pthread_create(&pthread_udp, NULL, thread_client_udp, fmt);
     if(0 != ret)
     {   
         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
     } 
-
     ret = pthread_create(&pthread_encode, NULL, thread_encode, fmt);
     if(0 != ret)
     {   
         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
     }
+	void *tret = NULL;
+	pthread_join(pthread_udp, &tret);  //等待线程同步		
+	pthread_join(pthread_encode, &tret);  //等待线程同步		
 }
+
+void init_client()
+{
+	int ret = -1;
+	pthread_t pthread_tcp;
+	rfb_format fmt = {0};
+
+	run_flag = 1;
+
+    int server_s = create_tcp();
+    if(!server_s)
+    {   
+        DIE("create tcp err");
+    }   
+    connect_server(server_s, server_ip, server_port);
+    ret = login_server(server_s, &fmt);
+    if(0 != ret)
+    {   
+        DIE("login_server err");
+    }   
+    ret = init_dev();
+    if(0 != ret)
+    {   
+        DIE("init device err %d,  %s",ret,strerror(ret));
+    }   
+    ret = pthread_create(&pthread_tcp, NULL, thread_client_tcp, &server_s);
+    if(0 != ret)
+    {   
+        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+    } 
+	DEBUG("fmt.play_flag %d", fmt.play_flag);
+	if(fmt.play_flag)
+	{
+		start_encode(&fmt);
+	}	
+	void *tret = NULL;
+	pthread_join(pthread_tcp, (void**)tret);  //等待线程同步		
+}
+
+

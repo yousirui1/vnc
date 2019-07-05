@@ -7,19 +7,19 @@
 static int fd_kbd = 0;
 static int fd_mouse  = 0;
 static Display *dpy = NULL;
-static Window root = NULL;
+static Window root;
 
 
 int init_dev()
 {
-	int id ,ret;
+	int id;
 	if((dpy = XOpenDisplay(0)) == NULL)
 	{
 		DEBUG("");
 		goto err;
 	}
 	id = DefaultScreen(dpy);  //DISPLAY:= id
-	if((root = XRootWindow(dpy, id)) == NULL)
+	if(!(root = XRootWindow(dpy, id)))
 	{
 		DEBUG("");
 		goto err;
