@@ -34,6 +34,12 @@ int read_options(rfb_request *req)
 
        	fmt->play_flag = 0;
        	fmt->data_port = 0;
+
+		while(!displays)
+		{
+			sleep(1);
+		}
+
        	for(i = 0; i < display_size; i++)   //ready play
        	{
            	if(!displays[i].play_flag)      //存在空闲的分屏, 发送play命令
@@ -63,7 +69,6 @@ int read_options(rfb_request *req)
 
 int process_msg(rfb_request *req)
 {
-
     int ret = 0;
 
     switch(req->status)

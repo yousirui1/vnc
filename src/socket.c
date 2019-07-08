@@ -596,7 +596,6 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 	            clients[i].frame_pos += ret;
 	            if(tmp[0] == 0xff && tmp[1] == 0xff)
 	            {
-					DEBUG("total_size %d", *((unsigned int *)&tmp[4]));
 #if 0
 					if(total_size == 0)
 					{
@@ -654,7 +653,6 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 	       }
         }
     }
-#if 0
 	for(i = 0; i< display_size; i++)
 	{
 		if(vids_buf[i])
@@ -667,7 +665,6 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 		free(vids_queue);
 	if(vids_buf)
 		free(vids_buf);
-#endif
 }
 
 void create_h264_socket()
