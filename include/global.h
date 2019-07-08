@@ -64,7 +64,7 @@ extern rfb_display client_display ;
 extern int screen_height, screen_width;
 
 void update_texture(AVFrame *frame_yuv, SDL_Rect rect);
-
+void clear_texture();
 
 
 /* server.c */

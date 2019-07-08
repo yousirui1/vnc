@@ -68,6 +68,15 @@ void event_loop()
 }
 #endif
 
+
+void clear_texture()
+{
+    pthread_mutex_lock(&renderer_mutex);
+	SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
+    pthread_mutex_unlock(&renderer_mutex);
+}
+
 void update_texture(AVFrame *frame_yuv, SDL_Rect rect)
 {
 	if(!texture || !renderer)
@@ -103,13 +112,14 @@ void partition_display()
     memset(displays, 0, sizeof(rfb_display) * window_size * window_size);
     pthread_decodes = (pthread_t *)malloc(sizeof(pthread_t) * window_size * window_size);
 
+	clear_texture();
+
     for(i = 0; i < window_size; i++)
     {   
         for(j = 0; j < window_size; j++)
         {   
             id = i + j * window_size;
             displays[id].id = id;
-            displays[id].fd = -1;
             displays[id].rect.x = i * vids_width;
             displays[id].rect.y = j * vids_height;
             displays[id].rect.w = vids_width;

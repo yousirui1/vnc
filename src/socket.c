@@ -146,6 +146,7 @@ void create_udp(char *ip, int port, rfb_display *display)
     	display->frame_size = 1024 * 1024 - 1;
     	display->frame_pos = 0;
 	}
+	DEBUG("display->fd %d", display->fd);
 }
 
 
@@ -282,6 +283,7 @@ static rfb_request* remove_request(rfb_request *req)
     {
         displays[req->display_id].req = NULL;
         displays[req->display_id].play_flag = 0;
+		clear_texture();	
     }
 
     dequeue(&request_ready, req);
@@ -568,15 +570,15 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
     unsigned int total_size = 0;
     unsigned int offset = 0;
     unsigned char *tmp;
-    //unsigned short count = 0;
+    unsigned short count = 0;
 
 	while(run_flag)
     {
         fds = allset;
         ret = select(maxfd + 1, &fds, NULL, NULL, &tv);
-
-        if(ret <= 0)
+        if(ret == 0)
             continue;
+
         nready = ret;
         for(i = 0; i < display_size; i++)
         {
@@ -592,25 +594,28 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 	
 	            tmp = &(clients[i].frame_buf[clients[i].frame_pos]);
 	            clients[i].frame_pos += ret;
-				DEBUG("ret %d",ret);
 	            if(tmp[0] == 0xff && tmp[1] == 0xff)
 	            {
+					DEBUG("total_size %d", *((unsigned int *)&tmp[4]));
 #if 0
 					if(total_size == 0)
 					{
 	                   	total_size = *((unsigned int *)&tmp[4]);
-						//continue;
+						continue;
 					}	
+
 					if(clients[i].frame_pos == total_size + 8)
 					{
 						total_size = 0;
-						en_queue(&vids_queue[i], clients[i].frame_buf + 8, offset - 8, 0x0);
+						DEBUG("en_queue");
+						en_queue(&vids_queue[i], clients[i].frame_buf + 8, clients[i].frame_pos - 8, 0x0);
 	                    clients[i].frame_pos = 0;
 	                    //clients[i].frame_size = 0;
 	                    clients[i].current_count = 0;
 					}
 					if(clients[i].frame_pos > total_size + 8)
 					{
+						DEBUG("clients[i].frame_pos %d> total_size + 8 %d", clients[i].frame_pos, total_size +8);
 						total_size = 0;
 	                    clients[i].frame_pos = 0;
 	                    //clients[i].frame_size = 0;
@@ -635,6 +640,7 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 	               {
 	                   if(clients[i].frame_pos == clients[i].frame_size + 8)
 	                   {
+						   DEBUG("en_queue");
 	                       en_queue(&vids_queue[i], clients[i].frame_buf + 8, offset - 8, 0x0);
 	                       clients[i].frame_pos = 0;
 	                       clients[i].frame_size = 0;
@@ -642,13 +648,13 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 	                   }
 	               }
 #endif
-	          }
-	          if(--nready <= 0)
-	             break;
-            }
+	          	}
+				if(--nready <= 0)
+	              break;
+	       }
         }
     }
-
+#if 0
 	for(i = 0; i< display_size; i++)
 	{
 		if(vids_buf[i])
@@ -661,6 +667,7 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 		free(vids_queue);
 	if(vids_buf)
 		free(vids_buf);
+#endif
 }
 
 void create_h264_socket()
@@ -688,7 +695,7 @@ void create_h264_socket()
         init_queue(&(vids_queue[i]), vids_buf[i], MAX_VIDSBUFSIZE);
     }
     server_udp_loop(display_size, maxfd, allset, displays);
-	free(displays);	
+	//free(displays);	
 }
 
 
@@ -718,8 +725,9 @@ void server_tcp_loop(int listenfd)
 	while(run_flag)
     {
         rset = allset; // structure assignment
-        ret = select(maxfd + 1, &rset, NULL, NULL, NULL);
-        if(ret <= 0)
+		
+        ret = select(maxfd + 1, &rset, NULL, NULL, &tv);
+        if(ret == -1)
         {
              if(errno == EINTR)
                 continue;
