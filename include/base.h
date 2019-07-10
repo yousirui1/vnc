@@ -89,8 +89,10 @@
 #define READ_HEADER             0
 #define LOGIN                   1
 #define OPTIONS                 2
-#define DONE                    3
-#define DEAD                    4
+#define PLAY					3
+#define CONTROL					4
+#define DONE                    5
+#define DEAD                    6
 
 
 
@@ -116,6 +118,16 @@
 /* queue */
 #define MAX_VIDSBUFSIZE 1024 * 1024
 #define DATA_SIZE 1452
+
+
+
+/* control */
+#define  MOUSE_LEFT_DOWN  1<<1
+#define  MOUSE_LEFT_UP  1<<2
+
+#define  MOUSE_RIGHT_DOWN  1<<3
+#define  MOUSE_RIGHT_UP  1<<4
+
 
 #ifndef __cplusplus
 #define max(a,b)    (((a) > (b)) ? (a) : (b))

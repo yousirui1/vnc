@@ -1,56 +1,30 @@
 File: ./src/main.c, Line: 00031: 
 programe server: 
- client_port 22000, control_port 23000, h264_port 23001, window_flag 1, window_size 2,
+ client_port 22000, control_port 23000, h264_port 23001, window_flag 0, window_size 2,
 File: ./src/socket.c, Line: 00203: server bind port 22000
-File: ./src/server.c, Line: 00111: server_s 5
-File: ./src/socket.c, Line: 00678: display_size 4
-File: ./src/display.c, Line: 00316: create window 
-File: ./src/display.c, Line: 00346: Failed to initialize a hardware accelerated renderer: GLX is not supported
-File: ./src/display.c, Line: 00352: Initialized software renderer.
+File: ./src/display.c, Line: 00491: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00929: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00952: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00681: display_size 4
+File: ./src/display.c, Line: 00411: create window 
+File: ./src/display.c, Line: 00423: full_width 1920 full_height 1080
+File: ./src/display.c, Line: 00444: Failed to initialize a hardware accelerated renderer: 
+File: ./src/display.c, Line: 00450: Initialized direct3d renderer.
+File: ./src/display.c, Line: 00378: show_window
+File: ./src/ffmpeg.c, Line: 00359: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00359: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00359: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00359: ThreadMain set SCHED_FIFO error
 File: ./src/socket.c, Line: 00080: ip  (null), port 23002
-File: ./src/socket.c, Line: 00149: display->fd 8
+File: ./src/socket.c, Line: 00149: display->fd 1024
 File: ./src/socket.c, Line: 00080: ip  (null), port 23003
-File: ./src/socket.c, Line: 00149: display->fd 9
+File: ./src/socket.c, Line: 00149: display->fd 1028
 File: ./src/socket.c, Line: 00080: ip  (null), port 23004
-File: ./src/socket.c, Line: 00149: display->fd 10
+File: ./src/socket.c, Line: 00149: display->fd 1032
 File: ./src/socket.c, Line: 00080: ip  (null), port 23005
-File: ./src/socket.c, Line: 00149: display->fd 11
-File: ./src/display.c, Line: 00155: event_loop
-File: ./src/display.c, Line: 00208: init ok loop start
-File: ./src/socket.c, Line: 00771: connfd fd 12
-File: ./src/socket.c, Line: 00314: send_request 0 fd
-File: ./src/server.c, Line: 00033: fmt->width 1280, fmt->height 720 fmt->code 0 fmt->data_port 0
-File: ./src/server.c, Line: 00055: req->display_id 0
-File: ./src/socket.c, Line: 00314: send_request 2 fd
-File: ./src/socket.c, Line: 00599: total_size 39945
-File: ./src/socket.c, Line: 00599: total_size 7067
-File: ./src/socket.c, Line: 00599: total_size 3352
-File: ./src/socket.c, Line: 00599: total_size 4124
-File: ./src/socket.c, Line: 00599: total_size 7738
-File: ./src/socket.c, Line: 00599: total_size 8855
-File: ./src/socket.c, Line: 00599: total_size 3799
-File: ./src/socket.c, Line: 00599: total_size 7627
-File: ./src/socket.c, Line: 00599: total_size 4402
-File: ./src/socket.c, Line: 00599: total_size 3327
-File: ./src/socket.c, Line: 00599: total_size 3587
-File: ./src/socket.c, Line: 00599: total_size 3110
-File: ./src/socket.c, Line: 00599: total_size 58008
-File: ./src/socket.c, Line: 00599: total_size 2219
-File: ./src/socket.c, Line: 00599: total_size 2241
-File: ./src/socket.c, Line: 00599: total_size 567
-File: ./src/socket.c, Line: 00599: total_size 3461
-File: ./src/socket.c, Line: 00599: total_size 2306
-File: ./src/socket.c, Line: 00599: total_size 2084
-File: ./src/socket.c, Line: 00599: total_size 2406
-File: ./src/socket.c, Line: 00599: total_size 1734
-File: ./src/socket.c, Line: 00599: total_size 1385
-File: ./src/socket.c, Line: 00599: total_size 94
-File: ./src/socket.c, Line: 00599: total_size 1310
-File: ./src/socket.c, Line: 00599: total_size 57743
-File: ./src/socket.c, Line: 00599: total_size 2047398906
-File: ./src/socket.c, Line: 00599: total_size 1232786764
-File: ./src/socket.c, Line: 00599: total_size 844
-File: ./src/ffmpeg.c, Line: 00288: Decode Error.(解码错误)
-File: ./src/server.c, Line: 00133: pthread_join 0
-File: ./src/server.c, Line: 00135: pthread_join 0
-File: ./src/server.c, Line: 00137: pthread_join 0
+File: ./src/socket.c, Line: 00149: display->fd 1036
+File: ./src/socket.c, Line: 00774: connfd fd 1240
+File: ./src/server.c, Line: 00027: fmt->width 1280, fmt->height 720 fmt->code 0 fmt->data_port 0
+File: ./src/server.c, Line: 00049: req->display_id 0
+File: ./src/display.c, Line: 00352: switch control
+File: ./src/ffmpeg.c, Line: 00291: Decode Error.(解码错误)

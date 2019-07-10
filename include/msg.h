@@ -51,17 +51,18 @@ typedef struct _rfb_packet
 }rfb_packet;
 
 
-typedef struct _rfb_format
+struct rfb_format
 {
     unsigned int width;
     unsigned int height;
     unsigned int code;
     unsigned int data_port;
-    unsigned char play_flag;
-    unsigned char vnc_flag;     //??flag  ?????,????????, ?????
+    char play_flag;   			// 0 stop 1 play -1 pause 2 control
 	unsigned char fps;
-	unsigned char quality;
-}rfb_format;
+	unsigned int bps;
+};
+
+typedef struct rfb_format rfb_format;
 
 typedef struct _rfb_display
 {
@@ -75,7 +76,9 @@ typedef struct _rfb_display
     struct sockaddr_in send_addr;
             
     rfb_request *req;
-    int play_flag;
+	rfb_format fmt;
+	
+    char play_flag;
 
     unsigned char frame_buf[1024 * 1024];
     int frame_pos;

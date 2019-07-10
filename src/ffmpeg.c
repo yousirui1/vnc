@@ -13,8 +13,10 @@
 
 void ffmpeg_encode(rfb_format *fmt)
 {
+
+	DEBUG("client encode start");
     int  i, videoindex, ret, quality, fps, bps, got_picture;
-    int width = 0; height = 0;
+    int width = 0, height = 0;
     const char *decode_speed = NULL;
     uint8_t *out_buffer = NULL;
 
@@ -33,25 +35,24 @@ void ffmpeg_encode(rfb_format *fmt)
 
     format_ctx = avformat_alloc_context();
 
-    fps = default_fps;
     quality = default_quality;
+	bps = fmt->bps;
+	fps = fmt->fps;
 
     const char *decode_speed_type[] = {"ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow", "placebo"};
     if(quality >= 80 && quality < 90)
     {
         decode_speed = decode_speed_type[4];
-        bps = 2000000;
     }
-    else if( quality > 90)
+    else if( quality >= 90)
     {
         decode_speed = decode_speed_type[6];
-        bps = 4000000;
     }
     else
     {
         decode_speed = decode_speed_type[0];
-        bps = 2000000;
     }
+
     width = fmt->width;
     height = fmt->height;
 
@@ -131,11 +132,12 @@ void ffmpeg_encode(rfb_format *fmt)
     avpicture_fill((AVPicture *)frame_yuv, out_buffer, AV_PIX_FMT_YUV420P, width, height);
     packet=(AVPacket *)av_malloc(sizeof(AVPacket));
 #ifdef _WIN32
- 	img_convert_ctx = sws_getContext(codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt, width, height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+    img_convert_ctx = sws_getContext(codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt, width, height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 #else
 
     img_convert_ctx = sws_getContext(codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt + 3, width, height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 #endif
+
     /* 查找h264编码器 */
     h264codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     if(!h264codec)
@@ -172,6 +174,12 @@ void ffmpeg_encode(rfb_format *fmt)
     }
 	while(run_flag)
     {
+		if(client_display.play_flag == -1)
+		{
+			DEBUG("client encode end");
+			break;
+		}
+		
         /* 读取截屏中的数据--->packet  */
         if(av_read_frame(format_ctx, packet) < 0)
         {
@@ -189,7 +197,6 @@ void ffmpeg_encode(rfb_format *fmt)
             if(got_picture)
             {
                  sws_scale(img_convert_ctx, (const uint8_t* const*)frame->data, frame->linesize, 0, codec_ctx->height, frame_yuv->data, frame_yuv->linesize);
-                //编码成h264文件
                 ret = avcodec_encode_video2(h264codec_ctx, packet,frame_yuv, &got_picture);
                 if(ret < 0)
                 {
@@ -216,8 +223,6 @@ run_end:
         avcodec_close(h264codec_ctx);
     if(format_ctx)
         avformat_close_input(&format_ctx);
-	if(run_flag)
-		run_flag = 0;
 }
 
 void ffmpeg_decode(rfb_display *vid)
@@ -233,7 +238,6 @@ void ffmpeg_decode(rfb_display *vid)
  	struct SwsContext *img_convert_ctx = NULL;
 
 	QUEUE_INDEX *index = NULL;
-
 
     codec = avcodec_find_decoder(AV_CODEC_ID_H264);
     if (!codec)
@@ -263,9 +267,8 @@ void ffmpeg_decode(rfb_display *vid)
  
 	while(run_flag)
     {
-		if(vid->play_flag)
+		if(vid->play_flag > 0)
 		{
-
 			if(empty_queue(&vids_queue[vid->id]))
 	        {
 				usleep(2000);
@@ -290,12 +293,15 @@ void ffmpeg_decode(rfb_display *vid)
         }
         if (got_picture)
         {
-       		update_texture(frame, vid->rect);
+			if(vid->play_flag == 2)
+       			update_texture(frame, NULL);
+			else
+       			update_texture(frame, &(vid->rect));
         }
         packet.data = NULL;
         packet.size = 0;
     }
-     if(img_convert_ctx)
+    if(img_convert_ctx)
         sws_freeContext(img_convert_ctx);
     if(out_buffer)
         av_free(out_buffer);
@@ -305,6 +311,9 @@ void ffmpeg_decode(rfb_display *vid)
         av_frame_free(&frame);
     if(codec_ctx)
         avcodec_close(codec_ctx);
+
+	clear_texture();
+	DEBUG("decode end");
 }
 
 void *thread_encode(void *param)

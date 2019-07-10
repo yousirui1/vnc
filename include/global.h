@@ -6,11 +6,15 @@
 #include "queue.h"
 
 /* main.c */
+extern int server_flag;
 extern int client_port, control_port, h264_port, window_flag, window_size, server_port;
 extern int max_connections;
 extern char server_ip[126];
 extern int default_quality, default_fps;
 extern int run_flag;
+extern int play_flag;
+extern int control_flag;
+
 
 
 /* log.c */
@@ -63,7 +67,7 @@ extern int display_size;
 extern rfb_display client_display ;
 extern int screen_height, screen_width;
 
-void update_texture(AVFrame *frame_yuv, SDL_Rect rect);
+void update_texture(AVFrame *frame_yuv, SDL_Rect *rect);
 void clear_texture();
 
 
@@ -74,6 +78,7 @@ int process_msg(rfb_request *req);
 
 /* client.c */
 void init_client();
+extern rfb_request *client_req;
 
 #endif
 

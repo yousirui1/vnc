@@ -1,17 +1,18 @@
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>      /* BitmapOpenFailed, etc.    */
-#include <X11/cursorfont.h> /* pre-defined crusor shapes */
+//#include <X11/Xlib.h>
+//#include <X11/Xutil.h>      /* BitmapOpenFailed, etc.    */
+//#include <X11/cursorfont.h> /* pre-defined crusor shapes */
 
 #include "base.h"
 
 static int fd_kbd = 0;
 static int fd_mouse  = 0;
-static Display *dpy = NULL;
-static Window root;
+//static Display *dpy = NULL;
+//static Window root;
 
 
 int init_dev()
 {
+#if 0
 	int id;
 	if((dpy = XOpenDisplay(0)) == NULL)
 	{
@@ -49,9 +50,10 @@ err:
 	if(dpy)
 		XCloseDisplay(dpy);
 	return -1;
+#endif
 }
 
-
+#if 0
 void get_position(int *x, int *y)
 {
 	int tmp;
@@ -160,4 +162,5 @@ void simulate_mouse(int x, int y)
 	get_position(&current_x, &current_y);
 	DEBUG("current_x %d current_y %d", current_x, current_y);
 }
+#endif
 #endif

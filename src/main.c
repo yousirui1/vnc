@@ -1,7 +1,7 @@
 #include "base.h"
 
 /* config.ini */
-static int server_flag = 0;
+int server_flag = 0;
 
 int client_port = -1, control_port = -1, h264_port = -1, server_port = -1, window_flag = 0, window_size = 0;
 int default_quality = 0, default_fps = 0;
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 #endif
 {
     init_logs();
-
+#if 0
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, SIG_IGN);
     signal(SIGILL, SIG_IGN);
@@ -70,7 +70,9 @@ int main(int argc, char *argv[])
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
     sigaction(SIGUSR1, &act, 0); 
+#endif
 
+	run_flag = 1;
 
     /* config */
     parse_options();

@@ -254,7 +254,7 @@ void close_socket(int fd)
 }
 /************************* request ***********************************/
 
-static rfb_request *new_request()
+rfb_request *new_request()
 {
     rfb_request* req = (rfb_request *) malloc(sizeof (rfb_request));
     if(!req)
@@ -295,26 +295,32 @@ static rfb_request* remove_request(rfb_request *req)
     return next;
 }
 
-
+void set_request_head(rfb_request *req, short cmd, int data_size)
+{
+    rfb_head *head = (rfb_head *)&(req->head_buf[0]);
+    head->syn = 0xff;
+    head->encrypt_flag = 0; //加密
+    head->cmd = cmd;
+    req->data_size = head->data_size = data_size;
+}
 
 
 int send_request(rfb_request *req)
 {
     if(!req || !req->fd)
-        return 0;
+        return -1;
 
     char *tmp = malloc(HEAD_LEN + req->data_size + 1);
     if(!tmp)
     {
-        return 0;
+        return -1;
     }
     memcpy(tmp, req->head_buf, HEAD_LEN);
     memcpy(tmp + HEAD_LEN, req->data_buf, req->data_size);
     send_msg(req->fd, tmp, HEAD_LEN + req->data_size);
-    DEBUG("send_request %d fd", req->status, req->fd);
 
     free(tmp);
-	return 1;
+	return 0;
 }
 
 static int frame_count = 0;
@@ -363,15 +369,9 @@ void client_tcp_loop(int sockfd)
 {
 	int ret;    
     fd_set fds;
-	rfb_request *current = (rfb_request *)malloc(sizeof(rfb_request));
-	if(!current)
-	{
-		goto run_end;
-	}
-
-	memset(current, 0, sizeof(rfb_request));
-	current->fd = sockfd;
-
+	rfb_request *current = NULL;
+	current = client_req;
+	
 	while(run_flag)
     {   
         FD_ZERO(&fds);
@@ -444,7 +444,7 @@ void client_tcp_loop(int sockfd)
                 current->data_pos += ret;
                 if(current->data_pos == current->data_size)
                 {   
-                    process_msg(current);
+                    process_client_msg(current);
                     memset(current->head_buf, 0, HEAD_LEN);
                     current->data_size = 0;
                     current->data_pos = 0;
@@ -500,7 +500,6 @@ void *thread_client_tcp(void *param)
 
 void client_udp_loop()
 {
-#if 0
     int ret;    
     fd_set fds;
     socklen_t socklen = sizeof (struct sockaddr_in);
@@ -510,13 +509,19 @@ void client_udp_loop()
 	
 	while(run_flag)
     {   
+
+		if(client->play_flag == -1)
+			break;
+#if 0
         FD_ZERO(&fds);
         FD_SET(sockfd, &fds);
         ret = select(sockfd + 1, &fds, NULL, NULL, NULL);
     
         if(ret < 0)
             continue;
-   #if 0 
+#endif
+		usleep(20000);
+#if 0
         if(FD_ISSET(sockfd, &fds))
         {   
 			ret = recvfrom(sockfd, (char *)client->frame_buf + client->frame_pos, clients->frame_size -> clients[i].f    rame_pos, 0,
@@ -527,7 +532,6 @@ void client_udp_loop()
 #endif
     }    
 	close(sockfd);
-#endif
 }
 
 void *thread_client_udp(void *param)
@@ -856,7 +860,7 @@ void server_tcp_loop(int listenfd)
                         current->data_pos += ret;
                         if(current->data_pos == current->data_size)
                         {
-                            if(process_msg(current))
+                            if(process_server_msg(current))
                             {
                                 DEBUG("close fd %d\n", sockfd);
                                 close(current->fd);

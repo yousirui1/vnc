@@ -2,7 +2,7 @@ VERSION = 0.1
 
 CROSS_COMPILE = #arm-
 
-TARGET_ARCH = arm
+TARGET_ARCH = x86
 
 DEBUG = -g #-O2
 

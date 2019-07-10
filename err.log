@@ -1,398 +1,75 @@
-In file included from ./src/main.c:1:0:
-./include/base.h:41:1: warning: multi-line comment [-Wcomment]
- //#define DIE(format,...) fprintf(stderr, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__); \
- ^
-./src/main.c: In function 'main':
-./src/main.c:19:5: warning: implicit declaration of function 'parse_options' [-Wimplicit-function-declaration]
-     parse_options(opt_input_file);
-     ^
-./src/main.c:21:2: warning: implicit declaration of function 'create_display' [-Wimplicit-function-declaration]
-  create_display(window_size);
-  ^
-./src/main.c:25:9: warning: implicit declaration of function 'init_server' [-Wimplicit-function-declaration]
-         init_server(window_size);
-         ^
-./src/main.c:29:9: warning: implicit declaration of function 'init_client' [-Wimplicit-function-declaration]
-         init_client();
-         ^
-./src/main.c:15:9: warning: unused variable 'ret' [-Wunused-variable]
-     int ret;
-         ^
-./src/main.c: At top level:
-./src/main.c:36:6: warning: conflicting types for 'parse_options'
- void parse_options(char *file)
-      ^
-./src/main.c:19:5: note: previous implicit declaration of 'parse_options' was here
-     parse_options(opt_input_file);
-     ^
-./src/main.c: In function 'parse_options':
-./src/main.c:39:9: warning: variable 'ret' set but not used [-Wunused-but-set-variable]
-     int ret;
-         ^
-./src/main.c: In function 'main':
-./src/main.c:19:5: warning: 'opt_input_file' is used uninitialized in this function [-Wuninitialized]
-     parse_options(opt_input_file);
-     ^
-In file included from ./src/queue.c:1:0:
-./include/base.h:41:1: warning: multi-line comment [-Wcomment]
- //#define DIE(format,...) fprintf(stderr, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__); \
- ^
-In file included from ./src/display.c:11:0:
-./include/base.h:41:1: warning: multi-line comment [-Wcomment]
- //#define DIE(format,...) fprintf(stderr, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__); \
- ^
-./src/display.c: In function 'create_display':
-./include/base.h:40:34: warning: format '%d' expects a matching 'int' argument [-Wformat=]
- #define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__)
-                                  ^
-./include/base.h:43:25: note: in expansion of macro 'DEBUG'
- #define DIE(format,...) DEBUG(format); exit(1)
-                         ^
-./src/display.c:92:17: note: in expansion of macro 'DIE'
-                 DIE("ThreadDisp err %d,  %s",ret , strerror(ret));
-                 ^
-./include/base.h:40:34: warning: format '%s' expects a matching 'char *' argument [-Wformat=]
- #define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__)
-                                  ^
-./include/base.h:43:25: note: in expansion of macro 'DEBUG'
- #define DIE(format,...) DEBUG(format); exit(1)
-                         ^
-./src/display.c:92:17: note: in expansion of macro 'DIE'
-                 DIE("ThreadDisp err %d,  %s",ret , strerror(ret));
-                 ^
-./src/display.c:31:15: warning: unused variable 'pthread_display' [-Wunused-variable]
-     pthread_t pthread_display;
-               ^
-./src/display.c: In function 'thread_display':
-./src/display.c:204:13: warning: 'avcodec_decode_video2' is deprecated [-Wdeprecated-declarations]
-             ret = avcodec_decode_video2(pCodecCtx, pFrame, &got_picture, &packet);
-             ^
-In file included from ./src/display.c:2:0:
-./ffmpeg/include/libavcodec/avcodec.h:4770:5: note: declared here
- int avcodec_decode_video2(AVCodecContext *avctx, AVFrame *picture,
-     ^
-./src/display.c:217:21: warning: 'avpicture_get_size' is deprecated [-Wdeprecated-declarations]
-                     out_buffer = (uint8_t *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV420P, vids_width, vids_height));
-                     ^
-In file included from ./src/display.c:2:0:
-./ffmpeg/include/libavcodec/avcodec.h:5449:5: note: declared here
- int avpicture_get_size(enum AVPixelFormat pix_fmt, int width, int height);
-     ^
-./src/display.c:218:21: warning: 'avpicture_fill' is deprecated [-Wdeprecated-declarations]
-                     avpicture_fill((AVPicture *)pFrameYUV, out_buffer, AV_PIX_FMT_YUV420P, vids_width, vids_height);
-                     ^
-In file included from ./src/display.c:2:0:
-./ffmpeg/include/libavcodec/avcodec.h:5434:5: note: declared here
- int avpicture_fill(AVPicture *picture, const uint8_t *ptr,
-     ^
-./src/display.c:117:11: warning: unused variable 'fp_out' [-Wunused-variable]
-     FILE *fp_out;
-           ^
-./src/display.c:115:9: warning: unused variable 'frame_count' [-Wunused-variable]
-     int frame_count;
-         ^
-./src/display.c:109:9: warning: unused variable 'buf_len' [-Wunused-variable]
-     int buf_len = 0;
-         ^
-./src/display.c:108:11: warning: unused variable 'buf' [-Wunused-variable]
-     char *buf = NULL;
-           ^
-In file included from ./src/socket.c:1:0:
-./include/base.h:41:1: warning: multi-line comment [-Wcomment]
- //#define DIE(format,...) fprintf(stderr, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__); \
- ^
-./src/socket.c: In function 'remove_request':
-./src/socket.c:111:5: warning: implicit declaration of function 'dequeue' [-Wimplicit-function-declaration]
-     dequeue(&request_ready, req);
-     ^
-In file included from ./src/socket.c:1:0:
-./src/socket.c: In function 'send_request':
-./include/base.h:40:34: warning: too many arguments for format [-Wformat-extra-args]
- #define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__)
-                                  ^
-./src/socket.c:133:2: note: in expansion of macro 'DEBUG'
-  DEBUG("send_request %d fd", req->status, req->fd);
-  ^
-./src/socket.c: In function 'connection_server':
-./src/socket.c:237:13: warning: pointer targets in passing argument 1 of 'sprintf' differ in signedness [-Wpointer-sign]
-     sprintf(tmp, VERSIONFORMAT, server_major, server_minor);
-             ^
-In file included from /usr/include/features.h:367:0,
-                 from /usr/include/stdio.h:27,
-                 from ./include/base.h:4,
-                 from ./src/socket.c:1:
-/usr/include/arm-linux-gnueabihf/bits/stdio2.h:31:1: note: expected 'char * restrict' but argument is of type 'unsigned char *'
- __NTH (sprintf (char *__restrict __s, const char *__restrict __fmt, ...))
- ^
-./src/socket.c:225:6: warning: unused variable 'ret' [-Wunused-variable]
-  int ret;
-      ^
-./src/socket.c: In function 'h264_send_data':
-./src/socket.c:274:5: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
-     *(unsigned int *)(&buf[4]) = len;
-     ^
-./src/socket.c:264:9: warning: unused variable 'num' [-Wunused-variable]
-     int num = (len + DATA_SIZE - 1)/ DATA_SIZE;
-         ^
-./src/socket.c: In function 'create_h264_socket':
-./src/socket.c:403:3: warning: implicit declaration of function 'create_udp' [-Wimplicit-function-declaration]
-   create_udp(NULL, i + 1 + h264_port, &displays[i]);
-   ^
-./src/socket.c:412:2: warning: implicit declaration of function 'udp_loop' [-Wimplicit-function-declaration]
-  udp_loop(display_size, maxfd, allset, displays );
-  ^
-./src/socket.c: At top level:
-./src/socket.c:415:6: warning: conflicting types for 'create_udp'
- void create_udp(char *ip, int port, rfb_display *display)
-      ^
-./src/socket.c:403:3: note: previous implicit declaration of 'create_udp' was here
-   create_udp(NULL, i + 1 + h264_port, &displays[i]);
-   ^
-In file included from ./src/socket.c:1:0:
-./src/socket.c: In function 'create_udp':
-./include/base.h:40:34: warning: format '%d' expects a matching 'int' argument [-Wformat=]
- #define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__)
-                                  ^
-./include/base.h:43:25: note: in expansion of macro 'DEBUG'
- #define DIE(format,...) DEBUG(format); exit(1)
-                         ^
-./src/socket.c:477:9: note: in expansion of macro 'DIE'
-         DIE("bind port %d err", port);
-         ^
-./src/socket.c:417:9: warning: unused variable 'ret' [-Wunused-variable]
-     int ret = -1;
-         ^
-./src/socket.c: In function 'tcp_loop':
-./src/socket.c:559:13: warning: implicit declaration of function 'enqueue' [-Wimplicit-function-declaration]
-             enqueue(&request_ready, conn);
-             ^
-./src/socket.c:646:32: warning: implicit declaration of function 'process_msg' [-Wimplicit-function-declaration]
-                             if(process_msg(current))
-                                ^
-./src/socket.c:506:18: warning: unused variable 'temp' [-Wunused-variable]
-     rfb_request *temp = NULL;
-                  ^
-./src/socket.c:496:30: warning: unused variable 'servaddr' [-Wunused-variable]
-  struct sockaddr_in cliaddr, servaddr;
-                              ^
-./src/socket.c: At top level:
-./src/socket.c:689:6: warning: conflicting types for 'udp_loop'
- void udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *clients)
-      ^
-./src/socket.c:412:2: note: previous implicit declaration of 'udp_loop' was here
-  udp_loop(display_size, maxfd, allset, displays );
-  ^
-./src/socket.c: In function 'udp_loop':
-./src/socket.c:708:20: warning: unused variable 'current_count' [-Wunused-variable]
-     unsigned short current_count = 0;
-                    ^
-./src/socket.c:703:19: warning: unused variable 'buf' [-Wunused-variable]
-     unsigned char buf[MAX_VIDSBUFSIZE] = {0};
-                   ^
-./src/socket.c:702:18: warning: unused variable 'tmp_size' [-Wunused-variable]
-     unsigned int tmp_size = 0;
-                  ^
-./src/socket.c:701:15: warning: variable 'total_size' set but not used [-Wunused-but-set-variable]
-  unsigned int total_size = 0;
-               ^
-./src/socket.c: In function 'send_request':
-./src/socket.c:136:1: warning: control reaches end of non-void function [-Wreturn-type]
- }
- ^
-./src/socket.c: In function 'create_h264_socket':
-./src/socket.c:412:2: warning: 'maxfd' may be used uninitialized in this function [-Wmaybe-uninitialized]
-  udp_loop(display_size, maxfd, allset, displays );
-  ^
-In file included from ./src/server.c:1:0:
-./include/base.h:41:1: warning: multi-line comment [-Wcomment]
- //#define DIE(format,...) fprintf(stderr, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__); \
- ^
-./src/server.c: In function 'init_server':
-./include/base.h:40:34: warning: format '%d' expects a matching 'int' argument [-Wformat=]
- #define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__)
-                                  ^
-./include/base.h:43:25: note: in expansion of macro 'DEBUG'
- #define DIE(format,...) DEBUG(format); exit(1)
-                         ^
-./src/server.c:19:9: note: in expansion of macro 'DIE'
-         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-         ^
-./include/base.h:40:34: warning: format '%s' expects a matching 'char *' argument [-Wformat=]
- #define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__)
-                                  ^
-./include/base.h:43:25: note: in expansion of macro 'DEBUG'
- #define DIE(format,...) DEBUG(format); exit(1)
-                         ^
-./src/server.c:19:9: note: in expansion of macro 'DIE'
-         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-         ^
-./include/base.h:40:34: warning: format '%d' expects a matching 'int' argument [-Wformat=]
- #define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__)
-                                  ^
-./include/base.h:43:25: note: in expansion of macro 'DEBUG'
- #define DIE(format,...) DEBUG(format); exit(1)
-                         ^
-./src/server.c:25:9: note: in expansion of macro 'DIE'
-         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-         ^
-./include/base.h:40:34: warning: format '%s' expects a matching 'char *' argument [-Wformat=]
- #define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__)
-                                  ^
-./include/base.h:43:25: note: in expansion of macro 'DEBUG'
- #define DIE(format,...) DEBUG(format); exit(1)
-                         ^
-./src/server.c:25:9: note: in expansion of macro 'DIE'
-         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-         ^
-./src/server.c: In function 'thread_tcp':
-./src/server.c:49:20: warning: implicit declaration of function 'create_server_socket' [-Wimplicit-function-declaration]
-     int server_s = create_server_socket();
-                    ^
-./src/server.c:65:5: warning: implicit declaration of function 'tcp_loop' [-Wimplicit-function-declaration]
-     tcp_loop(server_s);
-     ^
-./src/server.c:33:14: warning: unused variable 'c' [-Wunused-variable]
-     int ret, c;
-              ^
-./src/server.c: In function 'thread_udp':
-./src/server.c:86:2: warning: implicit declaration of function 'create_h264_socket' [-Wimplicit-function-declaration]
-  create_h264_socket(display_size, displays);
-  ^
-./src/server.c:70:14: warning: unused variable 'i' [-Wunused-variable]
-     int ret, i;
-              ^
-./src/server.c: In function 'process_msg':
-./src/server.c:102:19: warning: implicit declaration of function 'read_login' [-Wimplicit-function-declaration]
-             ret = read_login(req);
-                   ^
-./src/server.c:105:19: warning: implicit declaration of function 'read_options' [-Wimplicit-function-declaration]
-             ret = read_options(req);
-                   ^
-./src/server.c:96:9: warning: variable 'ret' set but not used [-Wunused-but-set-variable]
-     int ret = 0;
-         ^
-./src/server.c: In function 'read_login':
-./src/server.c:121:8: warning: implicit declaration of function 'read_msg_order' [-Wimplicit-function-declaration]
-     if(read_msg_order(req->head_buf) == 0x01)
-        ^
-./src/server.c:125:20: warning: pointer targets in passing argument 1 of 'sscanf' differ in signedness [-Wpointer-sign]
-         if (sscanf(req->data_buf, VERSIONFORMAT,
-                    ^
-In file included from /usr/include/features.h:367:0,
-                 from /usr/include/stdio.h:27,
-                 from ./include/base.h:4,
-                 from ./src/server.c:1:
-/usr/include/stdio.h:448:12: note: expected 'const char * restrict' but argument is of type 'unsigned char *'
- extern int __REDIRECT_NTH (sscanf, (const char *__restrict __s,
-            ^
-./src/server.c:128:17: warning: pointer targets in passing argument 1 of 'sprintf' differ in signedness [-Wpointer-sign]
-         sprintf(req->data_buf, VERSIONFORMAT, 3, server_minor + 1);
-                 ^
-In file included from /usr/include/features.h:367:0,
-                 from /usr/include/stdio.h:27,
-                 from ./include/base.h:4,
-                 from ./src/server.c:1:
-/usr/include/arm-linux-gnueabihf/bits/stdio2.h:31:1: note: expected 'char * restrict' but argument is of type 'unsigned char *'
- __NTH (sprintf (char *__restrict __s, const char *__restrict __fmt, ...))
- ^
-./src/server.c:129:9: warning: implicit declaration of function 'send_request' [-Wimplicit-function-declaration]
-         send_request(req);
-         ^
-./src/server.c: In function 'thread_tcp':
-./src/server.c:66:1: warning: control reaches end of non-void function [-Wreturn-type]
- }
- ^
-./src/server.c: In function 'thread_udp':
-./src/server.c:87:1: warning: control reaches end of non-void function [-Wreturn-type]
- }
- ^
-In file included from ./src/client.c:10:0:
-./include/base.h:41:1: warning: multi-line comment [-Wcomment]
- //#define DIE(format,...) fprintf(stderr, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__); \
- ^
-./src/client.c: In function 'init_client':
-./src/client.c:24:11: warning: implicit declaration of function 'create_client_socket' [-Wimplicit-function-declaration]
-  sockfd = create_client_socket(display);
-           ^
-./src/client.c:25:8: warning: implicit declaration of function 'connection_server' [-Wimplicit-function-declaration]
-  ret = connection_server(sockfd);
-        ^
-./src/client.c:29:3: warning: implicit declaration of function 'ffmpeg_encode' [-Wimplicit-function-declaration]
-   ffmpeg_encode(display);
-   ^
-./src/client.c: At top level:
-./src/client.c:41:6: warning: conflicting types for 'ffmpeg_encode'
- void ffmpeg_encode(rfb_display *display)
-      ^
-./src/client.c:29:3: note: previous implicit declaration of 'ffmpeg_encode' was here
-   ffmpeg_encode(display);
-   ^
-./src/client.c: In function 'ffmpeg_encode':
-./src/client.c:49:5: warning: 'av_register_all' is deprecated [-Wdeprecated-declarations]
-     av_register_all();
-     ^
-In file included from ./src/client.c:2:0:
-./ffmpeg/include/libavformat/avformat.h:2025:6: note: declared here
- void av_register_all(void);
-      ^
-./src/client.c:51:5: warning: implicit declaration of function 'avdevice_register_all' [-Wimplicit-function-declaration]
-     avdevice_register_all();    //Register Device
-     ^
-./src/client.c:84:9: warning: 'codec' is deprecated [-Wdeprecated-declarations]
-         if(pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO)
-         ^
-In file included from ./src/client.c:2:0:
-./ffmpeg/include/libavformat/avformat.h:877:21: note: declared here
-     AVCodecContext *codec;
-                     ^
-./src/client.c:94:5: warning: 'codec' is deprecated [-Wdeprecated-declarations]
-     pCodecCtx=pFormatCtx->streams[videoindex]->codec;
-     ^
-In file included from ./src/client.c:2:0:
-./ffmpeg/include/libavformat/avformat.h:877:21: note: declared here
-     AVCodecContext *codec;
-                     ^
-./src/client.c:119:5: warning: 'avpicture_get_size' is deprecated [-Wdeprecated-declarations]
-     uint8_t *out_buffer=(uint8_t *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV420P, 480, 270));
-     ^
-In file included from ./src/client.c:1:0:
-./ffmpeg/include/libavcodec/avcodec.h:5449:5: note: declared here
- int avpicture_get_size(enum AVPixelFormat pix_fmt, int width, int height);
-     ^
-./src/client.c:120:5: warning: 'avpicture_fill' is deprecated [-Wdeprecated-declarations]
-     avpicture_fill((AVPicture *)pFrameYUV, out_buffer, AV_PIX_FMT_YUV420P, 480, 270);
-     ^
-In file included from ./src/client.c:1:0:
-./ffmpeg/include/libavcodec/avcodec.h:5434:5: note: declared here
- int avpicture_fill(AVPicture *picture, const uint8_t *ptr,
-     ^
-./src/client.c:181:13: warning: 'avcodec_decode_video2' is deprecated [-Wdeprecated-declarations]
-             ret = avcodec_decode_video2(pCodecCtx, pFrame, &got_picture, packet);
-             ^
-In file included from ./src/client.c:1:0:
-./ffmpeg/include/libavcodec/avcodec.h:4770:5: note: declared here
- int avcodec_decode_video2(AVCodecContext *avctx, AVFrame *picture,
-     ^
-./src/client.c:191:17: warning: 'avcodec_encode_video2' is deprecated [-Wdeprecated-declarations]
-                 ret = avcodec_encode_video2(pH264CodecCtx, packet,pFrameYUV, &got_picture);
-                 ^
-In file included from ./src/client.c:1:0:
-./ffmpeg/include/libavcodec/avcodec.h:5401:5: note: declared here
- int avcodec_encode_video2(AVCodecContext *avctx, AVPacket *avpkt,
-     ^
-./src/client.c:196:17: warning: implicit declaration of function 'h264_send_data' [-Wimplicit-function-declaration]
-                 h264_send_data(display, (char *)packet->data, packet->size);
-                 ^
-./src/client.c:199:9: warning: 'av_free_packet' is deprecated [-Wdeprecated-declarations]
-         av_free_packet(packet);
-         ^
-In file included from ./src/client.c:1:0:
-./ffmpeg/include/libavcodec/avcodec.h:4415:6: note: declared here
- void av_free_packet(AVPacket *pkt);
-      ^
-./src/client.c:207:12: warning: 'return' with a value, in function returning void
-     return 0;
-            ^
-./src/client.c:124:15: warning: unused variable 'packetH264' [-Wunused-variable]
-     AVPacket *packetH264=(AVPacket *)av_malloc(sizeof(AVPacket));
-               ^
+In file included from ./src/display.c:4:0:
+./include/base.h:133:0: warning: "max" redefined
+ #define max(a,b)    (((a) > (b)) ? (a) : (b))
+ 
+In file included from c:\program files\git\mingw32\include\windows.h:42:0,
+                 from ./include/base.h:16,
+                 from ./src/display.c:4:
+c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
+ #define max(a,b) ((a)>(b)?(a):(b))
+ 
+In file included from ./src/display.c:4:0:
+./include/base.h:134:0: warning: "min" redefined
+ #define min(a,b)    (((a) < (b)) ? (a) : (b))
+ 
+In file included from c:\program files\git\mingw32\include\windows.h:42:0,
+                 from ./include/base.h:16,
+                 from ./src/display.c:4:
+c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
+ #define min(a,b) ((a)<(b)?(a):(b))
+ 
+./src/display.c: In function 'update_texture':
+./src/display.c:60:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+     if(!texture || !renderer || !full_texture || !frame_yuv)
+     ^~
+./src/display.c:62:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
+  if(loss_flag)
+  ^~
+./src/display.c: In function 'send_control':
+./src/display.c:181:2: warning: implicit declaration of function 'set_request_head' [-Wimplicit-function-declaration]
+  set_request_head(control_display->req, 0x03, data_len);
+  ^~~~~~~~~~~~~~~~
+./src/display.c:182:33: warning: pointer targets in assignment differ in signedness [-Wpointer-sign]
+  control_display->req->data_buf = buf;
+                                 ^
+./src/display.c: In function 'event_loop':
+./src/display.c:201:6: warning: implicit declaration of function 'switch_mode' [-Wimplicit-function-declaration]
+      switch_mode(0);
+      ^~~~~~~~~~~
+./src/display.c: In function 'control_msg':
+./src/display.c:299:90: error: 'vids_heigth' undeclared (first use in this function)
+             unsigned long y = (point->y * 65535) / vids_height * (float)(screen_height / vids_heigth );
+                                                                                          ^~~~~~~~~~~
+./src/display.c:299:90: note: each undeclared identifier is reported only once for each function it appears in
+./src/display.c:301:52: warning: passing argument 4 of 'mouse_event' makes integer from pointer without a cast [-Wint-conversion]
+             mouse_event(flags, (DWORD)x, (DWORD)y, NULL, 0);
+                                                    ^~~~
+In file included from c:\program files\git\mingw32\include\windows.h:48:0,
+                 from ./include/base.h:16,
+                 from ./src/display.c:4:
+c:\program files\git\mingw32\include\winuser.h:4063:24: note: expected 'DWORD {aka long unsigned int}' but argument is of type 'void *'
+ WINUSERAPI void WINAPI mouse_event (DWORD, DWORD, DWORD, DWORD, ULONG_PTR);
+                        ^~~~~~~~~~~
+./src/display.c: In function 'create_control':
+./src/display.c:318:2: warning: implicit declaration of function 'start_control' [-Wimplicit-function-declaration]
+  start_control(control_display);
+  ^~~~~~~~~~~~~
+./src/display.c: In function 'destroy_control':
+./src/display.c:326:2: warning: implicit declaration of function 'stop_control' [-Wimplicit-function-declaration]
+  stop_control(control_display);
+  ^~~~~~~~~~~~
+./src/display.c: At top level:
+./src/display.c:330:6: warning: conflicting types for 'switch_mode'
+ void switch_mode(int id)
+      ^~~~~~~~~~~
+./src/display.c:201:6: note: previous implicit declaration of 'switch_mode' was here
+      switch_mode(0);
+      ^~~~~~~~~~~
+./src/display.c: In function 'switch_mode':
+./src/display.c:335:3: warning: implicit declaration of function 'pause_all_vids' [-Wimplicit-function-declaration]
+   pause_all_vids();
+   ^~~~~~~~~~~~~~
+./src/display.c:343:3: warning: implicit declaration of function 'revert_all_vids' [-Wimplicit-function-declaration]
+   revert_all_vids();
+   ^~~~~~~~~~~~~~~
+make: *** [display.o] Error 1
