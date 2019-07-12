@@ -19,11 +19,14 @@ CONFIG_COMPILER=gnu
 
 outdir = ./bin
 
+
 exeobj = vnc
 
-mainobj =  main.o inirw.o queue.o  display.o socket.o server.o client.o log.o ffmpeg.o control.o
+mainobj = main.o inirw.o queue.o  display.o socket.o server.o client.o log.o ffmpeg.o control.o
 
-cppobj = 
+cppobj = VNCHooks.o
+
+all: $(exeobj)
 
 
 ifeq ($(TARGET_ARCH), arm)
@@ -34,7 +37,7 @@ CFLAGS = -I. -I./include/ -I./SDL/include -I./ffmpeg/include \
 else ifeq ($(TARGET_ARCH), x86)
 CFLAGS = -I. -I./include/ -I./SDL/include/win -I./ffmpeg/include \
          -L./ffmpeg/lib/win -lavcodec -lavformat -lswscale -lavutil -lavdevice \
-         -L./SDL/lib/win -lSDL2 -lmingw32 -lm -lws2_32  -lpthreadGC2  \
+         -L./SDL/lib/win -lSDL2 -lmingw32 -lm -lws2_32  -lpthreadGC2 -lgdi32 \
 		 #-mwindows
 else 
 endif
@@ -60,15 +63,12 @@ endif
 	@echo "Build $(TARGET_ARCH) program  OK"
 	
 
-
 $(mainobj):%.o:%.c
 	$(CC) -Wall $(DEBUG) $(CFLAGS) -c $< -o $@
 	
 
 $(cppobj):%.o:%.cpp
 	$(CXX) -Wall $(DEBUG) $(CXXFLAGS) -c $< -o $@
-
-
 
 clean:
 	rm -f *.o $(outdir)/$(exeobj) $(outdir)/*.dll

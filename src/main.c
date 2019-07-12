@@ -1,4 +1,5 @@
 #include "base.h"
+#include "VNCHooks.h"
 
 /* config.ini */
 int server_flag = 0;

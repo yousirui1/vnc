@@ -3,6 +3,7 @@
 
 int display_size = 0;
 
+
 static int recv_login(rfb_request *req)
 {
 	if(read_msg_order(req->head_buf) == 0x01)
@@ -217,6 +218,9 @@ int process_server_msg(rfb_request *req)
     return ret;
 }
 
+
+
+
 void init_server()
 {
 	int ret, server_s = 0;
@@ -224,6 +228,9 @@ void init_server()
 
 	display_size = window_size * window_size;
 	run_flag = 1;
+
+	
+
 	
 	server_s = create_tcp();
 	if(server_s == -1)
@@ -286,5 +293,4 @@ void start_control(rfb_request *req)
 	clear_texture();
 }
 #endif
-
 

@@ -128,6 +128,9 @@
 #define  MOUSE_RIGHT_DOWN  1<<3
 #define  MOUSE_RIGHT_UP  1<<4
 
+#define MOUSE_WHEEL_DOWN 1<<5
+#define MOUSE_WHEEL_UP 	1<<6
+
 
 #ifndef __cplusplus
 #define max(a,b)    (((a) > (b)) ? (a) : (b))

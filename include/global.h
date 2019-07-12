@@ -69,6 +69,7 @@ extern int screen_height, screen_width;
 
 void update_texture(AVFrame *frame_yuv, SDL_Rect *rect);
 void clear_texture();
+void send_control(char *buf, int data_len, int cmd);
 
 
 /* server.c */

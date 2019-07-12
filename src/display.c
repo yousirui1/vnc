@@ -2,6 +2,7 @@
 #include <SDL2/SDL.h>
 
 #include "base.h"
+#include "VNCHooks.h"
 
 const char program_name[] = "ffplay";
 
@@ -10,10 +11,8 @@ int screen_height = 0;
 int vids_width = 0;
 int vids_height = 0;
 
-
-
-static int default_width  = 720;
-static int default_height = 640;
+static int default_width  = 1600;
+static int default_height = 900;
 static int audio_disable = 1;
 //static int video_disable = 0;
 static int display_disable = 0;
@@ -175,47 +174,27 @@ void send_control(char *buf, int data_len, int cmd)
 	control_display->req->data_buf = NULL;
 }
 
+
 void event_loop()
 {
 	SDL_Event event;
-    rfb_pointevent point;
+    rfb_pointevent point = {0};
     rfb_keyevent key;
+	short old_x = 0;
+	short old_y = 0;
 	for(;;)
 	{
 		refresh_loop_wait_event(&event);
-
-
-#if 0
-
-		switch(event.type)
+		if(event.type == SDL_MOUSEWHEEL)
 		{
-            case SDL_KEYDOWN:   //键盘按下
-                if(event.key.keysym.sym == SDLK_ESCAPE)
-                {
-					switch_mode(0);
-                    break;
-                }
-				else
-				{
-					DEBUG("SDL_KEYDOWN");
-					key.key = *(SDL_GetKeyName(event.key.keysym.sym));
-					key.down = 1;
-					send_control((char *)&key, sizeof(rfb_keyevent), 0x04);
-				}
-                break;
-     		case SDL_KEYUP:   //键盘抬起
-				DEBUG("SDL_KEYUP");
-				key.key = *(SDL_GetKeyName(event.key.keysym.sym));
-                key.down = 0;
-                send_control((char *)&key, sizeof(rfb_keyevent), 0x04);
-                break;
-            case SDL_QUIT:          //关闭窗口
-                run_flag = 0;
-                goto run_end;
-            default:
-                break;
+			point.wheel = event.wheel.y;
+    		point.x = old_x;
+            point.y = old_y;
+            send_control((char *)&point, sizeof(rfb_pointevent), 0x03);
+			point.wheel = 0;
 		}
-#endif
+		else
+		{	
 
 		if(event.type == SDL_MOUSEBUTTONDOWN)
         {
@@ -239,30 +218,34 @@ void event_loop()
                 point.mask |= (1<<4);
             }
         }
-        if(point.mask != 0 || event.type == SDL_MOUSEMOTION)
+        if(point.mask != 0 || event.type == SDL_MOUSEMOTION )
         {
             point.x = event.motion.x;
             point.y = event.motion.y;
+			old_x = point.x;
+			old_y = point.y;
             send_control((char *)&point, sizeof(rfb_pointevent), 0x03);
+
             point.mask = 0;
         }
+		}
 		if (SDL_KEYDOWN == event.type) // SDL_KEYUP
         {
-            key.key = *(SDL_GetKeyName(event.key.keysym.sym));
-			DEBUG("event.key.keysym.sym %s", event.key.keysym.sym);
+            key.key = event.key.keysym.sym;	//*(SDL_GetKeyName(event.key.keysym.sym));
+            key.mod = event.key.keysym.mod;	//*(SDL_GetKeyName(event.key.keysym.sym));
             key.down = 1;
             send_control((char *)&key, sizeof(rfb_keyevent), 0x04);
+
 			if(event.key.keysym.sym == SDLK_ESCAPE) 
 				switch_mode(0);
         }
-
         if(SDL_KEYUP == event.type)
         {
-            key.key = *(SDL_GetKeyName(event.key.keysym.sym));
+            key.key = event.key.keysym.sym;
+            key.mod = event.key.keysym.mod;
             key.down = 0;
             send_control((char *)&key, sizeof(rfb_keyevent), 0x04);
         }
-
 		if(SDL_QUIT == event.type)
 		{
 			run_flag = 0;
@@ -272,22 +255,157 @@ void event_loop()
 	}
 run_end:
     do_exit();
-	
 }
+
+
+static void keycode2virtual(rfb_keyevent *key)
+{
+	/* a-z */
+	if(key->key >= 97 && key->key <= 122)
+	{
+		key->key -= 32;
+	}
+
+	/* F1-F12 */
+	else if(key->key >= 1073741882 && key->key <=1073741893 )
+	{
+		key->key -= 1073741770;
+	}
+
+	else
+	{
+		switch(key->key)
+		{
+			case 39:   // "'"
+				key->key = 0xDE;
+				break;
+			case 44:	//","
+				key->key = 0xBC;
+				break;
+			case 45:   //"-"
+				key->key = 0xBD;
+				break;
+			case 46:	//"."
+				key->key = 0xBE;
+				break;
+			case 47:   //"/"
+				key->key = 0xBF;
+				break;
+			case 59:	//":"
+				key->key = 0xBA;
+				break;
+			case 61:	// "+"
+				key->key = 0xBB;
+				break;
+			case 91:  // "["
+				key->key = 0xDB;
+				break;
+			case 92:  // "|"
+				key->key = 0xDC;
+				break;
+			case 93:  // "]"
+				key->key = 0xDD;
+				break;
+			case 96:	//"~"
+				key->key = 0xC0;
+				break;
+			case 1073741881: // "caps lock"
+				key->key = 0x14;
+				break;
+			case 1073742048: // "ctrl"
+				key->key = 0x11;
+				break;
+			case 1073741925: // "ctrl"
+				key->key = 0x11;
+				break;
+			case 1073742049: // "shift"
+				key->key = 0x10;
+				break;
+			case 1073742053: // "shift"
+				key->key = 0x10;
+				break;
+			case 1073742050: // "alt"
+				key->key = 0x12;
+				break;
+			case 1073742054: // "alt"
+				key->key = 0x12;
+				break;
+			case 1073742051: // "win"
+				key->key = 0x5B;
+				break;
+			case 1073742055: // "win"
+				key->key = 0x5B;
+				break;
+			case 1073741906: // "up"
+				key->key = 0x26;
+				break;
+			case 1073741905: // "down"
+				key->key = 0x28;
+				break;
+			case 1073741903: // "right"
+				key->key = 0x27;
+				break;
+			case 1073741904: // "left"
+				key->key = 0x25;
+				break;
+			case 1073741897: // "insert"
+				key->key = 0x2D;
+				break;
+			case 127: 		// "delete"
+				key->key = 0x2E;
+				break;
+			case 1073741898: // "home"
+				key->key = 0x24;
+				break;
+			case 1073741901: // "end"
+				key->key = 0x23;
+				break;
+			case 1073741899: // "pgup"
+				key->key = 0x21;
+				break;
+			case 1073741902: // "pgdn"
+				key->key = 0x22;
+				break;
+			case 1073741895: // "pause break"
+				key->key = 0x13;
+				break;
+			case 1073741894: // "scroll lock"
+				key->key = 0x91;
+				break;
+#if 0
+			case 1073741896: // "ptr scsys rq"
+				key->key = 0x25;
+				break;
+#endif
+			default:
+				break;
+		}
+	}	
+
+	if(key->down)
+    {
+        keybd_event(key->key, 0, 0,0);
+    }
+    else
+        keybd_event(key->key, 0,KEYEVENTF_KEYUP,0);
+}
+
+
 
 
 void control_msg(rfb_request *req)
 {
 	switch(read_msg_order(req->head_buf))
 	{
-		case 0x03:
+		case 0x03: //mouse
 		{
 			rfb_pointevent *point = (rfb_pointevent *)&(req->data_buf[0]);
 
             DWORD flags = MOUSEEVENTF_ABSOLUTE;
+			DWORD wheel_movement = 0;
             flags |= MOUSEEVENTF_MOVE;
 
-            if(point->mask & MOUSE_LEFT_DOWN)
+		    if(point->mask & MOUSE_LEFT_DOWN)
             {
                 flags |= MOUSEEVENTF_LEFTDOWN;
             }
@@ -303,32 +421,41 @@ void control_msg(rfb_request *req)
             {
                 flags |= MOUSEEVENTF_RIGHTUP;
             }
+
+			if(point->wheel)
+			{
+				flags |= MOUSEEVENTF_WHEEL;
+				if(point->wheel > 0)
+					wheel_movement = (DWORD)+120;	
+				else
+					wheel_movement = (DWORD)-120; 	
+			}
+
             /* 计算相对位置 */
             unsigned long x = (point->x * 65535) / (vids_width )  * (screen_width / screen_width);
             unsigned long y = (point->y * 65535) / (vids_height ) * (screen_height /screen_height);
+			//DEBUG("x %ld y %ld ", x, y);
 
-            mouse_event(flags, (DWORD)x, (DWORD)y, NULL, 0);
+		    mouse_event(flags, (DWORD)x, (DWORD)y, wheel_movement, 0);
+		    //mouse_event(flags, 1000 * 65535 / 1920, 500 * 65535 / 1080, wheel_movement, 0);
             break;
 		}
-		case 0x04:
+		case 0x04:  //keyboard
 		{
 			rfb_keyevent *keyboard = (rfb_keyevent *)&(req->data_buf[0]);	
-			if(keyboard->down)
-            {
-                keybd_event(keyboard->key, 0, 0,0);
-            }
-            else
-                keybd_event(keyboard->key, 0,KEYEVENTF_KEYUP,0);
-			break;
+			keycode2virtual(keyboard);
 		}
-		case 0x05:
+		case 0x05: //copy text
 			
 		
-		case 0x06:
+		case 0x06:  //copy file
 			break;
 
 	}
 }
+
+
+
 
 
 void create_control(int id)
@@ -379,8 +506,6 @@ void show_window()
 	DEBUG("show_window");	
 	SDL_ShowWindow(window);
 }
-
-
 
 
 void create_display()
@@ -457,11 +582,10 @@ void create_display()
         }
     }
 
-	//if(server_flag)
-		//hide_window();
 
 	if(server_flag)
 	{
+		//SetKeyboardHook(1);	
 		show_window();
     	init_display();
     	event_loop();
@@ -471,8 +595,6 @@ void create_display()
     	atexit(do_exit);
 	}
 }
-
-
 
 
 void *thread_display(void *param)
@@ -497,3 +619,78 @@ void *thread_display(void *param)
     create_display();
     return (void *)0;
 }
+
+
+
+#if 0
+#define KEY_CAPS_LOCK 1<<13
+
+#define KEY_LEFT_SHITF 1<<1
+#define KEY_RIGHT_SHITF 1<<2
+
+#define KEY_LEFT_CTRL 1<<9
+#define KEY_RIGHT_CTRL 1<<10
+
+#define KEY_LEFT_ALT 1<<9
+#define KEY_RIGHT_ALT 1<<10
+
+#define KEY_LEFT_WIN 1<<7
+#define KEY_RIGHT_WIN 1<<8
+
+
+/*
+ *    // close caps lock  13bit  left 1bit right 1bit
+ * 	|-1bit-| -2bit-|-2bit-|-2bit-|-2bit-|-2bit-|-2bit-|
+ *    flag    win     alt	ctrl				 shift
+ *
+ *  // open caps lock  14bit  left 1bit right 1bit
+ * 	|-1bit-|-1bit-| -2bit-|-2bit-|-2bit-|-2bit-|-2bit-|-2bit-|
+ *    flag   caps 	 win     alt	ctrl				 shift
+ *
+ */
+
+
+	if(key->mod > 0x1000)
+	{
+		if(key->mod > 0x3000)   //open caps lock  14bit
+		{
+    		keybd_event(VK_CAPITAL, 0, key->down, 0);
+		}
+		if(key->mod & KEY_LEFT_SHITF || key->mod & KEY_RIGHT_SHITF)
+		{
+    		keybd_event(VK_SHIFT, 0, key->down, 0);
+			//DEBUG("ctrl key");
+		}
+		if(key->mod & KEY_LEFT_CTRL || key->mod & KEY_RIGHT_CTRL)
+		{
+			if(first_time)
+			{
+				first_time = 0;
+				DEBUG("ctrl key");
+    			keybd_event(VK_CONTROL, 0, key->down, 0);
+			}
+		}
+
+		if(key->mod & KEY_LEFT_WIN )
+		{
+			if(first_time)
+			{			
+    			keybd_event(VK_LWIN, 0, key->down, 0);
+			}
+			//DEBUG("ctrl key");
+		}
+		if(key->mod & KEY_RIGHT_WIN)
+		{
+    		keybd_event(VK_RWIN, 0, key->down, 0);
+			//DEBUG("ctrl key");
+		}
+
+		if(key->mod & KEY_LEFT_ALT || key->mod & KEY_RIGHT_ALT)
+		{
+    		keybd_event(VK_MENU, 0, key->down, 0);
+			//DEBUG("ctrl key");
+		}
+	}
+#endif
+
+

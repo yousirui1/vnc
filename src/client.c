@@ -32,33 +32,8 @@ static int recv_options(rfb_request *req)
 		}
 		else
 		{
-
 			req->status = OPTIONS;
-
 		}
-
-		#if 0
-		switch(fmt->play_flag)
-		{
-			case 
-
-		}
-#endif
-#if 0
-        if(fmt->play_flag)
-        {
-			req->status = PLAY;
-            create_encode(fmt);
-			if(fmt->vnc_flag)
-			{
-				req->status = CONTROL;
-			}
-        }
-        else
-        {
-            play_flag = 0;
-        }
-#endif
     }
 }
 
