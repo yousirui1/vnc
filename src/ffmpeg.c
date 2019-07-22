@@ -38,7 +38,6 @@ void ffmpeg_encode(rfb_format *fmt)
     quality = default_quality;
 	bps = fmt->bps;
 	fps = fmt->fps;
-
     const char *decode_speed_type[] = {"ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow", "placebo"};
     if(quality >= 80 && quality < 90)
     {
@@ -70,7 +69,7 @@ void ffmpeg_encode(rfb_format *fmt)
         DEBUG("Couldn't open input stream. ");
     }
 #else
-	char video_size[8] = {0};
+	char video_size[10] = {0};
 
 	sprintf(video_size, "%dx%d", screen_width, screen_height);	
 
@@ -174,7 +173,7 @@ void ffmpeg_encode(rfb_format *fmt)
     }
 	while(run_flag)
     {
-		if(client_display.play_flag == -1)
+		if(client_display.play_flag == 0)
 		{
 			DEBUG("client encode end");
 			break;
@@ -223,6 +222,9 @@ run_end:
         avcodec_close(h264codec_ctx);
     if(format_ctx)
         avformat_close_input(&format_ctx);
+	if(packet)
+		av_free_packet(packet);
+	DEBUG("encode end");
 }
 
 void ffmpeg_decode(rfb_display *vid)

@@ -4,6 +4,20 @@
 #include "base.h"
 #include "VNCHooks.h"
 
+#ifndef _WIN32
+	#include <X11/Xlib.h>
+	#include <X11/Xutil.h>      /* BitmapOpenFailed, etc.    */
+	#include <X11/cursorfont.h> /* pre-defined crusor shapes */
+	#include <linux/input.h>
+	
+static int fd_kbd = 0;
+static int fd_mouse  = 0;
+static Display *dpy = NULL;
+static Window root;
+#endif
+
+
+
 const char program_name[] = "ffplay";
 
 int screen_width  = 0;
@@ -68,7 +82,6 @@ void update_texture(AVFrame *frame_yuv, SDL_Rect *rect)
 			loss_flag = 0;	
 		}
 	}	
-
 
     pthread_mutex_lock(&renderer_mutex);
 	if(!rect)
@@ -257,8 +270,82 @@ run_end:
     do_exit();
 }
 
+static void simulate_mouse(rfb_pointevent *point)
+{
+ 
+#ifdef _WIN32
+	DWORD flags = MOUSEEVENTF_ABSOLUTE;
+	DWORD wheel_movement = 0;
+    flags |= MOUSEEVENTF_MOVE;
 
-static void keycode2virtual(rfb_keyevent *key)
+	if(point->mask & MOUSE_LEFT_DOWN)
+    {
+        flags |= MOUSEEVENTF_LEFTDOWN;
+    }
+    if(point->mask & MOUSE_LEFT_UP)
+    {
+        flags |= MOUSEEVENTF_LEFTUP;
+    }
+    if(point->mask & MOUSE_RIGHT_DOWN)
+    {
+        flags |= MOUSEEVENTF_RIGHTDOWN;
+    }
+    if(point->mask & MOUSE_RIGHT_UP)
+    {
+        flags |= MOUSEEVENTF_RIGHTUP;
+    }
+
+	if(point->wheel)
+	{
+		flags |= MOUSEEVENTF_WHEEL;
+		if(point->wheel > 0)
+			wheel_movement = (DWORD)+120;	
+		else
+			wheel_movement = (DWORD)-120; 	
+	}
+    /* 计算相对位置 */
+    unsigned long x = (point->x * 65535) / (vids_width )  * (screen_width / screen_width);
+    unsigned long y = (point->y * 65535) / (vids_height ) * (screen_height /screen_height);
+
+	mouse_event(flags, (DWORD)x, (DWORD)y, wheel_movement, 0);
+
+#else
+	//XWarpPointer(dpy, None, root, 0, 0, 0, 0, point->x, point->y);
+	XTestFakeMotionEvent(dpy, 0, point->x, point->y, 0L);
+	int button = 0;
+	int down = 0;
+
+	if(point->mask & MOUSE_LEFT_DOWN)
+    {
+		button = 1;
+		down = 1;
+    }
+    if(point->mask & MOUSE_LEFT_UP)
+    {
+		button = 1;
+		down = 0;
+    }
+    if(point->mask & MOUSE_RIGHT_DOWN)
+    {
+		button = 3;
+		down = 1;
+    }
+    if(point->mask & MOUSE_RIGHT_UP)
+    {
+		button = 3;
+		down = 0;
+    }
+	if(point->mask)
+		XTestFakeButtonEvent(dpy, button, down, 0L);
+
+   	XFlush(dpy);
+
+#endif
+}
+
+
+
+static void simulate_key(rfb_keyevent *key)
 {
 	/* a-z */
 	if(key->key >= 97 && key->key <= 122)
@@ -271,7 +358,6 @@ static void keycode2virtual(rfb_keyevent *key)
 	{
 		key->key -= 1073741770;
 	}
-
 	else
 	{
 		switch(key->key)
@@ -381,17 +467,19 @@ static void keycode2virtual(rfb_keyevent *key)
 				break;
 		}
 	}	
-
+#ifdef _WIN32
 	if(key->down)
     {
         keybd_event(key->key, 0, 0,0);
     }
     else
         keybd_event(key->key, 0,KEYEVENTF_KEYUP,0);
+#else
+	XTestFakeKeyEvent(dpy, key->key, key->down, 0L);
+	XFlush(dpy);	
+#endif
+
 }
-
-
-
 
 void control_msg(rfb_request *req)
 {
@@ -400,63 +488,22 @@ void control_msg(rfb_request *req)
 		case 0x03: //mouse
 		{
 			rfb_pointevent *point = (rfb_pointevent *)&(req->data_buf[0]);
-
-            DWORD flags = MOUSEEVENTF_ABSOLUTE;
-			DWORD wheel_movement = 0;
-            flags |= MOUSEEVENTF_MOVE;
-
-		    if(point->mask & MOUSE_LEFT_DOWN)
-            {
-                flags |= MOUSEEVENTF_LEFTDOWN;
-            }
-            if(point->mask & MOUSE_LEFT_UP)
-            {
-                flags |= MOUSEEVENTF_LEFTUP;
-            }
-            if(point->mask & MOUSE_RIGHT_DOWN)
-            {
-                flags |= MOUSEEVENTF_RIGHTDOWN;
-            }
-            if(point->mask & MOUSE_RIGHT_UP)
-            {
-                flags |= MOUSEEVENTF_RIGHTUP;
-            }
-
-			if(point->wheel)
-			{
-				flags |= MOUSEEVENTF_WHEEL;
-				if(point->wheel > 0)
-					wheel_movement = (DWORD)+120;	
-				else
-					wheel_movement = (DWORD)-120; 	
-			}
-
-            /* 计算相对位置 */
-            unsigned long x = (point->x * 65535) / (vids_width )  * (screen_width / screen_width);
-            unsigned long y = (point->y * 65535) / (vids_height ) * (screen_height /screen_height);
-			//DEBUG("x %ld y %ld ", x, y);
-
-		    mouse_event(flags, (DWORD)x, (DWORD)y, wheel_movement, 0);
-		    //mouse_event(flags, 1000 * 65535 / 1920, 500 * 65535 / 1080, wheel_movement, 0);
+			simulate_mouse(point);
             break;
 		}
 		case 0x04:  //keyboard
 		{
 			rfb_keyevent *keyboard = (rfb_keyevent *)&(req->data_buf[0]);	
-			keycode2virtual(keyboard);
+			simulate_key(keyboard);
+			break;
 		}
 		case 0x05: //copy text
 			
 		
 		case 0x06:  //copy file
 			break;
-
 	}
 }
-
-
-
-
 
 void create_control(int id)
 {
@@ -494,8 +541,6 @@ void hide_window()
 {
 	if(!window)
 		return
-	
-	SDL_HideWindow(window);
 	SDL_HideWindow(window);
 }
 
@@ -503,10 +548,8 @@ void show_window()
 {
 	if(!window)
 		return
-	DEBUG("show_window");	
 	SDL_ShowWindow(window);
 }
-
 
 void create_display()
 {
@@ -594,6 +637,49 @@ void create_display()
 	{
     	atexit(do_exit);
 	}
+}
+
+
+int init_x11()
+{
+	int id;
+    if((dpy = XOpenDisplay(0)) == NULL)
+    {
+        DEBUG("");
+        goto err;
+    }
+    id = DefaultScreen(dpy);  //DISPLAY:= id
+    if(!(root = XRootWindow(dpy, id)))
+    {
+        DEBUG("");
+        goto err;
+    }
+	screen_width = DisplayWidth(dpy, id);
+    screen_height = DisplayHeight(dpy, id);
+
+		
+	fd_kbd = open("/dev/input/event2", O_RDWR);
+    if(fd_kbd <= 0)
+    {
+        DEBUG("");
+        goto err;
+    }
+
+    fd_mouse = open("/dev/input/event4", O_RDWR);
+    if(fd_mouse <= 0)
+    {
+        DEBUG("");
+        goto err;
+    }   
+    return 0;
+err:
+    if(fd_kbd)
+        close(fd_kbd);
+    if(fd_mouse)
+        close(fd_mouse);
+    if(dpy)
+        XCloseDisplay(dpy);
+    return -1;
 }
 
 
@@ -692,5 +778,3 @@ void *thread_display(void *param)
 		}
 	}
 #endif
-
-

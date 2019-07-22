@@ -82,7 +82,6 @@ static int send_login(rfb_request *req)
     set_request_head(req, 1, sz_verformat);
     req->status = LOGIN;
 
-	DEBUG("req->fd %d", req->fd);
     ret = send_request(req);
     free(client_req->data_buf);
     return ret;
@@ -93,16 +92,7 @@ static int send_login(rfb_request *req)
 void create_encode(rfb_format *fmt)
 {
     int ret;
-#if 0
-    rfb_format fmt = {0};
-    memcpy(&fmt, _fmt, sizeof(rfb_format));
-#endif
     pthread_t pthread_udp, pthread_encode;
-
-         DEBUG("fmt->width %d fmt->height %d fmt->code %d,"
-          " fmt->data_port %d fmt->play_flag %d  fmt->bps %d fmt->fps%d",
-             fmt->width, fmt->height,fmt->code, fmt->data_port,fmt->play_flag, fmt->bps, fmt->fps);
-
 
     ret = pthread_create(&pthread_udp, NULL, thread_client_udp, fmt);
     if(0 != ret)
@@ -151,8 +141,12 @@ void init_client()
 {
     int ret = -1, server_s = 0;
     pthread_t pthread_tcp, pthread_display;
-	
+
     server_s = create_tcp();
+#ifndef _WIN32
+	init_x11();
+#endif
+
     if(!server_s)
     {
         DIE("create tcp err");
@@ -166,22 +160,20 @@ void init_client()
 	}
 	client_req->fd = server_s;
 
-	DEBUG("server_s %d", client_req->fd );
-
+#if 0
 	ret = pthread_create(&pthread_display, NULL, thread_display, NULL);
     if(0 != ret)
     {
         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
     }
+#endif
 
-	
 	ret = pthread_create(&pthread_tcp, NULL, thread_client_tcp, &server_s);
     if(0 != ret)
     {
         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
     }
-	
-	DEBUG("server_s %d", client_req->fd);
+
 	ret = send_login(client_req);
 	if(0 != ret)
 	{
@@ -190,5 +182,4 @@ void init_client()
 	
     void *tret = NULL;
     pthread_join(pthread_tcp, (void**)tret);  //等待线程同步
-	DEBUG("pthread_exit client tcp");
 }

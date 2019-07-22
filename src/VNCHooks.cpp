@@ -5,9 +5,9 @@ extern "C"
 #include "msg.h"
 }
 
+#ifdef _WIN32
 HHOOK hKeyboardHook = NULL;
 HINSTANCE hInstance = NULL;
-
 
 
 LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam)
@@ -87,3 +87,4 @@ int SetKeyboardHook(int active)
 	return 0;
 }
 
+#endif
