@@ -33,6 +33,8 @@ cppobj = VNCHooks.o
 all: $(exeobj)
 
 
+DEFINES := -D DLL
+
 ifeq ($(TARGET_ARCH), arm)
 CFLAGS = -I. -I./include/ -I./SDL/include -I./ffmpeg/include \
 		 -L./SDL/lib -lSDL2 -lpthread -lX11 -lXtst \
@@ -43,8 +45,10 @@ CFLAGS = -I. -I./include/ -I./SDL/include/win -I./ffmpeg/include \
          -L./ffmpeg/lib/win -lavcodec -lavformat -lswscale -lavutil -lavdevice \
          -L./SDL/lib/win -lSDL2 -lmingw32 -lm -lws2_32  -lpthreadGC2 -lgdi32 \
 		 #-mwindows
-else 
+else
 endif
+
+
 
 
 
@@ -68,15 +72,15 @@ endif
 	
 
 $(mainobj):%.o:%.c
-	$(CC) -Wall $(DEBUG) $(CFLAGS) -c $< -o $@
+	$(CC) -Wall $(DEBUG) $(CFLAGS) $(DEFINES) -c $< -o $@ 
 	
 
 $(cppobj):%.o:%.cpp
-	$(CXX) -Wall $(DEBUG) $(CXXFLAGS) -c $< -o $@
+	$(CXX) -Wall $(DEBUG) $(CXXFLAGS) $(DEFINES) -c $< -o $@
 
 
 $(dllobj):$(mainobj) $(cppobj)
-	$(CXX) $(DEBUG) -shared -o $(outdir)/$(dllobj) $(mainobj) $(cppobj) $(CXXFLAGS) $(DLL) -Wl,--kill-at,--out-implib,$(outdir)/$(libobj)
+	$(CXX) $(DEBUG) -shared -o $(outdir)/$(dllobj) $(mainobj) $(cppobj) $(CXXFLAGS) $(DLL) -Wl,--kill-at,--out-implib,$(outdir)/$(libobj) $(DEFINES)
 	rm -f *.o
 	@echo "Version $(VERSION)"
 ifeq ($(TARGET_ARCH), x86)
@@ -84,8 +88,6 @@ ifeq ($(TARGET_ARCH), x86)
 	$(CP) ./ffmpeg/bin/*.dll ./bin
 	$(CP) ./SDL/bin/*.dll ./bin
 endif
-
-
 
 
 dll:$(dllobj)

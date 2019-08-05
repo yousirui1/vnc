@@ -10,10 +10,13 @@
 @param pageSize 图像质量0-100
 成功返回0, 否则返回对应错误号
 */
-CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize)
+
+static stop_callback call_back;
+
+
+CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
 {
 	
-	MessageBox(NULL, "StopBroadCastScreen", "error", MB_ICONEXCLAMATION | MB_OK);
 
 	init_logs();
 	server_flag = 1;
@@ -28,9 +31,19 @@ CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int contro
 	DEBUG("client_port %d, control_port %d , h264_port %d  window_flag %d window_size %d",
 			client_port, control_port, h264_port, window_flag, window_size);
 
+	call_back = call;
 	init_server();
 	return 0;
 }
+
+
+
+
+void stop_server()
+{
+	call_back();
+}
+
 
 
 /*
@@ -44,6 +57,8 @@ CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int contro
 */
 CAPTUREANDCAST_API int StopMonitorServer()
 {
+	do_exit();
+	run_flag = 0;
 	close_logs();
 	return 0;
 }

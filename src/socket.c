@@ -153,6 +153,13 @@ void create_udp(char *ip, int port, rfb_display *display)
 int create_tcp()
 {
     int fd, sock_opt = -1;
+    int on = 1 ;
+    int keepAlive = 1;      //heart echo open
+    int keepIdle = 15;      //if no data come in or out in 15 seconds,send tcp probe, not send ping
+    int keepInterval = 3;   //3seconds inteval
+    int keepCount = 5;      //retry count
+
+
 #ifdef _WIN32
     WSADATA wsData = {0};
     if(0 != WSAStartup(0x202, &wsData))
@@ -162,6 +169,9 @@ int create_tcp()
         return -1;
     }
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    if( setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) !=0) goto end_out;
+
 #else
 
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -177,12 +187,6 @@ int create_tcp()
      if (fcntl(fd, F_SETFL, sock_opt | O_NONBLOCK) == -1) {
         DIE("fcntl: unable to set server socket to nonblocking");
     }
-
-    int on = 1 ;
-    int keepAlive = 1;      //heart echo open
-    int keepIdle = 15;      //if no data come in or out in 15 seconds,send tcp probe, not send ping
-    int keepInterval = 3;   //3seconds inteval
-    int keepCount = 5;      //retry count
 
     if( setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void*)&keepAlive, sizeof(keepAlive)) != 0) goto end_out;
     if( setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, (void*)&keepIdle, sizeof(keepIdle)) != 0) goto end_out;
@@ -383,7 +387,7 @@ void client_tcp_loop(int sockfd)
 			if(errno == EINTR)
 				continue;
 			else if(errno != EBADF)
-				DEBUG("select err");
+				DIE("select %s", strerror(ret));
 		}		
 		if(FD_ISSET(sockfd, &fds))
 		{
@@ -657,6 +661,9 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 	       }
         }
     }
+
+	DEBUG("server_udp end");
+
 	for(i = 0; i< display_size; i++)
 	{
 		if(vids_buf[i])
@@ -669,6 +676,8 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 		free(vids_queue);
 	if(vids_buf)
 		free(vids_buf);
+
+	DEBUG("server_udp end");
 }
 
 void create_h264_socket()
@@ -903,23 +912,25 @@ void server_tcp_loop(int listenfd)
         }
     }
 
+	DEBUG("server_tcp end");
 run_end:
 	current = request_ready;
 	while(current)
 	{
 		current = remove_request(current);
 	}
+	close(listenfd);
+	DEBUG("server_tcp end");
+
 }
 
 void *thread_server_tcp(void *param)
 {
-    int ret, listenfd;
+    int ret, listenfd = -1;
     pthread_attr_t st_attr;
     struct sched_param sched;
 
-	listenfd = *(int *)param;
-
-	DEBUG("listenfd	%d", listenfd);
+    listenfd = *(int *)param;
 
     ret = pthread_attr_init(&st_attr);
     if(ret)
@@ -933,7 +944,6 @@ void *thread_server_tcp(void *param)
     }
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
-
 
     server_tcp_loop(listenfd);
 	return (void *)0;

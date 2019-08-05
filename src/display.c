@@ -35,13 +35,26 @@ pthread_mutex_t renderer_mutex;
 static int loss_flag = 0;
 static int loss_count = 10;
 
-static void do_exit()
+void do_exit()
 {
 	if(renderer)
 		SDL_DestroyRenderer(renderer);
 
 	if(window)
         SDL_DestroyWindow(window);	
+
+	if(texture)
+		SDL_DestroyTexture(texture);
+
+	if(full_texture)
+		SDL_DestroyTexture(full_texture);
+
+	
+	window = NULL;
+	renderer = NULL;
+	full_texture = NULL;
+	texture = NULL;
+
 	SDL_Quit();
 }
 
@@ -125,10 +138,7 @@ void init_display()
         DIE("create texture err");
     }
 
-	DEBUG("create display");
 	displays = (rfb_display *)malloc(sizeof(rfb_display) * window_size * window_size);
-
-	DEBUG("malloc display");
     memset(displays, 0, sizeof(rfb_display) * window_size * window_size);
     pthread_decodes = (pthread_t *)malloc(sizeof(pthread_t) * window_size * window_size);	
 
@@ -252,6 +262,7 @@ void event_loop()
 		if(SDL_QUIT == event.type)
 		{
 			run_flag = 0;
+			stop_server();
             goto run_end;
 		}
 
@@ -506,6 +517,7 @@ void show_window()
 {
 	if(!window)
 		return
+
 	DEBUG("show_window");	
 	SDL_ShowWindow(window);
 }
@@ -538,7 +550,7 @@ void create_display()
     if(!display_disable)
     {
         DEBUG("create window ");
-        int flags = SDL_WINDOW_SHOWN;  //SDL_WINDOW_SHOWN SDL_WINDOW_HIDDEN
+        int flags = SDL_WINDOW_HIDDEN;  //SDL_WINDOW_SHOWN SDL_WINDOW_HIDDEN
         if(borderless)              	//无边框
             flags |= SDL_WINDOW_BORDERLESS;
         else
@@ -571,7 +583,7 @@ void create_display()
             if(!renderer)
             {
                 DEBUG("Failed to initialize a hardware accelerated renderer: %s", SDL_GetError());
-                renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+                renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE ); // SDL_RENDERER_SOFTWARE  
             }
             if(renderer)
             {
@@ -584,6 +596,19 @@ void create_display()
             DIE("Failed to create window or renderer: %s", SDL_GetError());
         }
     }
+
+
+	if(server_flag)
+	{
+		//SetKeyboardHook(1);	
+		show_window();
+    	init_display();
+    	event_loop();
+	}
+	else
+	{
+    	atexit(do_exit);
+	}
 }
 
 
@@ -606,21 +631,7 @@ void *thread_display(void *param)
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
-   // create_display();
-	//server_flag = 1;
-
-	DEBUG("server_flag %d", server_flag);
-	if(server_flag)
-	{
-		//SetKeyboardHook(1);	
-		show_window();
-    	init_display();
-    	event_loop();
-	}
-	else
-	{
-    	atexit(do_exit);
-	}
+    create_display();
     return (void *)0;
 }
 

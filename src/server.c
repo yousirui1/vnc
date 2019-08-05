@@ -33,7 +33,6 @@ static int recv_options(rfb_request *req)
 		
 		while(!displays)
 		{
-			DEBUG("is NO display");
 			usleep(2000);
 		}	
 
@@ -227,13 +226,10 @@ void init_server()
 {
 	int ret;
 	pthread_t pthread_tcp, pthread_udp , pthread_display;
-
 	display_size = window_size * window_size;
 	run_flag = 1;
-
-	create_display();
-	
 	server_s = create_tcp();
+
 	if(server_s == -1)
 	{
 		DIE("create socket err");
@@ -242,14 +238,11 @@ void init_server()
     {
         DIE("bind port %d err", client_port);
     }
-
 	ret = pthread_create(&pthread_display, NULL, thread_display, NULL);
     if(0 != ret)
     {
         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
     }
-
-	DEBUG("server_s %d", server_s);
 
     ret = pthread_create(&pthread_tcp, NULL, thread_server_tcp, &server_s);
     if(0 != ret)
@@ -263,7 +256,16 @@ void init_server()
         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
     }
 
+#define DLL 
 
+#ifndef DLL
+	DEBUG("no dll");
+#else
+	DEBUG("is dll");
+#endif
+
+
+#if 0
 #ifndef DLL
 	void *tret = NULL;
     pthread_join(pthread_display, &tret);  //等待线程同步
@@ -272,6 +274,7 @@ void init_server()
     DEBUG("pthread_exit %d tcp", (int)tret);
     pthread_join(pthread_udp, &tret);  //等待线程同步
     DEBUG("pthread_exit %d udp", (int)tret);
+#endif
 #endif
 }
 

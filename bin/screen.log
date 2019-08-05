@@ -1,5 +1,79 @@
-File: ./src/main.c, Line: 00044: 
-programe client: 
- server_ip 192.169.27.211, server_port 22000, window_flag 0, default_quality 60 default_fps 25
-File: ./src/socket.c, Line: 00244: connection failed reconnection after 1 seconds
-File: ./src/socket.c, Line: 00244: connection failed reconnection after 1 seconds
+File: ./src/external.c, Line: 00032: client_port 22000, control_port 22001 , h264_port 22002  window_flag 1 window_size 4
+File: ./src/socket.c, Line: 00207: server bind port 22000
+File: ./src/server.c, Line: 00264: is dll
+File: ./src/socket.c, Line: 00966: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00690: display_size 16
+File: ./src/socket.c, Line: 00943: ThreadMain set SCHED_FIFO error
+File: ./src/display.c, Line: 00629: ThreadMain set SCHED_FIFO error
+File: ./src/display.c, Line: 00552: create window 
+File: ./src/display.c, Line: 00585: Failed to initialize a hardware accelerated renderer: 
+File: ./src/display.c, Line: 00591: Initialized software renderer.
+File: ./src/display.c, Line: 00521: show_window
+File: ./src/socket.c, Line: 00080: ip  (null), port 22003
+File: ./src/socket.c, Line: 00149: display->fd 1360
+File: ./src/socket.c, Line: 00080: ip  (null), port 22004
+File: ./src/socket.c, Line: 00149: display->fd 1364
+File: ./src/socket.c, Line: 00080: ip  (null), port 22005
+File: ./src/socket.c, Line: 00149: display->fd 1368
+File: ./src/socket.c, Line: 00080: ip  (null), port 22006
+File: ./src/socket.c, Line: 00149: display->fd 1372
+File: ./src/socket.c, Line: 00080: ip  (null), port 22007
+File: ./src/socket.c, Line: 00149: display->fd 1376
+File: ./src/socket.c, Line: 00080: ip  (null), port 22008
+File: ./src/socket.c, Line: 00149: display->fd 1380
+File: ./src/socket.c, Line: 00080: ip  (null), port 22009
+File: ./src/socket.c, Line: 00149: display->fd 1384
+File: ./src/socket.c, Line: 00080: ip  (null), port 22010
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00149: display->fd 1412
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00080: ip  (null), port 22011
+File: ./src/socket.c, Line: 00149: display->fd 1476
+File: ./src/socket.c, Line: 00080: ip  (null), port 22012
+File: ./src/socket.c, Line: 00149: display->fd 1528
+File: ./src/socket.c, Line: 00080: ip  (null), port 22013
+File: ./src/socket.c, Line: 00149: display->fd 1532
+File: ./src/socket.c, Line: 00080: ip  (null), port 22014
+File: ./src/socket.c, Line: 00149: display->fd 1536
+File: ./src/socket.c, Line: 00080: ip  (null), port 22015
+File: ./src/socket.c, Line: 00149: display->fd 1540
+File: ./src/socket.c, Line: 00080: ip  (null), port 22016
+File: ./src/socket.c, Line: 00149: display->fd 1544
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00080: ip  (null), port 22017
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00149: display->fd 1548
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00080: ip  (null), port 22018
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00149: display->fd 1552
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00360: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00915: server_tcp end
+File: ./src/socket.c, Line: 00923: server_tcp end
+File: ./src/socket.c, Line: 00665: server_udp end
+File: ./src/socket.c, Line: 00680: server_udp end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
+File: ./src/ffmpeg.c, Line: 00317: decode end
