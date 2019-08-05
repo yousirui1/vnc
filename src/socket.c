@@ -383,7 +383,7 @@ void client_tcp_loop(int sockfd)
 			if(errno == EINTR)
 				continue;
 			else if(errno != EBADF)
-				DIE();
+				DEBUG("select err");
 		}		
 		if(FD_ISSET(sockfd, &fds))
 		{
@@ -714,6 +714,7 @@ void server_tcp_loop(int listenfd)
     tv.tv_sec = 1;
     tv.tv_usec = 0;
     maxfd = listenfd;
+	
 
     FD_ZERO(&allset);
     FD_SET(listenfd, &allset);
@@ -726,15 +727,15 @@ void server_tcp_loop(int listenfd)
 	while(run_flag)
     {
         rset = allset; // structure assignment
-		
         ret = select(maxfd + 1, &rset, NULL, NULL, &tv);
         if(ret == -1)
         {
              if(errno == EINTR)
                 continue;
             else if(errno != EBADF)
-                DIE("select");
+				DIE("select %s", strerror(ret));
         }
+
         nready = ret;
 
         if(FD_ISSET(listenfd, &rset))
@@ -912,11 +913,13 @@ run_end:
 
 void *thread_server_tcp(void *param)
 {
-    int ret, listenfd = -1;
+    int ret, listenfd;
     pthread_attr_t st_attr;
     struct sched_param sched;
 
-    listenfd = *(int *)param;
+	listenfd = *(int *)param;
+
+	DEBUG("listenfd	%d", listenfd);
 
     ret = pthread_attr_init(&st_attr);
     if(ret)
@@ -930,6 +933,7 @@ void *thread_server_tcp(void *param)
     }
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
+
 
     server_tcp_loop(listenfd);
 	return (void *)0;

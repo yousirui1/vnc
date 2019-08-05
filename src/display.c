@@ -125,7 +125,10 @@ void init_display()
         DIE("create texture err");
     }
 
+	DEBUG("create display");
 	displays = (rfb_display *)malloc(sizeof(rfb_display) * window_size * window_size);
+
+	DEBUG("malloc display");
     memset(displays, 0, sizeof(rfb_display) * window_size * window_size);
     pthread_decodes = (pthread_t *)malloc(sizeof(pthread_t) * window_size * window_size);	
 
@@ -535,7 +538,7 @@ void create_display()
     if(!display_disable)
     {
         DEBUG("create window ");
-        int flags = SDL_WINDOW_HIDDEN;  //SDL_WINDOW_SHOWN SDL_WINDOW_HIDDEN
+        int flags = SDL_WINDOW_SHOWN;  //SDL_WINDOW_SHOWN SDL_WINDOW_HIDDEN
         if(borderless)              	//无边框
             flags |= SDL_WINDOW_BORDERLESS;
         else
@@ -568,7 +571,7 @@ void create_display()
             if(!renderer)
             {
                 DEBUG("Failed to initialize a hardware accelerated renderer: %s", SDL_GetError());
-                renderer = SDL_CreateRenderer(window, -1, 0);
+                renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
             }
             if(renderer)
             {
@@ -581,19 +584,6 @@ void create_display()
             DIE("Failed to create window or renderer: %s", SDL_GetError());
         }
     }
-
-
-	if(server_flag)
-	{
-		//SetKeyboardHook(1);	
-		show_window();
-    	init_display();
-    	event_loop();
-	}
-	else
-	{
-    	atexit(do_exit);
-	}
 }
 
 
@@ -616,7 +606,21 @@ void *thread_display(void *param)
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
-    create_display();
+   // create_display();
+	//server_flag = 1;
+
+	DEBUG("server_flag %d", server_flag);
+	if(server_flag)
+	{
+		//SetKeyboardHook(1);	
+		show_window();
+    	init_display();
+    	event_loop();
+	}
+	else
+	{
+    	atexit(do_exit);
+	}
     return (void *)0;
 }
 

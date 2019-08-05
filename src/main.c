@@ -7,7 +7,7 @@ int server_flag = 0;
 int client_port = -1, control_port = -1, h264_port = -1, server_port = -1, window_flag = 0, window_size = 0;
 int default_quality = 0, default_fps = 0;
 int max_connections = -1; 
-char server_ip[126] = {0};
+char *server_ip = NULL;
 int run_flag = 0;
 
 void parse_options()
@@ -15,6 +15,7 @@ void parse_options()
 	/* arg > file */
     int ret = 0;
     char buf[126] = {0};
+	
     ret = read_profile_string(BASE_SECTION, BASE_TYPE_KEY, buf, sizeof(buf), DEFAULT_TYPE, CONFIG_FILE);
     if(ret && !strncmp(buf, "server", 6))
     {   
@@ -33,7 +34,9 @@ void parse_options()
     }
     else                //客户端程序
     {   
-        ret = read_profile_string(CLIENT_SECTION, CLIENT_IP_KEY, server_ip, sizeof(server_ip), DEFAULT_IP_VALUE, CONFIG_FILE);
+        ret = read_profile_string(CLIENT_SECTION, CLIENT_IP_KEY, buf, sizeof(buf), DEFAULT_IP_VALUE, CONFIG_FILE);
+		server_ip = strdup(buf);	
+	
         server_port = read_profile_int(CLIENT_SECTION, CLIENT_PORT_KEY, DEFAULT_PORT_VALUE, CONFIG_FILE);
         default_quality = read_profile_int(CLIENT_SECTION, CLIENT_QUALITY_KEY, DEFAULT_QUALITY_VALUE, CONFIG_FILE);
         default_fps = read_profile_int(CLIENT_SECTION, CLIENT_FPS_KEY, DEFAULT_FPS_VALUE, CONFIG_FILE);
@@ -51,7 +54,24 @@ void sig_quit_listen(int e)
     return;
 }
 
-    
+
+#ifdef DLL
+BOOL APIENTRY DllMain(HMODULE hModule,
+                      DWORD ul_reason_for_call,
+                      LPVOID lpReserved)
+{
+
+    switch(ul_reason_for_call)
+    {
+        case DLL_PROCESS_ATTACH:
+        case DLL_THREAD_ATTACH:
+        case DLL_THREAD_DETACH:
+        case DLL_PROCESS_DETACH:
+            break;
+    }
+    return TRUE;
+}
+#else 
 #ifdef _WIN32
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
 #else
@@ -88,3 +108,6 @@ int main(int argc, char *argv[])
 	close_logs();
 	return 0;
 }
+#endif
+
+

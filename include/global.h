@@ -1,4 +1,5 @@
 #ifndef __GLOBAL_H__
+
 #define __GLOBAL_H__
 
 #include <libavutil/frame.h>
@@ -9,7 +10,7 @@
 extern int server_flag;
 extern int client_port, control_port, h264_port, window_flag, window_size, server_port;
 extern int max_connections;
-extern char server_ip[126];
+extern char* server_ip;
 extern int default_quality, default_fps;
 extern int run_flag;
 extern int play_flag;

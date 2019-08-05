@@ -4,6 +4,9 @@
 rfb_request *client_req = NULL;
 rfb_display client_display = {0};
 
+static int server_s = -1;
+
+
 static int recv_options(rfb_request *req)
 {
     if(read_msg_order(req->head_buf) == 0x02)
@@ -149,7 +152,7 @@ int process_client_msg(rfb_request *req)
 
 void init_client()
 {
-    int ret = -1, server_s = 0;
+    int ret = -1;
     pthread_t pthread_tcp, pthread_display;
 	
     server_s = create_tcp();
@@ -187,8 +190,10 @@ void init_client()
 	{
 		DIE("login_server err");
 	}
-	
+
+#ifndef DLL
     void *tret = NULL;
     pthread_join(pthread_tcp, (void**)tret);  //等待线程同步
 	DEBUG("pthread_exit client tcp");
+#endif
 }

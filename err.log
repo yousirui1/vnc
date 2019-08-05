@@ -1,0 +1,33 @@
+In file included from ./src/main.c:1:0:
+./include/base.h:136:0: warning: "max" redefined
+ #define max(a,b)    (((a) > (b)) ? (a) : (b))
+ 
+In file included from c:\program files\git\mingw32\include\windows.h:42:0,
+                 from ./include/base.h:16,
+                 from ./src/main.c:1:
+c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
+ #define max(a,b) ((a)>(b)?(a):(b))
+ 
+In file included from ./src/main.c:1:0:
+./include/base.h:137:0: warning: "min" redefined
+ #define min(a,b)    (((a) < (b)) ? (a) : (b))
+ 
+In file included from c:\program files\git\mingw32\include\windows.h:42:0,
+                 from ./include/base.h:16,
+                 from ./src/main.c:1:
+c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
+ #define min(a,b) ((a)<(b)?(a):(b))
+ 
+./src/main.c:10:7: error: conflicting types for 'server_ip'
+ char *server_ip = NULL;
+       ^~~~~~~~~
+In file included from ./include/base.h:35:0,
+                 from ./src/main.c:1:
+./include/global.h:12:13: note: previous declaration of 'server_ip' was here
+ extern char server_ip[126];
+             ^~~~~~~~~
+./src/main.c: In function 'sig_quit_listen':
+./src/main.c:50:10: warning: unused variable 's' [-Wunused-variable]
+     char s = 'S';
+          ^
+make: *** [main.o] Error 1

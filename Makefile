@@ -19,12 +19,16 @@ CONFIG_COMPILER=gnu
 
 outdir = ./bin
 
-
 exeobj = vnc
 
-mainobj = main.o inirw.o queue.o  display.o socket.o server.o client.o log.o ffmpeg.o control.o
+dllobj =  RemoteMonitor.dll
+
+libobj = libRemoteMonitor.dll.a
+
+mainobj = main.o inirw.o queue.o  display.o socket.o server.o client.o log.o ffmpeg.o control.o external.o
 
 cppobj = VNCHooks.o
+
 
 all: $(exeobj)
 
@@ -70,7 +74,23 @@ $(mainobj):%.o:%.c
 $(cppobj):%.o:%.cpp
 	$(CXX) -Wall $(DEBUG) $(CXXFLAGS) -c $< -o $@
 
-clean:
-	rm -f *.o $(outdir)/$(exeobj) $(outdir)/*.dll
 
+$(dllobj):$(mainobj) $(cppobj)
+	$(CXX) $(DEBUG) -shared -o $(outdir)/$(dllobj) $(mainobj) $(cppobj) $(CXXFLAGS) $(DLL) -Wl,--kill-at,--out-implib,$(outdir)/$(libobj)
+	rm -f *.o
+	@echo "Version $(VERSION)"
+ifeq ($(TARGET_ARCH), x86)
+	$(CP) ./lib/*.dll ./bin
+	$(CP) ./ffmpeg/bin/*.dll ./bin
+	$(CP) ./SDL/bin/*.dll ./bin
+endif
+
+
+
+
+dll:$(dllobj)
+	@echo "build  only dll $(dllobj)"
+
+clean:
+	rm -f *.o $(outdir)/$(exeobj) $(outdir)/*.dll $(outdir)/*.a
 
