@@ -49,12 +49,20 @@ void do_exit()
 	if(full_texture)
 		SDL_DestroyTexture(full_texture);
 
+#if 0
+	if(displays)
+		free(displays);
+
+	if(pthread_decodes)
+		free(pthread_decodes);
+#endif
 	
 	window = NULL;
 	renderer = NULL;
 	full_texture = NULL;
 	texture = NULL;
-
+	//displays = NULL;	
+	//pthread_decodes = NULL;	
 	SDL_Quit();
 }
 
@@ -250,7 +258,12 @@ void event_loop()
             send_control((char *)&key, sizeof(rfb_keyevent), 0x04);
 
 			if(event.key.keysym.sym == SDLK_ESCAPE) 
-				switch_mode(0);
+			{
+				//switch_mode(0);
+				do_exit();
+    			run_flag = 0;
+			}
+					
         }
         if(SDL_KEYUP == event.type)
         {
@@ -476,7 +489,6 @@ void create_control(int id)
 {
 	control_display = &displays[id];	
 	start_control(control_display);
-	
 }
 
 void destroy_control()

@@ -106,6 +106,7 @@ int main(int argc, char *argv[])
         init_client();
     }
 	close_logs();
+	while(1);
 	return 0;
 }
 #endif

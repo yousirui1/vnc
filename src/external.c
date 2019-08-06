@@ -59,7 +59,7 @@ CAPTUREANDCAST_API int StopMonitorServer()
 {
 	do_exit();
 	run_flag = 0;
-	close_logs();
+	//close_logs();
 	return 0;
 }
 
@@ -76,18 +76,18 @@ CAPTUREANDCAST_API int StopMonitorServer()
 
 CAPTUREANDCAST_API int StartMonitorClient(const char* serverIp, const int serverPort, const char* clientFlag)
 {
-	
 	server_ip = strdup(serverIp);	
 	server_port = serverPort;
 
 	run_flag = 1;
 
+	DEBUG("server_ip %s, server_port %d",
+			server_ip, server_port);
+
 	init_logs();
 	init_client();
 	
 
-	DEBUG("server_ip %s, server_port %d",
-			server_ip, server_port);
 
 	return 0;
 }

@@ -172,6 +172,14 @@ int create_tcp()
 
     if( setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) !=0) goto end_out;
 
+#if 0
+	sock_opt = 1;
+	if(ioctlsocket(fd, FIONBIO, &sock_opt) == NO_ERROR)
+	{
+        DIE("can't set close-on-exec on server socket!");
+	}
+#endif
+	
 #else
 
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -234,14 +242,12 @@ end_out:
 
 void connect_server(int fd, const char *ip, int port)
 {
-
     struct sockaddr_in client_sockaddr;
     memset(&client_sockaddr, 0, sizeof client_sockaddr);
 
     client_sockaddr.sin_family = AF_INET;
     client_sockaddr.sin_addr.s_addr = inet_addr(ip);
     client_sockaddr.sin_port = htons(port);
-
 
     while(connect(fd, (struct sockaddr *)&client_sockaddr, sizeof(client_sockaddr)) != 0)
     {
@@ -251,11 +257,7 @@ void connect_server(int fd, const char *ip, int port)
     return;
 }
 
-void close_socket(int fd)
-{
-    if(fd)
-        close(fd);
-}
+
 /************************* request ***********************************/
 
 rfb_request *new_request()
@@ -375,12 +377,16 @@ void client_tcp_loop(int sockfd)
     fd_set fds;
 	rfb_request *current = NULL;
 	current = client_req;
-	
+
+	struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+
 	while(run_flag)
     {   
         FD_ZERO(&fds);
         FD_SET(sockfd, &fds);
-        ret = select(sockfd + 1, &fds, NULL, NULL, NULL);
+        ret = select(sockfd + 1, &fds, NULL, NULL, &tv);
 
 		if(ret == -1)
 		{
@@ -467,12 +473,17 @@ void client_tcp_loop(int sockfd)
         }
     }    
 
+
 run_end:
 	if(run_flag)
 		run_flag = 0;
 	if(current)
 		free(current);
-	close(sockfd);
+	closesocket(sockfd);
+	
+#ifdef _WIN32
+	WSACleanup();
+#endif
 }
 
 
@@ -535,7 +546,7 @@ void client_udp_loop()
         }   
 #endif
     }    
-	close(sockfd);
+	closesocket(sockfd);
 }
 
 void *thread_client_udp(void *param)
@@ -662,22 +673,21 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
         }
     }
 
-	DEBUG("server_udp end");
 
 	for(i = 0; i< display_size; i++)
 	{
 		if(vids_buf[i])
 			free(vids_buf[i]);
 		if(clients[i].fd)
-			close(clients[i].fd);
+			closesocket(clients[i].fd);
+		DEBUG("udp close fd %d", clients[i].fd);
 	}
 
 	if(vids_queue)
 		free(vids_queue);
 	if(vids_buf)
 		free(vids_buf);
-
-	DEBUG("server_udp end");
+	DEBUG("server udp close end");
 }
 
 void create_h264_socket()
@@ -705,7 +715,6 @@ void create_h264_socket()
         init_queue(&(vids_queue[i]), vids_buf[i], MAX_VIDSBUFSIZE);
     }
     server_udp_loop(display_size, maxfd, allset, displays);
-	//free(displays);	
 }
 
 
@@ -812,7 +821,7 @@ void server_tcp_loop(int listenfd)
                                     continue;
                             }
                             DEBUG("close fd %d", sockfd);
-                            close(current->fd);
+                            closesocket(current->fd);
                             FD_CLR(current->fd, &allset);
                             current = remove_request(current);
                             continue;
@@ -844,7 +853,7 @@ void server_tcp_loop(int listenfd)
                             current->data_buf = (unsigned char*)malloc(current->data_size + 1);
                            if(!current->data_buf)
                             {
-                                close(current->fd);
+                                closesocket(current->fd);
                                 FD_CLR(current->fd, &allset);
                                 current = remove_request(current);
                                 continue;
@@ -862,7 +871,7 @@ void server_tcp_loop(int listenfd)
                                     continue;
                             }
                             DEBUG("close fd %d\n", sockfd);
-                            close(current->fd);
+                            closesocket(current->fd);
                             FD_CLR(current->fd, &allset);
                             current = remove_request(current);
                             continue;
@@ -917,11 +926,20 @@ run_end:
 	current = request_ready;
 	while(current)
 	{
+		DEBUG("while current");
+		if(current->fd)
+		{
+			closesocket(current->fd);
+			DEBUG("close client fd %d", current->fd);
+		}
 		current = remove_request(current);
 	}
-	close(listenfd);
-	DEBUG("server_tcp end");
 
+	closesocket(listenfd);
+	DEBUG("server_tcp end");
+#ifdef _WIN32
+	WSACleanup();
+#endif
 }
 
 void *thread_server_tcp(void *param)

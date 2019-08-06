@@ -47,6 +47,7 @@
 #define DIE(format,...) DEBUG(format);exit(1)
 #endif
 
+
 /* config */
 #define CONFIG_FILE "config.ini"
 

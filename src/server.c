@@ -14,6 +14,7 @@ static int recv_login(rfb_request *req)
                     &server_major, &server_minor) != 2)
 				;
 		sprintf((char *)req->data_buf, VERSIONFORMAT, 3, server_minor + 1);
+		DEBUG("recv_login server_major %d server_minor %d", server_major, server_minor);
 		req->status = OPTIONS;
 		return send_request(req);
 	}
@@ -256,16 +257,6 @@ void init_server()
         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
     }
 
-#define DLL 
-
-#ifndef DLL
-	DEBUG("no dll");
-#else
-	DEBUG("is dll");
-#endif
-
-
-#if 0
 #ifndef DLL
 	void *tret = NULL;
     pthread_join(pthread_display, &tret);  //等待线程同步
@@ -274,7 +265,6 @@ void init_server()
     DEBUG("pthread_exit %d tcp", (int)tret);
     pthread_join(pthread_udp, &tret);  //等待线程同步
     DEBUG("pthread_exit %d udp", (int)tret);
-#endif
 #endif
 }
 

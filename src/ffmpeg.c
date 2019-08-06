@@ -313,7 +313,7 @@ void ffmpeg_decode(rfb_display *vid)
     if(codec_ctx)
         avcodec_close(codec_ctx);
 
-	clear_texture();
+	//clear_texture();
 	DEBUG("decode end");
 }
 

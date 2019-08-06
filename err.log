@@ -1,32 +1,154 @@
-In file included from ./src/external.c:1:0:
+In file included from ./src/socket.c:1:0:
 ./include/base.h:136:0: warning: "max" redefined
  #define max(a,b)    (((a) > (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:16,
-                 from ./src/external.c:1:
+                 from ./src/socket.c:1:
 c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
  #define max(a,b) ((a)>(b)?(a):(b))
  
-In file included from ./src/external.c:1:0:
+In file included from ./src/socket.c:1:0:
 ./include/base.h:137:0: warning: "min" redefined
  #define min(a,b)    (((a) < (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:16,
-                 from ./src/external.c:1:
+                 from ./src/socket.c:1:
 c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
  #define min(a,b) ((a)<(b)?(a):(b))
  
-./src/external.c:19:24: error: conflicting types for 'StartMonitorServer'
- CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
-                        ^~~~~~~~~~~~~~~~~~
-In file included from ./src/external.c:2:0:
-./include/external.h:21:24: note: previous declaration of 'StartMonitorServer' was here
- CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize);
-                        ^~~~~~~~~~~~~~~~~~
-./src/external.c: In function 'SetPageAttribute':
-./src/external.c:106:1: warning: control reaches end of non-void function [-Wreturn-type]
- }
- ^
-make: *** [external.o] Error 1
+./src/socket.c: In function 'create_udp':
+./src/socket.c:88:16: warning: 'return' with a value, in function returning void
+         return -1;
+                ^
+./src/socket.c:75:6: note: declared here
+ void create_udp(char *ip, int port, rfb_display *display)
+      ^~~~~~~~~~
+./src/socket.c: In function 'create_tcp':
+./src/socket.c:173:50: warning: passing argument 4 of 'setsockopt' from incompatible pointer type [-Wincompatible-pointer-types]
+     if( setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) !=0) goto end_out;
+                                                  ^
+In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
+                 from c:\program files\git\mingw32\include\_winsock.h:50,
+                 from c:\program files\git\mingw32\include\windows.h:85,
+                 from ./include/base.h:16,
+                 from ./src/socket.c:1:
+c:\program files\git\mingw32\include\winsock.h:599:32: note: expected 'const char *' but argument is of type 'int *'
+ WINSOCK_API_LINKAGE int PASCAL setsockopt (SOCKET, int, int, const char *, int);
+                                ^~~~~~~~~~
+./src/socket.c:175:7: warning: implicit declaration of function 'fcntl' [-Wimplicit-function-declaration]
+   if (fcntl(fd, F_SETFD, 1) == -1) {
+       ^~~~~
+./src/socket.c:175:17: error: 'F_SETFD' undeclared (first use in this function)
+   if (fcntl(fd, F_SETFD, 1) == -1) {
+                 ^~~~~~~
+./src/socket.c:175:17: note: each undeclared identifier is reported only once for each function it appears in
+./src/socket.c:179:31: error: 'F_GETFL' undeclared (first use in this function)
+     if ((sock_opt = fcntl(fd, F_GETFL, 0)) < -1) {
+                               ^~~~~~~
+./src/socket.c:184:16: error: 'F_SETFL' undeclared (first use in this function)
+  if (fcntl(fd, F_SETFL, sock_opt | O_NONBLOCK) == -1) {
+                ^~~~~~~
+./src/socket.c:184:36: error: 'O_NONBLOCK' undeclared (first use in this function)
+  if (fcntl(fd, F_SETFL, sock_opt | O_NONBLOCK) == -1) {
+                                    ^~~~~~~~~~
+./src/socket.c:160:9: warning: unused variable 'keepCount' [-Wunused-variable]
+     int keepCount = 5;      //retry count
+         ^~~~~~~~~
+./src/socket.c:159:9: warning: unused variable 'keepInterval' [-Wunused-variable]
+     int keepInterval = 3;   //3seconds inteval
+         ^~~~~~~~~~~~
+./src/socket.c:158:9: warning: unused variable 'keepIdle' [-Wunused-variable]
+     int keepIdle = 15;      //if no data come in or out in 15 seconds,send tcp probe, not send ping
+         ^~~~~~~~
+./src/socket.c:157:9: warning: unused variable 'keepAlive' [-Wunused-variable]
+     int keepAlive = 1;      //heart echo open
+         ^~~~~~~~~
+./src/socket.c: In function 'client_tcp_loop':
+./src/socket.c:414:45: warning: pointer targets in passing argument 2 of 'recv' differ in signedness [-Wpointer-sign]
+                 if((ret = recv(current->fd, current->head_buf+current->data_pos,HEAD_LEN - current ->data_pos, 0)) <= 0)
+                                             ^~~~~~~
+In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
+                 from c:\program files\git\mingw32\include\_winsock.h:50,
+                 from c:\program files\git\mingw32\include\windows.h:85,
+                 from ./include/base.h:16,
+                 from ./src/socket.c:1:
+c:\program files\git\mingw32\include\winsock.h:595:32: note: expected 'char *' but argument is of type 'unsigned char *'
+ WINSOCK_API_LINKAGE int PASCAL recv (SOCKET, char *, int, int);
+                                ^~~~
+./src/socket.c:456:45: warning: pointer targets in passing argument 2 of 'recv' differ in signedness [-Wpointer-sign]
+                 if((ret = recv(current->fd, current->data_buf + current->data_pos, current->data_size - current ->data_pos,0)) <= 0)
+                                             ^~~~~~~
+In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
+                 from c:\program files\git\mingw32\include\_winsock.h:50,
+                 from c:\program files\git\mingw32\include\windows.h:85,
+                 from ./include/base.h:16,
+                 from ./src/socket.c:1:
+c:\program files\git\mingw32\include\winsock.h:595:32: note: expected 'char *' but argument is of type 'unsigned char *'
+ WINSOCK_API_LINKAGE int PASCAL recv (SOCKET, char *, int, int);
+                                ^~~~
+./src/socket.c:469:21: warning: implicit declaration of function 'process_client_msg' [-Wimplicit-function-declaration]
+                     process_client_msg(current);
+                     ^~~~~~~~~~~~~~~~~~
+./src/socket.c: In function 'client_udp_loop':
+./src/socket.c:545:3: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
+   usleep(20000);
+   ^~~~~~
+In file included from ./include/base.h:7:0,
+                 from ./src/socket.c:1:
+c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
+ int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
+                             ^~~~~~
+./src/socket.c:527:15: warning: unused variable 'socklen' [-Wunused-variable]
+     socklen_t socklen = sizeof (struct sockaddr_in);
+               ^~~~~~~
+./src/socket.c:526:12: warning: unused variable 'fds' [-Wunused-variable]
+     fd_set fds;
+            ^~~
+./src/socket.c:525:9: warning: unused variable 'ret' [-Wunused-variable]
+     int ret;
+         ^~~
+./src/socket.c: In function 'server_udp_loop':
+./src/socket.c:596:18: warning: variable 'total_size' set but not used [-Wunused-but-set-variable]
+     unsigned int total_size = 0;
+                  ^~~~~~~~~~
+./src/socket.c: In function 'create_h264_socket':
+./src/socket.c:712:3: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
+   usleep(10000);
+   ^~~~~~
+In file included from ./include/base.h:7:0,
+                 from ./src/socket.c:1:
+c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
+ int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
+                             ^~~~~~
+./src/socket.c: In function 'server_tcp_loop':
+./src/socket.c:825:53: warning: pointer targets in passing argument 2 of 'recv' differ in signedness [-Wpointer-sign]
+                         if((ret = recv(current->fd, current->head_buf+current->data_pos,HEAD_LEN - current ->data_pos, 0)) <= 0)
+                                                     ^~~~~~~
+In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
+                 from c:\program files\git\mingw32\include\_winsock.h:50,
+                 from c:\program files\git\mingw32\include\windows.h:85,
+                 from ./include/base.h:16,
+                 from ./src/socket.c:1:
+c:\program files\git\mingw32\include\winsock.h:595:32: note: expected 'char *' but argument is of type 'unsigned char *'
+ WINSOCK_API_LINKAGE int PASCAL recv (SOCKET, char *, int, int);
+                                ^~~~
+./src/socket.c:875:53: warning: pointer targets in passing argument 2 of 'recv' differ in signedness [-Wpointer-sign]
+                         if((ret = recv(current->fd, current->data_buf + current->data_pos, current->data_size - current ->data_pos,0)) <= 0)
+                                                     ^~~~~~~
+In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
+                 from c:\program files\git\mingw32\include\_winsock.h:50,
+                 from c:\program files\git\mingw32\include\windows.h:85,
+                 from ./include/base.h:16,
+                 from ./src/socket.c:1:
+c:\program files\git\mingw32\include\winsock.h:595:32: note: expected 'char *' but argument is of type 'unsigned char *'
+ WINSOCK_API_LINKAGE int PASCAL recv (SOCKET, char *, int, int);
+                                ^~~~
+./src/socket.c:891:32: warning: implicit declaration of function 'process_server_msg' [-Wimplicit-function-declaration]
+                             if(process_server_msg(current))
+                                ^~~~~~~~~~~~~~~~~~
+./src/socket.c:935:1: warning: label 'run_end' defined but not used [-Wunused-label]
+ run_end:
+ ^~~~~~~
+make: *** [socket.o] Error 1

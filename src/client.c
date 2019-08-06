@@ -169,8 +169,6 @@ void init_client()
 	}
 	client_req->fd = server_s;
 
-	DEBUG("server_s %d", client_req->fd );
-
 	ret = pthread_create(&pthread_display, NULL, thread_display, NULL);
     if(0 != ret)
     {
