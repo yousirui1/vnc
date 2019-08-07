@@ -279,11 +279,7 @@ void ffmpeg_decode(rfb_display *vid)
 			packet.size = index->uiSize;
 			packet.data = index->pBuf;
 	        de_queuePos(&vids_queue[vid->id]);
-		}
-		else
-		{
-			sleep(1);
-			continue;
+
 		}
 
 		ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, &packet);
@@ -313,8 +309,16 @@ void ffmpeg_decode(rfb_display *vid)
     if(codec_ctx)
         avcodec_close(codec_ctx);
 
-	//clear_texture();
+	img_convert_ctx = NULL;
+	out_buffer = NULL;
+	frame_yuv = NULL;
+	frame = NULL;
+	codec_ctx = NULL;	
+	
+	clear_texture();
 	DEBUG("decode end");
+
+	return (void *)0;
 }
 
 void *thread_encode(void *param)

@@ -3,6 +3,7 @@
 
 int display_size = 0;
 static int server_s = -1;
+static pthread_t pthread_tcp, pthread_udp , pthread_display;
 
 
 static int recv_login(rfb_request *req)
@@ -225,10 +226,12 @@ int process_server_msg(rfb_request *req)
 
 void init_server()
 {
-	int ret;
-	pthread_t pthread_tcp, pthread_udp , pthread_display;
+	int ret = -1;
 	display_size = window_size * window_size;
-	run_flag = 1;
+
+#ifdef _WIN32
+    load_wsa();
+#endif
 	server_s = create_tcp();
 
 	if(server_s == -1)
@@ -257,16 +260,24 @@ void init_server()
         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
     }
 
-#ifndef DLL
-	void *tret = NULL;
+}
+
+
+void exit_server()
+{
+    void *tret = NULL;
     pthread_join(pthread_display, &tret);  //等待线程同步
     DEBUG("pthread_exit %d display", (int)tret);
     pthread_join(pthread_tcp, &tret);  //等待线程同步
     DEBUG("pthread_exit %d tcp", (int)tret);
     pthread_join(pthread_udp, &tret);  //等待线程同步
     DEBUG("pthread_exit %d udp", (int)tret);
-#endif
+
+	destroy_socket();
+	destroy_display();
 }
+
+
 
 
 #if 0

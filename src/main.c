@@ -54,46 +54,32 @@ void sig_quit_listen(int e)
     return;
 }
 
-
-#ifdef DLL
-BOOL APIENTRY DllMain(HMODULE hModule,
-                      DWORD ul_reason_for_call,
-                      LPVOID lpReserved)
+void do_exit()
 {
 
-    switch(ul_reason_for_call)
+    if(server_flag)
     {
-        case DLL_PROCESS_ATTACH:
-        case DLL_THREAD_ATTACH:
-        case DLL_THREAD_DETACH:
-        case DLL_PROCESS_DETACH:
-            break;
+        exit_server();
     }
-    return TRUE;
+    else
+    {
+        //exit_client();
+    }
+
 }
-#else 
+
+
 #ifdef _WIN32
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
 #else
 int main(int argc, char *argv[])
 #endif
 {
-    init_logs();
-#if 0
-    signal(SIGPIPE, SIG_IGN);
-    signal(SIGINT, SIG_IGN);
-    signal(SIGILL, SIG_IGN);
-    signal(SIGTERM, SIG_IGN);
-    signal(SIGSEGV, SIG_IGN);
-    signal(SIGABRT, SIG_IGN);
-    struct sigaction act;
-    act.sa_handler =  sig_quit_listen;
-    sigemptyset(&act.sa_mask);
-    act.sa_flags = 0;
-    sigaction(SIGUSR1, &act, 0); 
-#endif
-
+	while(1)
+	{
 	run_flag = 1;
+
+    init_logs();
 
     /* config */
     parse_options();
@@ -106,9 +92,13 @@ int main(int argc, char *argv[])
         init_client();
     }
 	close_logs();
-	while(1);
+	
+	//atexit(do_exit);
+	do_exit();
+	}
+	
+
 	return 0;
 }
-#endif
 
 

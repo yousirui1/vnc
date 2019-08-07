@@ -1,154 +1,104 @@
-In file included from ./src/socket.c:1:0:
-./include/base.h:136:0: warning: "max" redefined
+In file included from ./src/ffmpeg.c:11:0:
+./include/base.h:137:0: warning: "max" redefined
  #define max(a,b)    (((a) > (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:16,
-                 from ./src/socket.c:1:
+                 from ./src/ffmpeg.c:11:
 c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
  #define max(a,b) ((a)>(b)?(a):(b))
  
-In file included from ./src/socket.c:1:0:
-./include/base.h:137:0: warning: "min" redefined
+In file included from ./src/ffmpeg.c:11:0:
+./include/base.h:138:0: warning: "min" redefined
  #define min(a,b)    (((a) < (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:16,
-                 from ./src/socket.c:1:
+                 from ./src/ffmpeg.c:11:
 c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
  #define min(a,b) ((a)<(b)?(a):(b))
  
-./src/socket.c: In function 'create_udp':
-./src/socket.c:88:16: warning: 'return' with a value, in function returning void
-         return -1;
-                ^
-./src/socket.c:75:6: note: declared here
- void create_udp(char *ip, int port, rfb_display *display)
-      ^~~~~~~~~~
-./src/socket.c: In function 'create_tcp':
-./src/socket.c:173:50: warning: passing argument 4 of 'setsockopt' from incompatible pointer type [-Wincompatible-pointer-types]
-     if( setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) !=0) goto end_out;
-                                                  ^
-In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
-                 from c:\program files\git\mingw32\include\_winsock.h:50,
-                 from c:\program files\git\mingw32\include\windows.h:85,
-                 from ./include/base.h:16,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\winsock.h:599:32: note: expected 'const char *' but argument is of type 'int *'
- WINSOCK_API_LINKAGE int PASCAL setsockopt (SOCKET, int, int, const char *, int);
-                                ^~~~~~~~~~
-./src/socket.c:175:7: warning: implicit declaration of function 'fcntl' [-Wimplicit-function-declaration]
-   if (fcntl(fd, F_SETFD, 1) == -1) {
-       ^~~~~
-./src/socket.c:175:17: error: 'F_SETFD' undeclared (first use in this function)
-   if (fcntl(fd, F_SETFD, 1) == -1) {
-                 ^~~~~~~
-./src/socket.c:175:17: note: each undeclared identifier is reported only once for each function it appears in
-./src/socket.c:179:31: error: 'F_GETFL' undeclared (first use in this function)
-     if ((sock_opt = fcntl(fd, F_GETFL, 0)) < -1) {
-                               ^~~~~~~
-./src/socket.c:184:16: error: 'F_SETFL' undeclared (first use in this function)
-  if (fcntl(fd, F_SETFL, sock_opt | O_NONBLOCK) == -1) {
-                ^~~~~~~
-./src/socket.c:184:36: error: 'O_NONBLOCK' undeclared (first use in this function)
-  if (fcntl(fd, F_SETFL, sock_opt | O_NONBLOCK) == -1) {
-                                    ^~~~~~~~~~
-./src/socket.c:160:9: warning: unused variable 'keepCount' [-Wunused-variable]
-     int keepCount = 5;      //retry count
-         ^~~~~~~~~
-./src/socket.c:159:9: warning: unused variable 'keepInterval' [-Wunused-variable]
-     int keepInterval = 3;   //3seconds inteval
-         ^~~~~~~~~~~~
-./src/socket.c:158:9: warning: unused variable 'keepIdle' [-Wunused-variable]
-     int keepIdle = 15;      //if no data come in or out in 15 seconds,send tcp probe, not send ping
-         ^~~~~~~~
-./src/socket.c:157:9: warning: unused variable 'keepAlive' [-Wunused-variable]
-     int keepAlive = 1;      //heart echo open
-         ^~~~~~~~~
-./src/socket.c: In function 'client_tcp_loop':
-./src/socket.c:414:45: warning: pointer targets in passing argument 2 of 'recv' differ in signedness [-Wpointer-sign]
-                 if((ret = recv(current->fd, current->head_buf+current->data_pos,HEAD_LEN - current ->data_pos, 0)) <= 0)
-                                             ^~~~~~~
-In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
-                 from c:\program files\git\mingw32\include\_winsock.h:50,
-                 from c:\program files\git\mingw32\include\windows.h:85,
-                 from ./include/base.h:16,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\winsock.h:595:32: note: expected 'char *' but argument is of type 'unsigned char *'
- WINSOCK_API_LINKAGE int PASCAL recv (SOCKET, char *, int, int);
-                                ^~~~
-./src/socket.c:456:45: warning: pointer targets in passing argument 2 of 'recv' differ in signedness [-Wpointer-sign]
-                 if((ret = recv(current->fd, current->data_buf + current->data_pos, current->data_size - current ->data_pos,0)) <= 0)
-                                             ^~~~~~~
-In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
-                 from c:\program files\git\mingw32\include\_winsock.h:50,
-                 from c:\program files\git\mingw32\include\windows.h:85,
-                 from ./include/base.h:16,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\winsock.h:595:32: note: expected 'char *' but argument is of type 'unsigned char *'
- WINSOCK_API_LINKAGE int PASCAL recv (SOCKET, char *, int, int);
-                                ^~~~
-./src/socket.c:469:21: warning: implicit declaration of function 'process_client_msg' [-Wimplicit-function-declaration]
-                     process_client_msg(current);
-                     ^~~~~~~~~~~~~~~~~~
-./src/socket.c: In function 'client_udp_loop':
-./src/socket.c:545:3: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
-   usleep(20000);
-   ^~~~~~
-In file included from ./include/base.h:7:0,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
- int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
-                             ^~~~~~
-./src/socket.c:527:15: warning: unused variable 'socklen' [-Wunused-variable]
-     socklen_t socklen = sizeof (struct sockaddr_in);
-               ^~~~~~~
-./src/socket.c:526:12: warning: unused variable 'fds' [-Wunused-variable]
-     fd_set fds;
-            ^~~
-./src/socket.c:525:9: warning: unused variable 'ret' [-Wunused-variable]
-     int ret;
-         ^~~
-./src/socket.c: In function 'server_udp_loop':
-./src/socket.c:596:18: warning: variable 'total_size' set but not used [-Wunused-but-set-variable]
-     unsigned int total_size = 0;
-                  ^~~~~~~~~~
-./src/socket.c: In function 'create_h264_socket':
-./src/socket.c:712:3: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
-   usleep(10000);
-   ^~~~~~
-In file included from ./include/base.h:7:0,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
- int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
-                             ^~~~~~
-./src/socket.c: In function 'server_tcp_loop':
-./src/socket.c:825:53: warning: pointer targets in passing argument 2 of 'recv' differ in signedness [-Wpointer-sign]
-                         if((ret = recv(current->fd, current->head_buf+current->data_pos,HEAD_LEN - current ->data_pos, 0)) <= 0)
-                                                     ^~~~~~~
-In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
-                 from c:\program files\git\mingw32\include\_winsock.h:50,
-                 from c:\program files\git\mingw32\include\windows.h:85,
-                 from ./include/base.h:16,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\winsock.h:595:32: note: expected 'char *' but argument is of type 'unsigned char *'
- WINSOCK_API_LINKAGE int PASCAL recv (SOCKET, char *, int, int);
-                                ^~~~
-./src/socket.c:875:53: warning: pointer targets in passing argument 2 of 'recv' differ in signedness [-Wpointer-sign]
-                         if((ret = recv(current->fd, current->data_buf + current->data_pos, current->data_size - current ->data_pos,0)) <= 0)
-                                                     ^~~~~~~
-In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
-                 from c:\program files\git\mingw32\include\_winsock.h:50,
-                 from c:\program files\git\mingw32\include\windows.h:85,
-                 from ./include/base.h:16,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\winsock.h:595:32: note: expected 'char *' but argument is of type 'unsigned char *'
- WINSOCK_API_LINKAGE int PASCAL recv (SOCKET, char *, int, int);
-                                ^~~~
-./src/socket.c:891:32: warning: implicit declaration of function 'process_server_msg' [-Wimplicit-function-declaration]
-                             if(process_server_msg(current))
-                                ^~~~~~~~~~~~~~~~~~
-./src/socket.c:935:1: warning: label 'run_end' defined but not used [-Wunused-label]
- run_end:
- ^~~~~~~
-make: *** [socket.o] Error 1
+./src/ffmpeg.c: In function 'ffmpeg_encode':
+./src/ffmpeg.c:32:5: warning: 'av_register_all' is deprecated [-Wdeprecated-declarations]
+     av_register_all();
+     ^~~~~~~~~~~~~~~
+In file included from ./src/ffmpeg.c:2:0:
+./ffmpeg/include/libavformat/avformat.h:2025:6: note: declared here
+ void av_register_all(void);
+      ^~~~~~~~~~~~~~~
+./src/ffmpeg.c:34:5: warning: implicit declaration of function 'avdevice_register_all' [-Wimplicit-function-declaration]
+     avdevice_register_all();
+     ^~~~~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:98:9: warning: 'codec' is deprecated [-Wdeprecated-declarations]
+         if(format_ctx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO)
+         ^~
+In file included from ./src/ffmpeg.c:2:0:
+./ffmpeg/include/libavformat/avformat.h:877:21: note: declared here
+     AVCodecContext *codec;
+                     ^~~~~
+./src/ffmpeg.c:109:5: warning: 'codec' is deprecated [-Wdeprecated-declarations]
+     codec_ctx=format_ctx->streams[videoindex]->codec;
+     ^~~~~~~~~
+In file included from ./src/ffmpeg.c:2:0:
+./ffmpeg/include/libavformat/avformat.h:877:21: note: declared here
+     AVCodecContext *codec;
+                     ^~~~~
+./src/ffmpeg.c:132:5: warning: 'avpicture_get_size' is deprecated [-Wdeprecated-declarations]
+     out_buffer = (uint8_t *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV420P, width, height));
+     ^~~~~~~~~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:5449:5: note: declared here
+ int avpicture_get_size(enum AVPixelFormat pix_fmt, int width, int height);
+     ^~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:133:5: warning: 'avpicture_fill' is deprecated [-Wdeprecated-declarations]
+     avpicture_fill((AVPicture *)frame_yuv, out_buffer, AV_PIX_FMT_YUV420P, width, height);
+     ^~~~~~~~~~~~~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:5434:5: note: declared here
+ int avpicture_fill(AVPicture *picture, const uint8_t *ptr,
+     ^~~~~~~~~~~~~~
+./src/ffmpeg.c:193:13: warning: 'avcodec_decode_video2' is deprecated [-Wdeprecated-declarations]
+             ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, packet);
+             ^~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:4770:5: note: declared here
+ int avcodec_decode_video2(AVCodecContext *avctx, AVFrame *picture,
+     ^~~~~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:201:17: warning: 'avcodec_encode_video2' is deprecated [-Wdeprecated-declarations]
+                 ret = avcodec_encode_video2(h264codec_ctx, packet,frame_yuv, &got_picture);
+                 ^~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:5401:5: note: declared here
+ int avcodec_encode_video2(AVCodecContext *avctx, AVPacket *avpkt,
+     ^~~~~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:209:9: warning: 'av_free_packet' is deprecated [-Wdeprecated-declarations]
+         av_free_packet(packet);
+         ^~~~~~~~~~~~~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:4415:6: note: declared here
+ void av_free_packet(AVPacket *pkt);
+      ^~~~~~~~~~~~~~
+./src/ffmpeg.c: In function 'ffmpeg_decode':
+./src/ffmpeg.c:271:21: error: wrong type argument to unary exclamation mark
+   if(!vids_queue || !vids_queue[vid->id])
+                     ^
+./src/ffmpeg.c:290:3: warning: 'avcodec_decode_video2' is deprecated [-Wdeprecated-declarations]
+   ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, &packet);
+   ^~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:4770:5: note: declared here
+ int avcodec_decode_video2(AVCodecContext *avctx, AVFrame *picture,
+     ^~~~~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:316:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+     if(codec_ctx)
+     ^~
+./src/ffmpeg.c:319:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
+  img_convert_ctx = NULL;
+  ^~~~~~~~~~~~~~~
+./src/ffmpeg.c:328:9: warning: 'return' with a value, in function returning void
+  return (void *)0;
+         ^
+./src/ffmpeg.c:229:6: note: declared here
+ void ffmpeg_decode(rfb_display *vid)
+      ^~~~~~~~~~~~~
+make: *** [ffmpeg.o] Error 1

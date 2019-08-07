@@ -2,12 +2,14 @@
 #include "msg.h"
 #include "queue.h"
 
-/* h264 data queue */
+/* h264 data queu */
 unsigned char **vids_buf;
 QUEUE *vids_queue;
-static int total_connections = 0;
-
 rfb_request *request_ready = NULL;   //ready list head
+
+static int total_connections = 0;
+static int frame_count = 0;
+
 
 unsigned char read_msg_syn(unsigned char* buf)
 {
@@ -23,6 +25,19 @@ int read_msg_size(unsigned char * buf)
 {
     return *(int*)&buf[DATA_LEN_OFFSET];
 }
+
+void close_fd(int fd)
+{
+    if(fd)
+    {
+#ifdef _WIN32
+        closesocket(fd);
+#else
+        close(fd);
+#endif
+    }
+}
+
 
 int recv_msg(const int fd,char* buf, const int len)
 {
@@ -74,28 +89,19 @@ int send_msg(const int fd, const char *buf, const int len)
 
 void create_udp(char *ip, int port, rfb_display *display)
 {
-    int sockfd;
+	DEBUG("udp ip %s, port %d", ip, port);
+
+	int fd = -1;
+    int sock_opt = 0;
     struct sockaddr_in send_addr,recv_addr;
 
-    DEBUG("ip  %s, port %d", ip, port);
-
 #ifdef _WIN32
-    WSADATA wsData = {0};
-    if(0 != WSAStartup(0x202, &wsData))
-    {
-        DEBUG("WSAStartup  fail");
-        WSACleanup();
-        return -1;
-    }
     int socklen =  sizeof (struct sockaddr_in);
 #else
     socklen_t socklen = sizeof (struct sockaddr_in);
 #endif
-
-    int opt = 0;
-    /* 创建 socket 用于UDP通讯 */
-    sockfd = socket (AF_INET, SOCK_DGRAM, 0);
-    if (sockfd < 0)
+    fd = socket (AF_INET, SOCK_DGRAM, 0);
+    if(fd < 0)
     {
         DIE("socket creating err in udptalk");
     }
@@ -107,141 +113,136 @@ void create_udp(char *ip, int port, rfb_display *display)
         send_addr.sin_port = htons (port);
         send_addr.sin_addr.s_addr = inet_addr(ip);
     }
-    opt = 1;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR , (char *)&opt, sizeof(opt)) < 0)
+
+    sock_opt = 1;
+    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR , (char *)&sock_opt, sizeof(sock_opt)) < 0)
     {
-        DIE("setsockopt SO_REUSEADDR");
+        DIE("setsocksock_sock_sock_opt SO_REUSEADDR");
     }
 
-    opt = 521 * 1024;//设置为512K
-    if (setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, (char *)&opt, sizeof (opt)) == -1)
-    {
-        DEBUG("IP_MULTICAST_LOOP set fail!");
-    }
-
-    opt = 512 * 1024;//设置为512K
-    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (char *)&opt, sizeof (opt)) == -1)
+    sock_opt = 521 * 1024;//设置为512K
+    if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char *)&sock_opt, sizeof (sock_opt)) == -1)
     {
         DEBUG("IP_MULTICAST_LOOP set fail!");
     }
 
+    sock_opt = 512 * 1024;//设置为512K
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char *)&sock_opt, sizeof (sock_opt)) == -1)
+    {
+        DEBUG("IP_MULTICAST_LOOP set fail!");
+    }
     memset(&recv_addr, 0, sizeof(recv_addr));
     recv_addr.sin_family = AF_INET;
     recv_addr.sin_addr.s_addr = htonl (INADDR_ANY);
     recv_addr.sin_port = htons(port);
 
     /* 绑定自己的端口和IP信息到socket上 */
-    if (bind(sockfd, (struct sockaddr *) &recv_addr,sizeof (struct sockaddr_in)) == -1)
+    if (bind(fd, (struct sockaddr *) &recv_addr,sizeof (struct sockaddr_in)) == -1)
     {
         DIE("bind port %d err", port);
     }
 
-	if(display)
-	{
-    	display->fd = sockfd;
-    	display->port =  port;
-    	display->recv_addr = recv_addr;
-    	display->send_addr = send_addr;
+    if(display)
+    {
+        display->fd = fd;
+        display->port =  port;
+        display->recv_addr = recv_addr;
+        display->send_addr = send_addr;
 
-    	display->frame_size = 1024 * 1024 - 1;
-    	display->frame_pos = 0;
-	}
-	DEBUG("display->fd %d", display->fd);
+        display->frame_size = 1024 * 1024 - 1;
+        display->frame_pos = 0;
+    }
+    DEBUG("display->fd %d", display->fd);
 }
 
 
 int create_tcp()
 {
-    int fd, sock_opt = -1;
-    int on = 1 ;
+    int fd = -1, sock_opt = -1;
     int keepAlive = 1;      //heart echo open
     int keepIdle = 15;      //if no data come in or out in 15 seconds,send tcp probe, not send ping
     int keepInterval = 3;   //3seconds inteval
     int keepCount = 5;      //retry count
 
-
-#ifdef _WIN32
-    WSADATA wsData = {0};
-    if(0 != WSAStartup(0x202, &wsData))
+    fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (fd == -1)
     {
-        DEBUG("WSAStartup  fail");
-        WSACleanup();
-        return -1;
-    }
-    fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-    if( setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) !=0) goto end_out;
-
-#if 0
-	sock_opt = 1;
-	if(ioctlsocket(fd, FIONBIO, &sock_opt) == NO_ERROR)
-	{
-        DIE("can't set close-on-exec on server socket!");
-	}
-#endif
-	
-#else
-
-    fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (fd == -1) {
         DIE("unable to create socket");
     }
-    if (fcntl(fd, F_SETFD, 1) == -1) {
+
+    sock_opt = 1;
+    if( setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &sock_opt, sizeof(sock_opt)) !=0) goto end_out;
+
+#ifdef _WIN32
+#if 0
+    sock_opt = 1;
+    if(ioctlsocket(fd, FIONBIO, &sock_opt) == NO_ERROR)
+    {
         DIE("can't set close-on-exec on server socket!");
     }
-    if ((sock_opt = fcntl(fd, F_GETFL, 0)) < -1) {
+#endif
+#else
+    if (fcntl(fd, F_SETFD, 1) == -1)
+    {
         DIE("can't set close-on-exec on server socket!");
     }
-     if (fcntl(fd, F_SETFL, sock_opt | O_NONBLOCK) == -1) {
+    if ((sock_opt = fcntl(fd, F_GETFL, 0)) < -1)
+    {
+        DIE("can't set close-on-exec on server socket!");
+    }
+     if (fcntl(fd, F_SETFL, sock_opt | O_NONBLOCK) == -1)
+    {
         DIE("fcntl: unable to set server socket to nonblocking");
     }
-
     if( setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void*)&keepAlive, sizeof(keepAlive)) != 0) goto end_out;
     if( setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, (void*)&keepIdle, sizeof(keepIdle)) != 0) goto end_out;
     if( setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, (void *)&keepInterval, sizeof(keepInterval)) != 0) goto end_out;
-    if( setsockopt(fd, SOL_TCP, TCP_KEEPCNT, (void *)&keepCount, sizeof(keepCount)) != 0) goto end_out;
-
-    if( setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) !=0) goto end_out;
 #endif
-    return fd;
+	return fd;
 end_out:
-    close(fd);
-    return 0;
+    close_fd(fd);
+    return -1;
+
+
 }
 
 
 int bind_server(int fd, int port)
 {
-	DEBUG("server bind port %d", port);
-	
+
+    DEBUG("server bind port %d", port);
+
     struct sockaddr_in server_sockaddr;
     memset(&server_sockaddr, 0, sizeof server_sockaddr);
 
     server_sockaddr.sin_family = AF_INET;
     server_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_sockaddr.sin_port = htons(client_port);
+    server_sockaddr.sin_port = htons(port);
 
-     /* internet family-specific code encapsulated in bind_server()  */
+    /* internet family-specific code encapsulated in bind_server()  */
     if (bind(fd, (struct sockaddr *) &server_sockaddr,
-                sizeof (server_sockaddr)) == -1) {
+                sizeof (server_sockaddr)) == -1)
+    {
         DEBUG("unable to bind");
         goto end_out;
     }
 
         /* listen: large number just in case your kernel is nicely tweaked */
-    if (listen(fd, max_connections) == -1) {
+    if (listen(fd, max_connections) == -1)
+    {
         DEBUG("listen err");
         goto end_out;
     }
-    return 0;
 
+    return 0;
 end_out:
-    close(fd);
+    close_fd(fd);
     return -1;
 }
 
 void connect_server(int fd, const char *ip, int port)
 {
+    int count = 10;             //重连10次
     struct sockaddr_in client_sockaddr;
     memset(&client_sockaddr, 0, sizeof client_sockaddr);
 
@@ -253,8 +254,12 @@ void connect_server(int fd, const char *ip, int port)
     {
         DEBUG("connection failed reconnection after 1 seconds");
         sleep(1);
+        if(count --)
+        {
+            return -1;
+        }
     }
-    return;
+    return 0;
 }
 
 
@@ -329,19 +334,15 @@ int send_request(rfb_request *req)
 	return 0;
 }
 
-static int frame_count = 0;
 
 void h264_send_data(char *data, int len, int key_flag)
 {
-    //int num = (len + DATA_SIZE - 1)/ DATA_SIZE;
     int pending = len;
     int dataLen = 0;
     char *ptr = data;
     char buf[DATA_SIZE + 8] = {0};
     buf[0] = 0xff;
     buf[1] = 0xff;
-    //buf[2] = 0xff;
-    //buf[3] = 0xff;
     *(unsigned short *)(&buf[2]) = frame_count++;
     *(unsigned int *)(&buf[4]) = len;
     int first = 1;
@@ -367,8 +368,6 @@ void h264_send_data(char *data, int len, int key_flag)
         pending -= dataLen;
     }    
 }
-
-
 
 /**************client *******************/
 void client_tcp_loop(int sockfd)
@@ -479,11 +478,7 @@ run_end:
 		run_flag = 0;
 	if(current)
 		free(current);
-	closesocket(sockfd);
-	
-#ifdef _WIN32
-	WSACleanup();
-#endif
+	close_fd(sockfd);
 }
 
 
@@ -546,7 +541,7 @@ void client_udp_loop()
         }   
 #endif
     }    
-	closesocket(sockfd);
+	close_fd(sockfd);
 }
 
 void *thread_client_udp(void *param)
@@ -673,21 +668,18 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
         }
     }
 
-
-	for(i = 0; i< display_size; i++)
-	{
-		if(vids_buf[i])
-			free(vids_buf[i]);
-		if(clients[i].fd)
-			closesocket(clients[i].fd);
-		DEBUG("udp close fd %d", clients[i].fd);
-	}
-
-	if(vids_queue)
-		free(vids_queue);
-	if(vids_buf)
-		free(vids_buf);
 	DEBUG("server udp close end");
+
+    for(i = 0; i< display_size; i++)
+    {
+        if(vids_buf[i])
+            free(vids_buf[i]);
+        if(clients[i].fd)
+            close_fd(clients[i].fd);
+        DEBUG("udp close fd %d", clients[i].fd);
+    }
+
+
 }
 
 void create_h264_socket()
@@ -695,8 +687,8 @@ void create_h264_socket()
     int i, maxfd = -1;
     fd_set allset;
     FD_ZERO(&allset);
-    vids_queue = (QUEUE *)malloc(sizeof(QUEUE) * display_size);
-    vids_buf = (unsigned char **)malloc(display_size * sizeof(unsigned char *));
+    //vids_queue = (QUEUE *)malloc(sizeof(QUEUE) * display_size);
+    //vids_buf = (unsigned char **)malloc(display_size * sizeof(unsigned char *));
     DEBUG("display_size %d", display_size);
 
 	while(!displays)
@@ -707,12 +699,14 @@ void create_h264_socket()
     for(i = 0; i < display_size; i++)
     {
         create_udp(NULL, i + 1 + h264_port, &displays[i]);
+		DEBUG("");
         FD_SET(displays[i].fd, &allset);
         maxfd = maxfd > displays[i].fd ? maxfd : displays[i].fd;
-        vids_buf[i] = (unsigned char *)malloc(MAX_VIDSBUFSIZE * sizeof(unsigned char));
-        memset(vids_buf[i], 0, MAX_VIDSBUFSIZE);
+        //vids_buf[i] = (unsigned char *)malloc(MAX_VIDSBUFSIZE * sizeof(unsigned char));
+        //memset(vids_buf[i], 0, MAX_VIDSBUFSIZE);
         /* 创建窗口的对应队列 */
-        init_queue(&(vids_queue[i]), vids_buf[i], MAX_VIDSBUFSIZE);
+        //init_queue(&(vids_queue[i]), vids_buf[i], MAX_VIDSBUFSIZE);
+		DEBUG("");
     }
     server_udp_loop(display_size, maxfd, allset, displays);
 }
@@ -773,19 +767,19 @@ void server_tcp_loop(int listenfd)
             ret = fcntl(connfd,F_GETFL,0);
             if(ret < 0)
             {
-                close(connfd);
+                close_fd(connfd);
                 continue;
             }
             if(fcntl(connfd, F_SETFL, ret | O_NONBLOCK) <0)
             {
-                close(connfd);
+                close_fd(connfd);
                 continue;
             }
 
             /* recode client ip */
             if(inet_ntop(AF_INET,&cliaddr.sin_addr, conn->ip, sizeof(conn->ip)) == NULL)
             {
-                close(connfd);
+                close_fd(connfd);
                 free(conn);
                 continue;
             }
@@ -821,7 +815,7 @@ void server_tcp_loop(int listenfd)
                                     continue;
                             }
                             DEBUG("close fd %d", sockfd);
-                            closesocket(current->fd);
+                            close_fd(current->fd);
                             FD_CLR(current->fd, &allset);
                             current = remove_request(current);
                             continue;
@@ -831,7 +825,7 @@ void server_tcp_loop(int listenfd)
                             continue;
                         if(read_msg_syn(current->head_buf) != DATA_SYN)
                         {
-                            close(current->fd);
+                            close_fd(current->fd);
                             FD_CLR(current->fd, &allset);
                             current  = remove_request(current);
                             continue;
@@ -843,7 +837,7 @@ void server_tcp_loop(int listenfd)
 
                         if(current->data_size < 0 || current->data_size > CLIENT_BUF)
                         {
-                            close(current->fd);
+                            close_fd(current->fd);
                             FD_CLR(current->fd, &allset);
                             current = remove_request(current);
                             continue;
@@ -853,7 +847,7 @@ void server_tcp_loop(int listenfd)
                             current->data_buf = (unsigned char*)malloc(current->data_size + 1);
                            if(!current->data_buf)
                             {
-                                closesocket(current->fd);
+                                close_fd(current->fd);
                                 FD_CLR(current->fd, &allset);
                                 current = remove_request(current);
                                 continue;
@@ -870,8 +864,8 @@ void server_tcp_loop(int listenfd)
                                 if(errno == EINTR || errno == EAGAIN)
                                     continue;
                             }
-                            DEBUG("close fd %d\n", sockfd);
-                            closesocket(current->fd);
+                            DEBUG("close fd %d", sockfd);
+                            close_fd(current->fd);
                             FD_CLR(current->fd, &allset);
                             current = remove_request(current);
                             continue;
@@ -881,8 +875,8 @@ void server_tcp_loop(int listenfd)
                         {
                             if(process_server_msg(current))
                             {
-                                DEBUG("close fd %d\n", sockfd);
-                                close(current->fd);
+                                DEBUG("close fd %d", sockfd);
+                                close_fd(current->fd);
                                 FD_CLR(current->fd, &allset);
                                 current = remove_request(current);
                                 continue;
@@ -899,7 +893,7 @@ void server_tcp_loop(int listenfd)
                         {
                             /** wow , something error **/
                             DEBUG("current->pos > current->size");
-                            close(current->fd);
+                            close_fd(current->fd);
                             FD_CLR(current->fd, &allset);
                             current =  remove_request(current);
                             continue;
@@ -908,8 +902,8 @@ void server_tcp_loop(int listenfd)
                 }
                 else
                 {
-                    DEBUG("close fd %d\n", sockfd);
-                    close(current->fd);
+                    DEBUG("close fd %d", sockfd);
+                    close_fd(current->fd);
                     FD_CLR(current->fd, &allset);
                     current = remove_request(current);
                     continue;
@@ -929,18 +923,50 @@ run_end:
 		DEBUG("while current");
 		if(current->fd)
 		{
-			closesocket(current->fd);
+			close_fd(current->fd);
 			DEBUG("close client fd %d", current->fd);
 		}
 		current = remove_request(current);
 	}
-
-	closesocket(listenfd);
+	request_ready = NULL;
+	close_fd(listenfd);
 	DEBUG("server_tcp end");
+}
+
+
+
+void load_wsa()
+{
 #ifdef _WIN32
-	WSACleanup();
+    WSADATA wsData = {0};
+    if(0 != WSAStartup(0x202, &wsData))
+    {
+        DEBUG("WSAStartup  fail");
+        WSACleanup();
+        return -1;
+    }
 #endif
 }
+
+/*
+ * 等线程结束后最后销毁公共变量
+ */
+void destroy_socket()
+{
+    if(vids_buf)
+        free(vids_buf);
+    if(vids_queue)
+        free(vids_queue);
+	vids_buf = NULL;
+	vids_queue = NULL;
+	request_ready = NULL;
+
+#ifdef _WIN32
+    WSACleanup();
+#endif
+	DEBUG("destroy_socket end");
+}
+
 
 void *thread_server_tcp(void *param)
 {

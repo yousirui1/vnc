@@ -14,7 +14,7 @@ void init_logs()
 		fp_err = fopen(err_name, "wb");
         if(!fp_err)
         {
-			DIE();
+			DIE("fopen err_name %s", err_name);
         }
     }
     if(log_name)
@@ -22,7 +22,7 @@ void init_logs()
 		fp_log = fopen(log_name, "wb");
         if(!fp_log)
         {
-			DIE();
+			DIE("fopen log_name %s", log_name);
         }
     }
 }

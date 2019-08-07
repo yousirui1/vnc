@@ -16,12 +16,10 @@ static stop_callback call_back;
 
 CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
 {
-	
+	run_flag = 1;
+	server_flag = 1;
 
 	init_logs();
-	server_flag = 1;
-	run_flag = 1;
-
 	client_port = clientPort;
 	control_port = controlPort;
 	h264_port = dataPort;
@@ -33,6 +31,7 @@ CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int contro
 
 	call_back = call;
 	init_server();
+
 	return 0;
 }
 
@@ -57,9 +56,9 @@ void stop_server()
 */
 CAPTUREANDCAST_API int StopMonitorServer()
 {
-	do_exit();
 	run_flag = 0;
-	//close_logs();
+    do_exit();
+	close_logs();
 	return 0;
 }
 

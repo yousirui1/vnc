@@ -33,7 +33,7 @@ cppobj = VNCHooks.o
 all: $(exeobj)
 
 
-DEFINES := -D DLL
+DEFINES := #-D DLL
 
 ifeq ($(TARGET_ARCH), arm)
 CFLAGS = -I. -I./include/ -I./SDL/include -I./ffmpeg/include \
