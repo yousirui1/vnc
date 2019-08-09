@@ -608,6 +608,7 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 
 				if(DONE == status)
 				{
+					DEBUG("DONE status close %d", i);
 					if(clients[i].req)
 						close_fd(clients[i].req->fd);
 				}

@@ -80,6 +80,7 @@ static int recv_options(rfb_request *req)
 
 static int send_control(rfb_request *req)
 {
+	DEBUG("send_control");
 	int ret = -1;
 	set_request_head(req, 0x02, sizeof(rfb_format));	
 	req->data_buf = malloc(sizeof(rfb_format) + 1);	
@@ -91,6 +92,7 @@ static int send_control(rfb_request *req)
     fmt->play_flag = 0x02;
     fmt->bps = 4000000;
     fmt->fps = 22;
+	fmt->data_port = control_display->fmt.data_port;
 
 	ret = send_request(req);		
 	free(req->data_buf);
@@ -109,15 +111,18 @@ static int send_play(rfb_request *req)
 	rfb_format *fmt = (rfb_format *)&req->data_buf[0];
 	fmt->play_flag = 0x01;
 
+	DEBUG("fmt->width %d fmt->height %d", fmt->width, fmt->height );
 	ret = send_request(req);		
 	free(req->data_buf);
     req->data_buf = NULL;
 	req->status = DONE;
+	DEBUG("req->play_id %d", req->display_id);
     return ret;
 }
 
 static int send_done(rfb_request *req)
 {
+	DEBUG("send_done ");
 	int ret = -1;
 	req->status = OPTIONS;
 	set_request_head(req, 0x02, sizeof(rfb_format));	
@@ -126,12 +131,14 @@ static int send_done(rfb_request *req)
 	ret = send_request(req);		
 	free(req->data_buf);
     req->data_buf = NULL;
+	DEBUG("req->play_id %d", req->display_id);
     return ret;
 }
 
 
 int process_server_msg(rfb_request *req)
 {
+	DEBUG("process_server_msg");
     int ret = 0;
     switch(req->status)
     {

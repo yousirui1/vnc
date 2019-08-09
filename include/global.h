@@ -71,6 +71,7 @@ extern QUEUE *vids_queue;
 extern int display_size;
 extern rfb_display client_display ;
 extern int screen_height, screen_width;
+extern rfb_display *control_display;
 
 void update_texture(AVFrame *frame_yuv, SDL_Rect *rect);
 void clear_texture();

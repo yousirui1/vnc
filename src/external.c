@@ -19,6 +19,8 @@ CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int contro
 	server_flag = 1;
 	run_flag = 1;
 
+	status = NORMAL;
+
 	init_logs();
 	client_port = clientPort;
 	control_port = controlPort;
@@ -64,7 +66,8 @@ CAPTUREANDCAST_API int DisconnectAllClient()
 
 CAPTUREANDCAST_API int ExitControl()
 {
-
+	switch_mode(0);
+	return 0;
 }
 
 

@@ -36,8 +36,6 @@ rfb_display *control_display = NULL;
 pthread_t *pthread_decodes = NULL;
 pthread_mutex_t renderer_mutex;
 
-
-
 static void send_control(char *buf, int data_len, int cmd)
 {
 	if(!control_display || status != CONTROL)
@@ -179,29 +177,94 @@ static void refresh_loop_wait_event(SDL_Event *event)
         SDL_PumpEvents();
     }
 }
-
-
-void start_display(rfb_request *req)
+void start_display(rfb_display *cli)
 {
-	//state = DISPLAY;
-	
-	DEBUG("total %d", total_connections);
-
-	req->data_buf = malloc(sizeof(rfb_format) + 1);	
-	memset(req->data_buf, 0, sizeof(rfb_format));
-	rfb_format *fmt = (rfb_format *)&req->data_buf[0];	
-	
-	displays[0].req = req;
-	displays[0].play_flag = 1;
-	fmt->width = vids_width;
-    fmt->height = vids_height;
-    fmt->play_flag = 0x01;
-    fmt->data_port = 0 + h264_port + 1;
-    req->display_id = 0;
-	req->status = PLAY;
-	process_server_msg(req);
+	status = PLAY;
+	cli->req->status = PLAY;
+	DEBUG("cli->req->status %d", cli->req->status);
+	cli->req->data_buf = malloc(sizeof(rfb_format) + 1);	
+	cli->fmt.play_flag = cli->play_flag = 1;
+	memset(cli->req->data_buf, 0, sizeof(rfb_format));
+	rfb_format *fmt = (rfb_format *)&(cli->req->data_buf[0]);	
+	memcpy(fmt, &(cli->fmt), sizeof(rfb_format));
+	DEBUG("cli->req->status %d", cli->req->status);
+	process_server_msg(cli->req);
 }
 
+void stop_display()
+{
+	int i;
+	for(i = 0; i < display_size; i++)
+	{
+		if(displays[i].play_flag == 1)
+		{
+			if(displays[i].req)
+				process_server_msg(displays[i].req);
+			displays[i].play_flag = 0;
+		}
+	}
+	usleep(200000);   //等待200ms 客户端结束 
+	status = DONE;	//在检测到udp 有数据就断开连接保证下一页数据不被混杂
+	usleep(200000);   //等待200ms 客户端断开
+	clear_texture();
+}
+
+void revert_display()
+{
+	int i;
+	for(i = 0; i < display_size; i++)
+	{
+		if(displays[i].play_flag == 0)
+		{
+			if(displays[i].req)
+			{
+				start_display(&displays[i]);
+				DEBUG(" process_server_msg %d", i);
+			}
+			displays[i].play_flag = 1;
+		}
+	}
+}
+
+void start_control(int id)
+{
+	if(!displays[id].req )
+		return;	
+	DEBUG("start_control");
+	status = CONTROL;
+	control_display = &displays[id];
+	control_display->fmt.play_flag = control_display->play_flag = 2;    //控制状态
+	displays[id].req->status = CONTROL;
+	process_server_msg(displays[id].req);
+    clear_texture();
+}
+
+void stop_control()
+{
+	control_display->fmt.play_flag = control_display->play_flag = 0;    //控制状态
+	control_display->req->status = DONE;
+	process_server_msg(control_display->req);
+    clear_texture();
+	usleep(200000);
+}
+
+
+void switch_mode(int id)
+{
+    if(displays[id].play_flag == 1)
+    {
+        DEBUG("switch control");
+		stop_display();	
+		start_control(id);
+        loss_flag = 1;
+    }
+    else if(status == CONTROL)
+    {
+        DEBUG("switch display");
+		stop_control();
+		revert_display();		
+    }
+}
 
 void close_display()
 {
@@ -217,11 +280,9 @@ void close_display()
 			displays[i].play_flag = 0;
 		}
 	}
-	usleep(50000);   //等待500ms 客户端结束 
-	status = DONE;	//在检测到udp 有数据就断开连接保证下一页数据不被混杂
-	usleep(50000);   //等待500ms 客户端结束 
 }
 
+#if 0
 void control_msg(rfb_request *req)
 {
 	switch(read_msg_order(req->head_buf))
@@ -237,6 +298,68 @@ void control_msg(rfb_request *req)
 		case COPY_FILE:
 			break;
 	}
+}
+#endif
+
+void control_msg(rfb_request *req)
+{
+    switch(read_msg_order(req->head_buf))
+    {
+        case 0x03: //mouse
+        {
+            rfb_pointevent *point = (rfb_pointevent *)&(req->data_buf[0]);
+
+            DWORD flags = MOUSEEVENTF_ABSOLUTE;
+            DWORD wheel_movement = 0;
+            flags |= MOUSEEVENTF_MOVE;
+
+            if(point->mask & MOUSE_LEFT_DOWN)
+            {
+                flags |= MOUSEEVENTF_LEFTDOWN;
+            }
+            if(point->mask & MOUSE_LEFT_UP)
+            {
+                flags |= MOUSEEVENTF_LEFTUP;
+            }
+            if(point->mask & MOUSE_RIGHT_DOWN)
+            {
+                flags |= MOUSEEVENTF_RIGHTDOWN;
+            }
+            if(point->mask & MOUSE_RIGHT_UP)
+            {
+                flags |= MOUSEEVENTF_RIGHTUP;
+            }
+
+            if(point->wheel)
+            {
+                flags |= MOUSEEVENTF_WHEEL;
+                if(point->wheel > 0)
+                    wheel_movement = (DWORD)+120;
+                else
+                    wheel_movement = (DWORD)-120;
+            }
+
+            /* 计算相对位置 */
+            unsigned long x = (point->x * 65535) / (vids_width )  * (screen_width / screen_width);
+            unsigned long y = (point->y * 65535) / (vids_height ) * (screen_height /screen_height);
+            //DEBUG("x %ld y %ld ", x, y);
+
+            mouse_event(flags, (DWORD)x, (DWORD)y, wheel_movement, 0);
+            //mouse_event(flags, 1000 * 65535 / 1920, 500 * 65535 / 1080, wheel_movement, 0);
+            break;
+        }
+        case 0x04:  //keyboard
+        {
+            rfb_keyevent *keyboard = (rfb_keyevent *)&(req->data_buf[0]);
+            //keycode2virtual(keyboard);
+        }
+        case 0x05: //copy text
+
+
+        case 0x06:  //copy file
+            break;
+
+    }
 }
 
 
@@ -274,7 +397,7 @@ void event_loop()
 	
 				if(area_id == get_area(event.motion.x, event.motion.y))
 				{
-					//switch_mode(area_id);
+					switch_mode(area_id);
 				}
 				area_id = get_area(event.motion.x, event.motion.y);
 				DEBUG("area_id %d", area_id);
@@ -287,6 +410,7 @@ void event_loop()
 			{
 				point.mask |= (1<<3);
 			}
+			
 		}
 		if(event.type == SDL_MOUSEBUTTONUP)
 		{
@@ -306,6 +430,7 @@ void event_loop()
             old_x = point.x;
         	old_y = point.y;
             send_control((char *)&point, sizeof(rfb_pointevent), MOUSE);
+			point.mask = 0;
 		}
 		if(SDL_KEYDOWN == event.type)
 		{
@@ -313,6 +438,12 @@ void event_loop()
             key.mod = event.key.keysym.mod; //*(SDL_GetKeyName(event.key.keysym.sym));
             key.down = 1;
             send_control((char *)&key, sizeof(rfb_keyevent), KEYBOARD);
+
+			if(event.key.keysym.sym == SDLK_ESCAPE)
+			{
+				DEBUG("end control");	
+				switch_mode(0);
+			}
 		}	
 		if(SDL_KEYUP == event.type)
 		{

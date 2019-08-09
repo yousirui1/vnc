@@ -175,7 +175,7 @@ void ffmpeg_encode(rfb_format *fmt)
     }
 	while(run_flag)
     {
-		if(client_display.play_flag == -1)
+		if(client_display.play_flag == 0)
 		{
 			DEBUG("client encode end");
 			break;

@@ -35,6 +35,7 @@ static int recv_options(rfb_request *req)
 		}
 		else
 		{
+			DEBUG("OPTIONS");
 			req->status = OPTIONS;
 		}
     }
@@ -138,7 +139,7 @@ int process_client_msg(rfb_request *req)
 			if(read_msg_order(req->head_buf) == 0x02)
 				ret = recv_options(req);
 			else	
-				;//ret = control_msg(req);
+				ret = control_msg(req);
         case DONE:
 
         case DEAD:
