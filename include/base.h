@@ -87,13 +87,14 @@
 #define REQUEST_TIMEOUT             60
 
 /* req->status */
-#define READ_HEADER             0
-#define LOGIN                   1
-#define OPTIONS                 2
-#define PLAY					3
-#define CONTROL					4
-#define DONE                    5
-#define DEAD                    6
+#define NORMAL					0
+#define READ_HEADER             1
+#define LOGIN                   2
+#define OPTIONS                 3
+#define PLAY					4
+#define CONTROL					5
+#define DONE                    6
+#define DEAD                    7
 
 
 

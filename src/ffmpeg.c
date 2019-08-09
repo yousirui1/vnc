@@ -279,7 +279,11 @@ void ffmpeg_decode(rfb_display *vid)
 			packet.size = index->uiSize;
 			packet.data = index->pBuf;
 	        de_queuePos(&vids_queue[vid->id]);
-
+		}
+		else
+		{
+			sleep(1);
+			continue;
 		}
 
 		ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, &packet);

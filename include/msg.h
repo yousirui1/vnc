@@ -6,6 +6,15 @@
 #define HEAD_LEN 8
 #define sz_verformat 20
 
+enum control_msg_type{
+	MOUSE = 0x03,
+	KEYBOARD,
+	COPY_TEXT,
+	COPY_FILE	
+};
+
+
+
 struct rfb_request
 {
     int fd;                     /* client's socket fd */

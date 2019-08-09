@@ -5,7 +5,7 @@ rfb_request *client_req = NULL;
 rfb_display client_display = {0};
 
 static int server_s = -1;
-
+static pthread_t pthread_tcp, pthread_display;
 
 static int recv_options(rfb_request *req)
 {
@@ -138,7 +138,7 @@ int process_client_msg(rfb_request *req)
 			if(read_msg_order(req->head_buf) == 0x02)
 				ret = recv_options(req);
 			else	
-				ret = control_msg(req);
+				;//ret = control_msg(req);
         case DONE:
 
         case DEAD:
@@ -149,18 +149,32 @@ int process_client_msg(rfb_request *req)
 }
 
 
+void exit_client()
+{
+    void *tret = NULL;
+    pthread_join(pthread_display, (void**)tret);  //等待线程同步
+    pthread_join(pthread_tcp, (void**)tret);  //等待线程同步
+	DEBUG("pthread_exit client tcp");
+}
 
 void init_client()
 {
     int ret = -1;
-    pthread_t pthread_tcp, pthread_display;
+
+#ifdef _WIN32
+    load_wsa();
+#endif
 	
     server_s = create_tcp();
     if(!server_s)
     {
         DIE("create tcp err");
     }
-    connect_server(server_s, server_ip, server_port);
+    ret = connect_server(server_s, server_ip, server_port);
+	if(0 != ret)
+	{
+		return;
+	}
 	
 	client_req = new_request();
 	if(!client_req)
@@ -189,9 +203,4 @@ void init_client()
 		DIE("login_server err");
 	}
 
-#ifndef DLL
-    void *tret = NULL;
-    pthread_join(pthread_tcp, (void**)tret);  //等待线程同步
-	DEBUG("pthread_exit client tcp");
-#endif
 }

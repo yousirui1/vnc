@@ -19,6 +19,10 @@ static int recv_login(rfb_request *req)
 		req->status = OPTIONS;
 		return send_request(req);
 	}
+    else
+    {
+		return -1;
+    }
 }
 
 static int recv_options(rfb_request *req)
@@ -32,12 +36,18 @@ static int recv_options(rfb_request *req)
 		
 		fmt->play_flag = 0;
 		fmt->data_port = 0;
-		
+	
 		while(!displays)
 		{
 			usleep(2000);
 		}	
-
+		
+		if(status == CONTROL)
+		{
+			return send_request(req);	
+		}
+	
+	
 		for(i = 0; i < display_size; i++)   //ready play
         {
             if(!displays[i].play_flag)      //存在空闲的分屏, 发送play命令
@@ -54,167 +64,96 @@ static int recv_options(rfb_request *req)
                 break;
             }
         }
-        req->status = DONE;
+
+		if(fmt->play_flag)
+		{
+        	req->status = DONE;
+			status = PLAY;
+		}
         return send_request(req);
 	}
+	else
+	{
+		return -1;	
+	}
 }
 
-
-static int send_options(rfb_request *req, rfb_format *_fmt)
+static int send_control(rfb_request *req)
 {
 	int ret = -1;
-	set_request_head(req, 0x02, sizeof(rfb_format));
-	req->data_buf = malloc(sizeof(rfb_format) + 1);
-	rfb_format *fmt = (rfb_format *)&req->data_buf[0];	
+	set_request_head(req, 0x02, sizeof(rfb_format));	
+	req->data_buf = malloc(sizeof(rfb_format) + 1);	
+	memset(req->data_buf, 0, sizeof(rfb_format));
+	rfb_format *fmt = (rfb_format *)&req->data_buf[0];
 
-	memcpy(fmt, _fmt, sizeof(rfb_format));
+	fmt->width = screen_width;
+    fmt->height = screen_height;
+    fmt->play_flag = 0x02;
+    fmt->bps = 4000000;
+    fmt->fps = 22;
 
-	ret = send_request(req);
+	ret = send_request(req);		
 	free(req->data_buf);
-	req->data_buf = NULL;
-	return ret;
+    req->data_buf = NULL;
+	req->status = DONE;
+    return ret;
 }
 
 
-
-void pause_vids(rfb_display *cli)
+static int send_play(rfb_request *req)
 {
-	cli->fmt.play_flag = cli->play_flag = -1;    //暂停状态 
-	send_options(cli->req, &(cli->fmt));
+	int ret;
+	req->status = DONE;
+	set_request_head(req, 0x02, sizeof(rfb_format));	
+
+	rfb_format *fmt = (rfb_format *)&req->data_buf[0];
+	fmt->play_flag = 0x01;
+
+	ret = send_request(req);		
+	free(req->data_buf);
+    req->data_buf = NULL;
+	req->status = DONE;
+    return ret;
 }
 
-
-void pause_all_vids()
+static int send_done(rfb_request *req)
 {
-	int i = 0;
-	for(i = 0; i < display_size; i++)
-	{
-		if(displays[i].play_flag == 1)
-		{
-			pause_vids(&displays[i]);
-		}
-	}
+	int ret = -1;
+	req->status = OPTIONS;
+	set_request_head(req, 0x02, sizeof(rfb_format));	
+	req->data_buf = malloc(sizeof(rfb_format) + 1);	
+	memset(req->data_buf, 0, sizeof(rfb_format));
+	ret = send_request(req);		
+	free(req->data_buf);
+    req->data_buf = NULL;
+    return ret;
 }
-
-void start_control(rfb_display *cli)
-{
-	rfb_format fmt = {0};
-
-	fmt.width = screen_width;
-	fmt.height = screen_height;
-	fmt.play_flag = 0x02;
-	fmt.data_port = cli->fmt.data_port;
-	fmt.bps = 4000000;
-	fmt.fps = 25;
-
-	cli->fmt.play_flag = cli->play_flag = 2;    //控制状态
-	send_options(cli->req, &(fmt));
-	clear_texture();
-}
-
-void stop_control(rfb_display *cli)
-{
-	cli->fmt.play_flag = cli->play_flag = -1;    //控制状态
-	send_options(cli->req, &(cli->fmt));
-	clear_texture();
-}
-
-void revert_vids(rfb_display *cli)
-{
-	cli->fmt.play_flag = cli->play_flag = 1;    //暂停状态 
-	send_options(cli->req, &(cli->fmt));
-}
-
-void revert_all_vids()
-{
-	int i = 0;
-	for(i = 0; i < display_size; i++)
-	{
-		if(displays[i].play_flag == -1)
-		{
-			revert_vids(&displays[i]);
-		}
-	}
-}
-
-
-
-
-
-#if 0
-void pause_vids(rfb_display *cli)
-{
-	cli->fmt.play_flag = cli->play_flag = -1;    //暂停状态 
-	send_options(cli->req, &(cli->fmt));
-}
-
-void pause_all_vids()
-{
-	int i = 0;
-	for(i = 0; i < display_size; i++)
-	{
-		if(displays[i].play_flag == 1)
-		{
-			pause_vids(displays[i]);
-		}
-	}
-}
-
-void start_control(rfb_display *cli)
-{
-	cli->fmt.width = screen_width;
-	cli->fmt.height = screen_height;
-	cli->fmt.data_port = h264_port + 1;
-	cli->fmt.play_flag = 0x02;
-	cli->fmt.bps = 4000000;
-	cli->fmt.fps = 25;
-
-	cli->fmt.play_flag = cli->play_flag = 2;    //控制状态
-	send_options(cli->req, &(cli->fmt));
-	clear_texture();
-}
-
-
-void play_vids(rfb_display *cli)
-{
-	cli->fmt.play_flag = cli->play_flag = -1;    //暂停状态 
-	send_options(cli->req, &(cli->fmt));
-}
-
-
-void revert_all_vids()
-{
-	int i = 0;
-	for(i = 0; i < display_size; i++)
-	{
-		if(displays[i].play_flag == -1)
-		{
-			play_vids(displays[i]);
-		}
-	}
-}
-#endif
-
 
 
 int process_server_msg(rfb_request *req)
 {
-	int ret = 0;
-	switch(req->status)
+    int ret = 0;
+    switch(req->status)
     {
+		case NORMAL:
         case READ_HEADER:
         case LOGIN:
             ret = recv_login(req);
             break;
-        case OPTIONS:
-		case PLAY:
+        case OPTIONS:					//被动请求开始显示
             ret = recv_options(req);
             break;
-		case CONTROL:
-			//ret = control_msg(req);	
+        case PLAY:						//主动要求显示
+			ret = send_play(req);
+			break;
+        case CONTROL:
+            ret = send_control(req);
+			break;
         case DONE:
-
+            ret = send_done(req);
+			break;
         case DEAD:
+
         default:
             break;
     }
@@ -278,30 +217,4 @@ void exit_server()
 }
 
 
-
-
-#if 0
-void stop_control(rfb_request *req)
-{
-	pause_vids(req);
-}
-#endif
-
-
-#if 0
-void start_control(rfb_request *req)
-{
-	rfb_format fmt = {0};
-	fmt.width = screen_width;
-	fmt.height = screen_height;
-	fmt.data_port = h264_port + 1;
-	fmt.play_flag = 0x02;
-	fmt.bps = 4000000;
-	fmt.fps = 25;
-
-	pause_all_vids();
-	send_options(req, &fmt);
-	clear_texture();
-}
-#endif
 

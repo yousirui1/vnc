@@ -1,5 +1,4 @@
 #include "base.h"
-#include "VNCHooks.h"
 
 /* config.ini */
 int server_flag = 0;
@@ -9,6 +8,10 @@ int default_quality = 0, default_fps = 0;
 int max_connections = -1; 
 char *server_ip = NULL;
 int run_flag = 0;
+int status = NORMAL;
+time_t last_time;
+time_t current_time;
+
 
 void parse_options()
 {  
@@ -63,8 +66,8 @@ void do_exit()
     }
     else
     {
-        //exit_client();
-    }
+        exit_client();
+	}
 
 }
 
@@ -75,8 +78,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 int main(int argc, char *argv[])
 #endif
 {
-	while(1)
-	{
+	(void) time(&current_time);	
+
 	run_flag = 1;
 
     init_logs();
@@ -91,11 +94,9 @@ int main(int argc, char *argv[])
     {
         init_client();
     }
-	close_logs();
 	
-	//atexit(do_exit);
 	do_exit();
-	}
+	close_logs();
 	
 
 	return 0;

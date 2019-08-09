@@ -7,7 +7,7 @@ unsigned char **vids_buf;
 QUEUE *vids_queue;
 rfb_request *request_ready = NULL;   //ready list head
 
-static int total_connections = 0;
+int total_connections = 0;
 static int frame_count = 0;
 
 
@@ -240,7 +240,7 @@ end_out:
     return -1;
 }
 
-void connect_server(int fd, const char *ip, int port)
+int connect_server(int fd, const char *ip, int port)
 {
     int count = 10;             //重连10次
     struct sockaddr_in client_sockaddr;
@@ -254,7 +254,7 @@ void connect_server(int fd, const char *ip, int port)
     {
         DEBUG("connection failed reconnection after 1 seconds");
         sleep(1);
-        if(count --)
+        if(!count--)
         {
             return -1;
         }
@@ -600,68 +600,35 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
                 continue;
             if(FD_ISSET(sockfd, &fds))
             {
-            	ret = recvfrom(sockfd, (char *)clients[i].frame_buf + clients[i].frame_pos, clients[i].frame_size - clients[i].frame_pos, 0,
+            	ret = recvfrom(sockfd, (char *)clients[i].frame_buf + clients[i].frame_pos, MAX_VIDSBUFSIZE, 0,
                     (struct sockaddr*)&(clients[i].recv_addr), &socklen);
 
 				if(ret < 0)
 					continue;
+
+				if(DONE == status)
+				{
+					if(clients[i].req)
+						close_fd(clients[i].req->fd);
+				}
 	
 	            tmp = &(clients[i].frame_buf[clients[i].frame_pos]);
 	            clients[i].frame_pos += ret;
-	            if(tmp[0] == 0xff && tmp[1] == 0xff)
-	            {
-#if 0
-					if(total_size == 0)
-					{
-	                   	total_size = *((unsigned int *)&tmp[4]);
-						continue;
-					}	
 
-					if(clients[i].frame_pos == total_size + 8)
-					{
-						total_size = 0;
-						DEBUG("en_queue");
-						en_queue(&vids_queue[i], clients[i].frame_buf + 8, clients[i].frame_pos - 8, 0x0);
-	                    clients[i].frame_pos = 0;
-	                    //clients[i].frame_size = 0;
-	                    clients[i].current_count = 0;
-					}
-					if(clients[i].frame_pos > total_size + 8)
-					{
-						DEBUG("clients[i].frame_pos %d> total_size + 8 %d", clients[i].frame_pos, total_size +8);
-						total_size = 0;
-	                    clients[i].frame_pos = 0;
-	                    //clients[i].frame_size = 0;
-	                    clients[i].current_count = 0;
-					}
-#else
-	               count = *((unsigned short *)&tmp[2]);
-	               if(count != clients[i].current_count)
-	               {
-	                   if(clients[i].current_count == 0)
-	                   {
-	                       clients[i].current_count = count;
-	                       continue;
-	                   }
-	                   total_size = *((unsigned int *)&tmp[4]);
-	                   en_queue(&vids_queue[i], clients[i].frame_buf + 8,  clients[i].frame_pos - ret - 8, 0x0);
-	                   memcpy(clients[i].frame_buf, tmp, ret);
-	                   clients[i].frame_pos = ret;
-	                   clients[i].current_count = count;
-	               }
-	               else
-	               {
-	                   if(clients[i].frame_pos == clients[i].frame_size + 8)
-	                   {
-						   DEBUG("en_queue");
-	                       en_queue(&vids_queue[i], clients[i].frame_buf + 8, offset - 8, 0x0);
-	                       clients[i].frame_pos = 0;
-	                       clients[i].frame_size = 0;
-	                       clients[i].current_count = 0;
-	                   }
-	               }
-#endif
-	          	}
+				if(tmp[0] == 0xff && tmp[1] == 0xff)
+				{
+	            	clients[i].frame_size = *((unsigned int *)&tmp[4]);
+				}
+				if(clients[i].frame_pos == clients[i].frame_size + 8)
+				{
+	               	en_queue(&vids_queue[i], clients[i].frame_buf + 8,  clients[i].frame_pos - 8, 0x0);
+					clients[i].frame_pos = 0;
+
+				}
+				else if(clients[i].frame_pos > clients[i].frame_size + 8)
+				{
+					clients[i].frame_pos = 0;
+				}
 				if(--nready <= 0)
 	              break;
 	       }
@@ -695,18 +662,11 @@ void create_h264_socket()
 	{
 		usleep(10000);
 	}
-
     for(i = 0; i < display_size; i++)
     {
         create_udp(NULL, i + 1 + h264_port, &displays[i]);
-		DEBUG("");
         FD_SET(displays[i].fd, &allset);
         maxfd = maxfd > displays[i].fd ? maxfd : displays[i].fd;
-        //vids_buf[i] = (unsigned char *)malloc(MAX_VIDSBUFSIZE * sizeof(unsigned char));
-        //memset(vids_buf[i], 0, MAX_VIDSBUFSIZE);
-        /* 创建窗口的对应队列 */
-        //init_queue(&(vids_queue[i]), vids_buf[i], MAX_VIDSBUFSIZE);
-		DEBUG("");
     }
     server_udp_loop(display_size, maxfd, allset, displays);
 }

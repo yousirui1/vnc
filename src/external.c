@@ -16,8 +16,8 @@ static stop_callback call_back;
 
 CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
 {
-	run_flag = 1;
 	server_flag = 1;
+	run_flag = 1;
 
 	init_logs();
 	client_port = clientPort;
@@ -31,19 +31,8 @@ CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int contro
 
 	call_back = call;
 	init_server();
-
 	return 0;
 }
-
-
-
-
-void stop_server()
-{
-	call_back();
-}
-
-
 
 /*
 停止监控服务（教师端调用）
@@ -56,11 +45,30 @@ void stop_server()
 */
 CAPTUREANDCAST_API int StopMonitorServer()
 {
+	DEBUG("StopMonitorServer");
 	run_flag = 0;
     do_exit();
-	close_logs();
+	DEBUG("do_exit");
 	return 0;
 }
+
+
+
+CAPTUREANDCAST_API int DisconnectAllClient()
+{
+	DEBUG("DisconnectAllClient");
+	close_display();	
+	return 0;		
+}
+
+
+CAPTUREANDCAST_API int ExitControl()
+{
+
+}
+
+
+
 
 
 /*
@@ -139,7 +147,11 @@ CAPTUREANDCAST_API int GetPageCount()
 
 
 
-
+void stop_server()
+{
+	if(call_back)
+		call_back();
+}
 
 
 

@@ -1,4 +1,99 @@
-File: ./src/main.c, Line: 00033: 
+File: ./src/main.c, Line: 00036: 
 programe server: 
- client_port 22000, control_port 23000, h264_port 23001, window_flag 1, window_size 2,
+ client_port 22000, control_port 23000, h264_port 23001, window_flag 1, window_size 3,
 File: ./src/socket.c, Line: 00213: server bind port 22000
+File: ./src/display.c, Line: 00426: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00947: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00970: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00659: display_size 9
+File: ./src/display.c, Line: 00354: create window 
+File: ./src/display.c, Line: 00390: Failed to initialize a hardware accelerated renderer: 
+File: ./src/display.c, Line: 00396: Initialized software renderer.
+File: ./src/socket.c, Line: 00092: udp ip (null), port 23002
+File: ./src/socket.c, Line: 00155: display->fd 900
+File: ./src/socket.c, Line: 00092: udp ip (null), port 23003
+File: ./src/socket.c, Line: 00155: display->fd 908
+File: ./src/socket.c, Line: 00092: udp ip (null), port 23004
+File: ./src/socket.c, Line: 00155: display->fd 912
+File: ./src/socket.c, Line: 00092: udp ip (null), port 23005
+File: ./src/socket.c, Line: 00155: display->fd 932
+File: ./src/socket.c, Line: 00092: udp ip (null), port 23006
+File: ./src/socket.c, Line: 00155: display->fd 928
+File: ./src/socket.c, Line: 00092: udp ip (null), port 23007
+File: ./src/socket.c, Line: 00155: display->fd 940
+File: ./src/socket.c, Line: 00092: udp ip (null), port 23008
+File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00155: display->fd 964
+File: ./src/socket.c, Line: 00092: udp ip (null), port 23009
+File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00155: display->fd 1016
+File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00092: udp ip (null), port 23010
+File: ./src/socket.c, Line: 00155: display->fd 1020
+File: ./src/socket.c, Line: 00747: connfd fd 1224
+File: ./src/server.c, Line: 00018: recv_login server_major 0 server_minor 0
+File: ./src/server.c, Line: 00035: fmt->width 1280, fmt->height 720 fmt->code 0 fmt->data_port 0
+File: ./src/server.c, Line: 00063: req->display_id 0
+File: ./src/display.c, Line: 00204: area_id 0
+File: ./src/display.c, Line: 00201: switch area_id 0
+File: ./src/display.c, Line: 00204: area_id 0
+File: ./src/display.c, Line: 00204: area_id 1
+File: ./src/display.c, Line: 00201: switch area_id 1
+File: ./src/display.c, Line: 00204: area_id 1
+File: ./src/display.c, Line: 00204: area_id 2
+File: ./src/display.c, Line: 00201: switch area_id 2
+File: ./src/display.c, Line: 00204: area_id 2
+File: ./src/display.c, Line: 00204: area_id 6
+File: ./src/display.c, Line: 00204: area_id 6
+File: ./src/display.c, Line: 00204: area_id 3
+File: ./src/display.c, Line: 00201: switch area_id 3
+File: ./src/display.c, Line: 00204: area_id 3
+File: ./src/display.c, Line: 00204: area_id 4
+File: ./src/display.c, Line: 00201: switch area_id 4
+File: ./src/display.c, Line: 00204: area_id 4
+File: ./src/display.c, Line: 00204: area_id 5
+File: ./src/display.c, Line: 00201: switch area_id 5
+File: ./src/display.c, Line: 00204: area_id 5
+File: ./src/display.c, Line: 00204: area_id 7
+File: ./src/display.c, Line: 00201: switch area_id 7
+File: ./src/display.c, Line: 00204: area_id 7
+File: ./src/display.c, Line: 00204: area_id 8
+File: ./src/display.c, Line: 00201: switch area_id 8
+File: ./src/display.c, Line: 00204: area_id 8
+File: ./src/display.c, Line: 00204: area_id 8
+File: ./src/display.c, Line: 00201: switch area_id 8
+File: ./src/display.c, Line: 00204: area_id 8
+File: ./src/ffmpeg.c, Line: 00323: decode end
+File: ./src/server.c, Line: 00206: pthread_exit 0 display
+File: ./src/socket.c, Line: 00638: server udp close end
+File: ./src/socket.c, Line: 00646: udp close fd 900
+File: ./src/socket.c, Line: 00646: udp close fd 908
+File: ./src/ffmpeg.c, Line: 00323: decode end
+File: ./src/socket.c, Line: 00646: udp close fd 912
+File: ./src/ffmpeg.c, Line: 00323: decode end
+File: ./src/ffmpeg.c, Line: 00323: decode end
+File: ./src/socket.c, Line: 00646: udp close fd 932
+File: ./src/socket.c, Line: 00646: udp close fd 928
+File: ./src/ffmpeg.c, Line: 00323: decode end
+File: ./src/ffmpeg.c, Line: 00323: decode end
+File: ./src/ffmpeg.c, Line: 00323: decode end
+File: ./src/ffmpeg.c, Line: 00323: decode end
+File: ./src/ffmpeg.c, Line: 00323: decode end
+File: ./src/socket.c, Line: 00646: udp close fd 940
+File: ./src/socket.c, Line: 00646: udp close fd 964
+File: ./src/socket.c, Line: 00646: udp close fd 1016
+File: ./src/socket.c, Line: 00646: udp close fd 1020
+File: ./src/socket.c, Line: 00878: server_tcp end
+File: ./src/socket.c, Line: 00883: while current
+File: ./src/socket.c, Line: 00887: close client fd 1224
+File: ./src/socket.c, Line: 00893: server_tcp end
+File: ./src/server.c, Line: 00208: pthread_exit 0 tcp
+File: ./src/server.c, Line: 00210: pthread_exit 0 udp
+File: ./src/socket.c, Line: 00927: destroy_socket end
+File: ./src/display.c, Line: 00260: destroy_display end

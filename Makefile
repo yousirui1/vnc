@@ -25,7 +25,7 @@ dllobj =  RemoteMonitor.dll
 
 libobj = libRemoteMonitor.dll.a
 
-mainobj = main.o inirw.o queue.o  display.o socket.o server.o client.o log.o ffmpeg.o control.o external.o
+mainobj = main.o inirw.o queue.o  display.o socket.o server.o client.o log.o ffmpeg.o  external.o
 
 cppobj = VNCHooks.o
 

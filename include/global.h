@@ -15,6 +15,9 @@ extern int default_quality, default_fps;
 extern int run_flag;
 extern int play_flag;
 extern int control_flag;
+extern int status;
+extern time_t last_time;
+extern time_t current_time;
 
 
 
@@ -32,7 +35,7 @@ void *thread_server_tcp(void *param);
 void *thread_server_udp(void *param);
 void h264_send_data(char *data, int len, int key_flag);
 int create_tcp();
-void connect_server(int fd, const char *ip, int port);
+int connect_server(int fd, const char *ip, int port);
 int bind_server(int fd, int port);
 int send_msg(const int fd, const char *buf, const int len);
 int recv_msg(const int fd,char* buf, const int len);
@@ -40,6 +43,7 @@ int send_request(rfb_request *req);
 unsigned char read_msg_syn(unsigned char* buf);
 unsigned short read_msg_order(unsigned char * buf);
 int read_msg_size(unsigned char * buf);
+extern int total_connections;
 
 
 
@@ -70,7 +74,6 @@ extern int screen_height, screen_width;
 
 void update_texture(AVFrame *frame_yuv, SDL_Rect *rect);
 void clear_texture();
-void send_control(char *buf, int data_len, int cmd);
 
 
 /* server.c */
