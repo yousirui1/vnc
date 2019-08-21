@@ -1,134 +1,23 @@
-File: ./src/main.c, Line: 00036: 
+File: ./src/main.c, Line: 00037: 
 programe server: 
  client_port 22000, control_port 23000, h264_port 23001, window_flag 1, window_size 2,
 File: ./src/socket.c, Line: 00213: server bind port 22000
-File: ./src/display.c, Line: 00660: ThreadMain set SCHED_FIFO error
-File: ./src/socket.c, Line: 00948: ThreadMain set SCHED_FIFO error
-File: ./src/socket.c, Line: 00971: ThreadMain set SCHED_FIFO error
-File: ./src/socket.c, Line: 00660: display_size 4
-File: ./src/display.c, Line: 00588: create window 
-File: ./src/display.c, Line: 00624: Failed to initialize a hardware accelerated renderer: 
-File: ./src/display.c, Line: 00630: Initialized software renderer.
+File: ./src/display.c, Line: 00935: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00950: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00973: ThreadMain set SCHED_FIFO error
+File: ./src/socket.c, Line: 00662: display_size 4
+File: ./src/display.c, Line: 00847: create window 
+File: ./src/display.c, Line: 00883: Failed to initialize a hardware accelerated renderer: 
+File: ./src/display.c, Line: 00889: Initialized software renderer.
 File: ./src/socket.c, Line: 00092: udp ip (null), port 23002
-File: ./src/socket.c, Line: 00155: display->fd 908
-File: ./src/socket.c, Line: 00092: udp ip (null), port 23003
 File: ./src/socket.c, Line: 00155: display->fd 920
-File: ./src/socket.c, Line: 00092: udp ip (null), port 23004
+File: ./src/socket.c, Line: 00092: udp ip (null), port 23003
 File: ./src/socket.c, Line: 00155: display->fd 924
-File: ./src/socket.c, Line: 00092: udp ip (null), port 23005
+File: ./src/socket.c, Line: 00092: udp ip (null), port 23004
 File: ./src/socket.c, Line: 00155: display->fd 928
-File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
-File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
-File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
-File: ./src/ffmpeg.c, Line: 00368: ThreadMain set SCHED_FIFO error
-File: ./src/socket.c, Line: 00748: connfd fd 1160
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00018: recv_login server_major 0 server_minor 0
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00035: fmt->width 1280, fmt->height 720 fmt->code 0 fmt->data_port 0
-File: ./src/server.c, Line: 00063: req->display_id 0
-File: ./src/socket.c, Line: 00748: connfd fd 1168
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00018: recv_login server_major 0 server_minor 0
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00035: fmt->width 1280, fmt->height 720 fmt->code 0 fmt->data_port 0
-File: ./src/server.c, Line: 00063: req->display_id 1
-File: ./src/display.c, Line: 00403: area_id 1
-File: ./src/display.c, Line: 00256: switch control
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00125: send_done 
-File: ./src/server.c, Line: 00134: req->play_id 0
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00125: send_done 
-File: ./src/server.c, Line: 00134: req->play_id 1
-File: ./src/display.c, Line: 00233: start_control
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00083: send_control
-File: ./src/display.c, Line: 00403: area_id 1
-File: ./src/display.c, Line: 00444: end control
-File: ./src/display.c, Line: 00263: switch display
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00125: send_done 
-File: ./src/server.c, Line: 00134: req->play_id 1
-File: ./src/display.c, Line: 00184: cli->req->status 4
-File: ./src/display.c, Line: 00190: cli->req->status 4
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00114: fmt->width 800 fmt->height 450
-File: ./src/server.c, Line: 00119: req->play_id 0
-File: ./src/display.c, Line: 00222:  process_server_msg 0
-File: ./src/display.c, Line: 00184: cli->req->status 4
-File: ./src/display.c, Line: 00190: cli->req->status 4
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00114: fmt->width 800 fmt->height 450
-File: ./src/server.c, Line: 00119: req->play_id 1
-File: ./src/display.c, Line: 00222:  process_server_msg 1
-File: ./src/display.c, Line: 00403: area_id 0
-File: ./src/display.c, Line: 00256: switch control
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00125: send_done 
-File: ./src/server.c, Line: 00134: req->play_id 0
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00125: send_done 
-File: ./src/server.c, Line: 00134: req->play_id 1
-File: ./src/display.c, Line: 00233: start_control
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00083: send_control
-File: ./src/display.c, Line: 00403: area_id 0
-File: ./src/display.c, Line: 00444: end control
-File: ./src/display.c, Line: 00263: switch display
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00125: send_done 
-File: ./src/server.c, Line: 00134: req->play_id 0
-File: ./src/display.c, Line: 00184: cli->req->status 4
-File: ./src/display.c, Line: 00190: cli->req->status 4
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00114: fmt->width 800 fmt->height 450
-File: ./src/server.c, Line: 00119: req->play_id 0
-File: ./src/display.c, Line: 00222:  process_server_msg 0
-File: ./src/display.c, Line: 00184: cli->req->status 4
-File: ./src/display.c, Line: 00190: cli->req->status 4
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00114: fmt->width 800 fmt->height 450
-File: ./src/server.c, Line: 00119: req->play_id 1
-File: ./src/display.c, Line: 00222:  process_server_msg 1
-File: ./src/display.c, Line: 00403: area_id 1
-File: ./src/display.c, Line: 00256: switch control
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00125: send_done 
-File: ./src/server.c, Line: 00134: req->play_id 0
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00125: send_done 
-File: ./src/server.c, Line: 00134: req->play_id 1
-File: ./src/display.c, Line: 00233: start_control
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00083: send_control
-File: ./src/display.c, Line: 00403: area_id 1
-File: ./src/display.c, Line: 00444: end control
-File: ./src/display.c, Line: 00263: switch display
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00125: send_done 
-File: ./src/server.c, Line: 00134: req->play_id 1
-File: ./src/display.c, Line: 00184: cli->req->status 4
-File: ./src/display.c, Line: 00190: cli->req->status 4
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00114: fmt->width 800 fmt->height 450
-File: ./src/server.c, Line: 00119: req->play_id 0
-File: ./src/display.c, Line: 00222:  process_server_msg 0
-File: ./src/display.c, Line: 00184: cli->req->status 4
-File: ./src/display.c, Line: 00190: cli->req->status 4
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00114: fmt->width 800 fmt->height 450
-File: ./src/server.c, Line: 00119: req->play_id 1
-File: ./src/display.c, Line: 00222:  process_server_msg 1
-File: ./src/display.c, Line: 00403: area_id 0
-File: ./src/display.c, Line: 00256: switch control
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00125: send_done 
-File: ./src/server.c, Line: 00134: req->play_id 0
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00125: send_done 
-File: ./src/server.c, Line: 00134: req->play_id 1
-File: ./src/display.c, Line: 00233: start_control
-File: ./src/server.c, Line: 00141: process_server_msg
-File: ./src/server.c, Line: 00083: send_control
-File: ./src/display.c, Line: 00403: area_id 0
+File: ./src/socket.c, Line: 00092: udp ip (null), port 23005
+File: ./src/socket.c, Line: 00155: display->fd 932
+File: ./src/ffmpeg.c, Line: 00381: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00381: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00381: ThreadMain set SCHED_FIFO error
+File: ./src/ffmpeg.c, Line: 00381: ThreadMain set SCHED_FIFO error

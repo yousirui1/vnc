@@ -1,93 +1,74 @@
-In file included from ./src/display.c:4:0:
+In file included from ./src/display.c:14:0:
 ./include/base.h:138:0: warning: "max" redefined
  #define max(a,b)    (((a) > (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:16,
-                 from ./src/display.c:4:
+                 from ./src/display.c:14:
 c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
  #define max(a,b) ((a)>(b)?(a):(b))
  
-In file included from ./src/display.c:4:0:
+In file included from ./src/display.c:14:0:
 ./include/base.h:139:0: warning: "min" redefined
  #define min(a,b)    (((a) < (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:16,
-                 from ./src/display.c:4:
+                 from ./src/display.c:14:
 c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
  #define min(a,b) ((a)<(b)?(a):(b))
  
 ./src/display.c: In function 'send_control':
-./src/display.c:43:2: warning: implicit declaration of function 'set_request_head' [-Wimplicit-function-declaration]
+./src/display.c:53:2: warning: implicit declaration of function 'set_request_head' [-Wimplicit-function-declaration]
   set_request_head(control_display->req, cmd, data_len);
   ^~~~~~~~~~~~~~~~
-./src/display.c:44:36: warning: pointer targets in assignment differ in signedness [-Wpointer-sign]
+./src/display.c:54:36: warning: pointer targets in assignment differ in signedness [-Wpointer-sign]
      control_display->req->data_buf = buf;
                                     ^
-In file included from ./src/display.c:4:0:
+./src/display.c: At top level:
+./src/display.c:111:1: error: expected '=', ',', ';', 'asm' or '__attribute__' before 'static'
+ static void simulate_keyboard(rfb_keyevent *key)
+ ^~~~~~
 ./src/display.c: In function 'start_display':
-./src/display.c:188:58: error: invalid type argument of '->' (have 'rfb_format {aka struct rfb_format}')
-  DEBUG("cli->fmt->width %d cli->fmt->height %d", cli->fmt->width, cli->fmt->height);
-                                                          ^
-./include/base.h:39:90: note: in definition of macro 'DEBUG'
- #define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__);\
-                                                                                          ^~~~~~~~~~~
-./src/display.c:188:75: error: invalid type argument of '->' (have 'rfb_format {aka struct rfb_format}')
-  DEBUG("cli->fmt->width %d cli->fmt->height %d", cli->fmt->width, cli->fmt->height);
-                                                                           ^
-./include/base.h:39:90: note: in definition of macro 'DEBUG'
- #define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__);\
-                                                                                          ^~~~~~~~~~~
-./src/display.c:188:58: error: invalid type argument of '->' (have 'rfb_format {aka struct rfb_format}')
-  DEBUG("cli->fmt->width %d cli->fmt->height %d", cli->fmt->width, cli->fmt->height);
-                                                          ^
-./include/base.h:40:89: note: in definition of macro 'DEBUG'
-                         log_msg("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__);
-                                                                                         ^~~~~~~~~~~
-./src/display.c:188:75: error: invalid type argument of '->' (have 'rfb_format {aka struct rfb_format}')
-  DEBUG("cli->fmt->width %d cli->fmt->height %d", cli->fmt->width, cli->fmt->height);
-                                                                           ^
-./include/base.h:40:89: note: in definition of macro 'DEBUG'
-                         log_msg("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__);
-                                                                                         ^~~~~~~~~~~
-./src/display.c:191:2: warning: implicit declaration of function 'process_server_msg' [-Wimplicit-function-declaration]
+./src/display.c:507:2: warning: implicit declaration of function 'process_server_msg' [-Wimplicit-function-declaration]
   process_server_msg(cli->req);
   ^~~~~~~~~~~~~~~~~~
 ./src/display.c: In function 'stop_display':
-./src/display.c:206:2: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
+./src/display.c:522:2: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
   usleep(200000);   //等待200ms 客户端结束
   ^~~~~~
 In file included from ./include/base.h:7:0,
-                 from ./src/display.c:4:
+                 from ./src/display.c:14:
 c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
  int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
                              ^~~~~~
-./src/display.c:208:2: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
+./src/display.c:524:2: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
   usleep(200000);   //等待200ms 客户端断开
   ^~~~~~
 In file included from ./include/base.h:7:0,
-                 from ./src/display.c:4:
+                 from ./src/display.c:14:
+c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
+ int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
+                             ^~~~~~
+./src/display.c: In function 'stop_control':
+./src/display.c:570:2: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
+  usleep(200000);
+  ^~~~~~
+In file included from ./include/base.h:7:0,
+                 from ./src/display.c:14:
 c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
  int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
                              ^~~~~~
 ./src/display.c: In function 'close_display':
-./src/display.c:278:5: warning: implicit declaration of function 'close_fd' [-Wimplicit-function-declaration]
+./src/display.c:601:5: warning: implicit declaration of function 'close_fd' [-Wimplicit-function-declaration]
      close_fd(displays[i].req->fd);
      ^~~~~~~~
 ./src/display.c: In function 'control_msg':
-./src/display.c:352:27: warning: unused variable 'keyboard' [-Wunused-variable]
-             rfb_keyevent *keyboard = (rfb_keyevent *)&(req->data_buf[0]);
-                           ^~~~~~~~
+./src/display.c:615:4: warning: implicit declaration of function 'simulate_keyboard' [-Wimplicit-function-declaration]
+    simulate_keyboard((rfb_keyevent *)&(req->data_buf[0]));
+    ^~~~~~~~~~~~~~~~~
 ./src/display.c: In function 'event_loop':
-./src/display.c:457:4: warning: implicit declaration of function 'stop_server' [-Wimplicit-function-declaration]
+./src/display.c:717:4: warning: implicit declaration of function 'stop_server' [-Wimplicit-function-declaration]
     stop_server();  //通过callback 返回给dll
     ^~~~~~~~~~~
-At top level:
-./src/display.c:96:13: warning: 'simulate_keyboard' defined but not used [-Wunused-function]
- static void simulate_keyboard(rfb_keyevent *key)
-             ^~~~~~~~~~~~~~~~~
-./src/display.c:55:13: warning: 'simulate_mouse' defined but not used [-Wunused-function]
- static void simulate_mouse(rfb_pointevent *point)
-             ^~~~~~~~~~~~~~
 make: *** [display.o] Error 1

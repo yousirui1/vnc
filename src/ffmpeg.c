@@ -71,7 +71,7 @@ void ffmpeg_encode(rfb_format *fmt)
         DEBUG("Couldn't open input stream. ");
     }
 #else
-	char video_size[8] = {0};
+	char video_size[12] = {0};
 
 	sprintf(video_size, "%dx%d", screen_width, screen_height);	
 
@@ -108,6 +108,10 @@ void ffmpeg_encode(rfb_format *fmt)
     /* 根据视频中的流打开选择解码器 */
     codec_ctx=format_ctx->streams[videoindex]->codec;
     codec=avcodec_find_decoder(codec_ctx->codec_id);
+
+	codec_ctx->thread_count = 4;
+	codec_ctx->thread_type = 2;
+
     if(codec==NULL)
     {
         DEBUG("Couldn't find a video stream.");
@@ -224,6 +228,19 @@ run_end:
         avcodec_close(h264codec_ctx);
     if(format_ctx)
         avformat_close_input(&format_ctx);
+	if(packet)
+		av_free_packet(packet);
+
+	img_convert_ctx = NULL;
+	out_buffer = NULL;
+	frame_yuv = NULL;
+	frame = NULL;
+	codec_ctx = NULL;
+	h264codec_ctx = NULL;
+	format_ctx = NULL;	
+    codec = NULL;
+    h264codec = NULL;
+	packet = NULL;
 }
 
 void ffmpeg_decode(rfb_display *vid)
@@ -233,7 +250,6 @@ void ffmpeg_decode(rfb_display *vid)
 
  	AVCodec *codec = NULL;
  	AVCodecContext *codec_ctx = NULL;
- 	AVCodecParserContext *codec_parser_ctx = NULL;
  	AVFrame *frame = NULL, *frame_yuv = NULL;
  	AVPacket  packet;
  	struct SwsContext *img_convert_ctx = NULL;
@@ -246,16 +262,13 @@ void ffmpeg_decode(rfb_display *vid)
         DIE("Codec not found");
     }
     codec_ctx = avcodec_alloc_context3(codec);
+	codec_ctx->thread_count = 4;
+	codec_ctx->thread_type = 2;
+
     if (!codec_ctx)
     {
         DIE("Could not allocate video codec context");
     }
-    codec_parser_ctx = av_parser_init(AV_CODEC_ID_H264);
-    if (!codec_parser_ctx)
-    {
-        DIE("Could not allocate video parser context");
-    }
-
     if (codec->capabilities&AV_CODEC_CAP_TRUNCATED)
         codec_ctx->flags |= AV_CODEC_FLAG_TRUNCATED; /* we do not send complete frames */
 

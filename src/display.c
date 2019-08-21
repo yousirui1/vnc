@@ -1,6 +1,16 @@
 #include <libavutil/frame.h>
 #include <SDL2/SDL.h>
 
+#ifndef _WIN32
+    #include <X11/Xlib.h>
+    #include <X11/Xutil.h>      /* BitmapOpenFailed, etc.    */
+    #include <X11/cursorfont.h> /* pre-defined crusor shapes */
+    #include <linux/input.h>
+
+static Display *dpy = NULL;
+static Window root;
+#endif
+
 #include "base.h"
 
 const char program_name[] = "remote monitor";
@@ -52,6 +62,7 @@ static int get_area(int x, int y)
 	return ((x/vids_width) + (y/vids_height) * window_size);
 }
 
+#ifdef _WIN32
 static void simulate_mouse(rfb_pointevent *point)
 {
     DWORD flags = MOUSEEVENTF_ABSOLUTE;
@@ -93,8 +104,132 @@ static void simulate_mouse(rfb_pointevent *point)
 	
 }
 
+
 static void simulate_keyboard(rfb_keyevent *key)
 {
+
+	/* a-z */
+	if(key->key >= 97 && key->key <= 122)
+	{
+		key->key -= 32;
+	}
+
+	/* F1-F12 */
+	else if(key->key >= 1073741882 && key->key <=1073741893 )
+	{
+		key->key -= 1073741770;
+	}
+
+	else
+	{
+		switch(key->key)
+		{
+			case 39:   // "'"
+				key->key = 0xDE;
+				break;
+			case 44:	//","
+				key->key = 0xBC;
+				break;
+			case 45:   //"-"
+				key->key = 0xBD;
+				break;
+			case 46:	//"."
+				key->key = 0xBE;
+				break;
+			case 47:   //"/"
+				key->key = 0xBF;
+				break;
+			case 59:	//":"
+				key->key = 0xBA;
+				break;
+			case 61:	// "+"
+				key->key = 0xBB;
+				break;
+			case 91:  // "["
+				key->key = 0xDB;
+				break;
+			case 92:  // "|"
+				key->key = 0xDC;
+				break;
+			case 93:  // "]"
+				key->key = 0xDD;
+				break;
+			case 96:	//"~"
+				key->key = 0xC0;
+				break;
+			case 1073741881: // "caps lock"
+				key->key = 0x14;
+				break;
+			case 1073742048: // "ctrl"
+				key->key = 0x11;
+				break;
+			case 1073741925: // "ctrl"
+				key->key = 0x11;
+				break;
+			case 1073742049: // "shift"
+				key->key = 0x10;
+				break;
+			case 1073742053: // "shift"
+				key->key = 0x10;
+				break;
+			case 1073742050: // "alt"
+				key->key = 0x12;
+				break;
+			case 1073742054: // "alt"
+				key->key = 0x12;
+				break;
+			case 1073742051: // "win"
+				key->key = 0x5B;
+				break;
+			case 1073742055: // "win"
+				key->key = 0x5B;
+				break;
+			case 1073741906: // "up"
+				key->key = 0x26;
+				break;
+			case 1073741905: // "down"
+				key->key = 0x28;
+				break;
+			case 1073741903: // "right"
+				key->key = 0x27;
+				break;
+			case 1073741904: // "left"
+				key->key = 0x25;
+				break;
+			case 1073741897: // "insert"
+				key->key = 0x2D;
+				break;
+			case 127: 		// "delete"
+				key->key = 0x2E;
+				break;
+			case 1073741898: // "home"
+				key->key = 0x24;
+				break;
+			case 1073741901: // "end"
+				key->key = 0x23;
+				break;
+			case 1073741899: // "pgup"
+				key->key = 0x21;
+				break;
+			case 1073741902: // "pgdn"
+				key->key = 0x22;
+				break;
+			case 1073741895: // "pause break"
+				key->key = 0x13;
+				break;
+			case 1073741894: // "scroll lock"
+				key->key = 0x91;
+				break;
+#if 0
+			case 1073741896: // "ptr scsys rq"
+				key->key = 0x25;
+				break;
+#endif
+			default:
+				break;
+		}
+	}	
+
 	if(key->down)
     {
         keybd_event(key->key, 0, 0,0);
@@ -102,6 +237,184 @@ static void simulate_keyboard(rfb_keyevent *key)
     else
         keybd_event(key->key, 0,KEYEVENTF_KEYUP,0);
 }
+#else
+
+static void simulate_mouse(rfb_pointevent *point)
+{
+
+	unsigned long x = point->x / (float)vids_width * screen_width;
+    unsigned long y = point->y / (float)vids_height * screen_height;
+
+    XTestFakeMotionEvent(dpy, 0, x, y, 0L);
+    int button = 0;
+    int down = 0;
+
+    if(point->mask & MOUSE_LEFT_DOWN)
+    {   
+        button = 1;
+        down = 1;
+    }   
+    if(point->mask & MOUSE_LEFT_UP)
+    {   
+        button = 1;
+        down = 0;
+    }   
+    if(point->mask & MOUSE_RIGHT_DOWN)
+    {   
+        button = 3;
+        down = 1;
+    }   
+    if(point->mask & MOUSE_RIGHT_UP)
+    {   
+        button = 3;
+        down = 0;
+    }   
+    if(point->mask)
+        XTestFakeButtonEvent(dpy, button, down, 0L);
+
+    XFlush(dpy);
+}
+
+static void simulate_keyboard(rfb_keyevent *key)
+{
+
+	DEBUG("key->key %d", key->key);
+	/* a-z */
+	if(key->key >= 97 && key->key <= 122)
+	{
+		key->key -= 32;
+	}
+
+	/* F1-F12 */
+	else if(key->key >= 1073741882 && key->key <=1073741893 )
+	{
+		key->key -= 1073676412;
+	}
+	else
+	{
+		switch(key->key)
+		{
+			case SDLK_ESCAPE:
+				key->key = XK_Escape;
+				break;
+			case SDLK_BACKSPACE:
+				key->key = XK_BackSpace;
+				break;
+			case 39:   // "'"
+				key->key = 0x22;
+				break;
+			case 44:	//","
+				key->key = 0x2C;
+				break;
+			case 45:   //"-"
+				key->key = 0x2d;
+				break;
+			case 46:	//"."
+				key->key = 0x2E;
+				break;
+			case 47:   //"/"
+				key->key = 0x2F;
+				break;
+			case 59:	//":"
+				key->key = 0x3A;
+				break;
+			case 61:	// "+"
+				key->key = 0x2B;
+				break;
+			case 91:  // "["
+				key->key = 0x7B;
+				break;
+			case 92:  // "|"
+				key->key = 0x7C;
+				break;
+			case 93:  // "]"
+				key->key = 0x7D;
+				break;
+			case 96:	//"~"
+				key->key = 0x7E;
+				break;
+			case 13:		//"enter"
+				key->key = XK_KP_Enter;
+				break;
+			case 9:		//"tab"
+				key->key = XK_KP_Tab;
+				break;
+			case 1073741881: // "caps lock"
+				key->key = XK_Caps_Lock;
+				break;
+			case 1073742048: // "ctrl"
+				key->key = XK_Control_L;
+				break;
+			case 1073741925: // "ctrl"
+				key->key = XK_Control_R;
+				break;
+			case 1073742049: // "shift"
+				key->key = XK_Shift_L;
+				break;
+			case 1073742053: // "shift"
+				key->key = XK_Shift_R;
+				break;
+			case 1073742050: // "alt"
+				key->key = XK_Alt_L;
+				break;
+			case 1073742054: // "alt"
+				key->key = XK_Alt_R;
+				break;
+			case 1073742051: // "win"
+				key->key = XK_Meta_L;
+				break;
+			case 1073742055: // "win"
+				key->key = XK_Meta_R;
+				break;
+			case 1073741906: // "up"
+				key->key = XK_Up;
+				break;
+			case 1073741905: // "down"
+				key->key = XK_Down;
+				break;
+			case 1073741903: // "right"
+				key->key = XK_Right;
+				break;
+			case 1073741904: // "left"
+				key->key = XK_Left;
+				break;
+			case 1073741897: // "insert"
+				key->key = XK_Insert;
+				break;
+			case 127: 		// "delete"
+				key->key = XK_Delete;
+				break;
+			case 1073741898: // "home"
+				key->key = XK_Home;
+				break;
+			case 1073741901: // "end"
+				key->key = XK_End;
+				break;
+			case 1073741899: // "pgup"
+				key->key = XK_Page_Up;
+				break;
+			case 1073741902: // "pgdn"
+				key->key = XK_Page_Down;
+				break;
+			case 1073741895: // "pause break"
+				key->key = XK_Pause;
+				break;
+			case 1073741894: // "scroll lock"
+				key->key = XK_Scroll_Lock;
+				break;
+			case 1073741896: // "ptr scsys rq"
+				key->key = XK_Sys_Req;
+				break;
+			//key->key = XK_BackSpace
+			default:
+				break;
+		}
+	}	
+
+	XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, key->key), key->down, 0L);
+    XFlush(dpy);    
+}
+#endif
 
 
 void hide_window()
@@ -241,6 +554,12 @@ void start_control(int id)
 
 void stop_control()
 {
+	if(!control_display || !control_display->req)
+	{
+		status = PLAY;
+		return;	
+	}
+
 	control_display->fmt.play_flag = control_display->play_flag = 0;    //控制状态
 	control_display->req->status = DONE;
 	process_server_msg(control_display->req);
@@ -282,7 +601,6 @@ void close_display()
 	}
 }
 
-#if 0
 void control_msg(rfb_request *req)
 {
 	switch(read_msg_order(req->head_buf))
@@ -299,69 +617,6 @@ void control_msg(rfb_request *req)
 			break;
 	}
 }
-#endif
-
-void control_msg(rfb_request *req)
-{
-    switch(read_msg_order(req->head_buf))
-    {
-        case 0x03: //mouse
-        {
-            rfb_pointevent *point = (rfb_pointevent *)&(req->data_buf[0]);
-
-            DWORD flags = MOUSEEVENTF_ABSOLUTE;
-            DWORD wheel_movement = 0;
-            flags |= MOUSEEVENTF_MOVE;
-
-            if(point->mask & MOUSE_LEFT_DOWN)
-            {
-                flags |= MOUSEEVENTF_LEFTDOWN;
-            }
-            if(point->mask & MOUSE_LEFT_UP)
-            {
-                flags |= MOUSEEVENTF_LEFTUP;
-            }
-            if(point->mask & MOUSE_RIGHT_DOWN)
-            {
-                flags |= MOUSEEVENTF_RIGHTDOWN;
-            }
-            if(point->mask & MOUSE_RIGHT_UP)
-            {
-                flags |= MOUSEEVENTF_RIGHTUP;
-            }
-
-            if(point->wheel)
-            {
-                flags |= MOUSEEVENTF_WHEEL;
-                if(point->wheel > 0)
-                    wheel_movement = (DWORD)+120;
-                else
-                    wheel_movement = (DWORD)-120;
-            }
-
-            /* 计算相对位置 */
-            unsigned long x = (point->x * 65535) / (vids_width )  * (screen_width / screen_width);
-            unsigned long y = (point->y * 65535) / (vids_height ) * (screen_height /screen_height);
-            //DEBUG("x %ld y %ld ", x, y);
-
-            mouse_event(flags, (DWORD)x, (DWORD)y, wheel_movement, 0);
-            //mouse_event(flags, 1000 * 65535 / 1920, 500 * 65535 / 1080, wheel_movement, 0);
-            break;
-        }
-        case 0x04:  //keyboard
-        {
-            rfb_keyevent *keyboard = (rfb_keyevent *)&(req->data_buf[0]);
-            //keycode2virtual(keyboard);
-        }
-        case 0x05: //copy text
-
-
-        case 0x06:  //copy file
-            break;
-
-    }
-}
-
 
 void event_loop()
 {
@@ -441,8 +696,9 @@ void event_loop()
 
 			if(event.key.keysym.sym == SDLK_ESCAPE)
 			{
-				DEBUG("end control");	
-				switch_mode(0);
+				//DEBUG("end control");	
+				//switch_mode(0);
+				SDL_Quit();
 			}
 		}	
 		if(SDL_KEYUP == event.type)
@@ -455,7 +711,9 @@ void event_loop()
 		if(SDL_QUIT == event.type)
 		{
 			run_flag = 0;
+#ifdef _WIN32
 			stop_server();		//通过callback 返回给dll
+#endif
 		}
 	}	
 }
@@ -464,6 +722,8 @@ void event_loop()
 /* 等待线程结束后销毁公共变量 */
 void destroy_display()
 {
+    SDL_Quit();
+
     if(renderer)
         SDL_DestroyRenderer(renderer);
 
@@ -490,7 +750,6 @@ void destroy_display()
     full_texture = NULL;
     texture = NULL;
 
-    SDL_Quit();
     DEBUG("destroy_display end");
 }
 
@@ -641,6 +900,22 @@ void create_display()
         init_display();
         event_loop();
     }
+	else
+	{
+#ifndef _WIN32
+		int id;
+    	if((dpy = XOpenDisplay(0)) == NULL)
+    	{
+			DIE("XOpenDisplay err");
+    	}
+    	id = DefaultScreen(dpy);  //DISPLAY:= id
+    	if(!(root = XRootWindow(dpy, id)))
+    	{
+			DIE("XRootWindow err");
+    	}
+#endif
+
+	}
 }
 
 void *thread_display(void *param)

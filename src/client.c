@@ -162,6 +162,8 @@ void init_client()
 {
     int ret = -1;
 
+	create_display();
+
 #ifdef _WIN32
     load_wsa();
 #endif
@@ -183,12 +185,6 @@ void init_client()
         DIE("create tcp err");
 	}
 	client_req->fd = server_s;
-
-	ret = pthread_create(&pthread_display, NULL, thread_display, NULL);
-    if(0 != ret)
-    {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-    }
 
 	
 	ret = pthread_create(&pthread_tcp, NULL, thread_client_tcp, &server_s);

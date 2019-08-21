@@ -1,6 +1,7 @@
 #include "base.h"
 #include "external.h"
 
+#ifdef _WIN32
 /*
 启动启动监控服务 （教师端调用）
 @param clientPort 
@@ -71,9 +72,6 @@ CAPTUREANDCAST_API int ExitControl()
 }
 
 
-
-
-
 /*
 启动被监控端连接（学生端用）
 @param clientPort 启动成功后返回的实例句柄
@@ -97,11 +95,8 @@ CAPTUREANDCAST_API int StartMonitorClient(const char* serverIp, const int server
 	init_logs();
 	init_client();
 	
-
-
 	return 0;
 }
-
 
 
 /*
@@ -135,21 +130,6 @@ CAPTUREANDCAST_API int GetPageCount()
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void stop_server()
 {
 	if(call_back)
@@ -157,4 +137,4 @@ void stop_server()
 }
 
 
-
+#endif

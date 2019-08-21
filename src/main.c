@@ -13,6 +13,7 @@ time_t last_time;
 time_t current_time;
 
 
+#if 1
 void parse_options()
 {  
 	/* arg > file */
@@ -47,6 +48,31 @@ void parse_options()
                 server_ip, server_port, window_flag, default_quality, default_fps);
     }
 }
+#else
+
+void parse_options(int argc, char *argv[])
+{
+    switch(argc)
+    {   
+        case 3:
+            server_port = atoi(argv[2]);
+        case 2:
+            server_ip = strdup(argv[1]); 
+        default:
+            break;
+    }   
+
+    if(!server_ip || server_port >= 65535 || server_port <= 0)
+    {   
+    	int ret = 0;
+    	char buf[126] = {0};
+   		ret = read_profile_string(CLIENT_SECTION, CLIENT_IP_KEY, buf, sizeof(buf), DEFAULT_IP_VALUE, CONFIG_FILE);
+		server_ip = strdup(buf);	
+        server_port = read_profile_int(CLIENT_SECTION, CLIENT_PORT_KEY, DEFAULT_PORT_VALUE, CONFIG_FILE);
+    }   
+
+}
+#endif
 
 void sig_quit_listen(int e)
 {
@@ -85,7 +111,9 @@ int main(int argc, char *argv[])
     init_logs();
 
     /* config */
+    //parse_options(argc, argv);
     parse_options();
+	
     if(server_flag)
     {
         init_server();

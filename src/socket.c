@@ -308,6 +308,8 @@ static rfb_request* remove_request(rfb_request *req)
 
 void set_request_head(rfb_request *req, short cmd, int data_size)
 {
+	if(!req)
+		return;
     rfb_head *head = (rfb_head *)&(req->head_buf[0]);
     head->syn = 0xff;
     head->encrypt_flag = 0; //加密
