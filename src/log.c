@@ -1,11 +1,13 @@
 #include "base.h"
 #include <stdarg.h>
 
-FILE *fp_err;
-FILE *fp_log;
+FILE *fp_err = NULL;
+FILE *fp_log = NULL;
 
-char *err_name = "err.log";
-char *log_name = "screen.log";
+//char *err_name = "err.log";
+//char *log_name = "screen.log";
+char *err_name = "c://Users//Public//Documents//YZYEduClient//vnc_err.log";
+char *log_name = "c://Users//Public//Documents//YZYEduClient//vnc.log";
 
 void init_logs()
 {
@@ -14,7 +16,7 @@ void init_logs()
 		fp_err = fopen(err_name, "wb");
         if(!fp_err)
         {
-			DIE("fopen err_name %s", err_name);
+			DEBUG("fopen err_name %s", err_name);
         }
     }
     if(log_name)
@@ -22,7 +24,7 @@ void init_logs()
 		fp_log = fopen(log_name, "wb");
         if(!fp_log)
         {
-			DIE("fopen log_name %s", log_name);
+			DEBUG("fopen log_name %s", log_name);
         }
     }
 }
@@ -34,6 +36,9 @@ void close_logs()
 
     if(fp_log)
         fclose(fp_log);
+
+	fp_err = NULL;
+	fp_log = NULL;
 }
 
 
@@ -43,6 +48,8 @@ void log_msg(const char *fmt, ...)
     char *ptr = buf;
     va_list ap;
 
+	if(!fp_log)
+		return;
     va_start(ap, fmt);
     vsprintf(ptr, fmt, ap);
     va_end(ap);
@@ -57,6 +64,9 @@ void err_msg(const char *fmt, ...)
     char *ptr = buf;
     va_list ap;
 
+	if(!fp_err)
+		return;
+		
     va_start(ap, fmt);
     vsprintf(ptr, fmt, ap);
     va_end(ap);

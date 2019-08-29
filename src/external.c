@@ -21,8 +21,9 @@ CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int contro
 	run_flag = 1;
 
 	status = NORMAL;
-
+#ifdef __DEBUG__
 	init_logs();
+#endif
 	client_port = clientPort;
 	control_port = controlPort;
 	h264_port = dataPort;
@@ -48,10 +49,12 @@ CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int contro
 */
 CAPTUREANDCAST_API int StopMonitorServer()
 {
-	DEBUG("StopMonitorServer");
 	run_flag = 0;
-    do_exit();
-	DEBUG("do_exit");
+   	do_exit();
+#ifdef __DEBUG__
+	close_logs();
+#endif
+	DEBUG("StopMonitorServer end");
 	return 0;
 }
 
@@ -91,8 +94,9 @@ CAPTUREANDCAST_API int StartMonitorClient(const char* serverIp, const int server
 
 	DEBUG("server_ip %s, server_port %d",
 			server_ip, server_port);
-
+#ifdef __DEBUG__
 	init_logs();
+#endif
 	init_client();
 	
 	return 0;
@@ -134,6 +138,7 @@ void stop_server()
 {
 	if(call_back)
 		call_back();
+	call_back = NULL;
 }
 
 

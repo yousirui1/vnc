@@ -13,8 +13,9 @@
 
 void ffmpeg_encode(rfb_format *fmt)
 {
+
 	DEBUG("client encode start");
-    int  i, videoindex, ret, quality, fps,  got_picture;
+    int  i, videoindex, ret, quality, fps, bps, got_picture;
     int width = 0, height = 0;
     const char *decode_speed = NULL;
     uint8_t *out_buffer = NULL;
@@ -35,6 +36,8 @@ void ffmpeg_encode(rfb_format *fmt)
     format_ctx = avformat_alloc_context();
 
     quality = default_quality;
+	bps = fmt->bps;
+	//fps = fmt->fps;
 	fps = 22;
 
     const char *decode_speed_type[] = {"ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow", "placebo"};
@@ -51,12 +54,13 @@ void ffmpeg_encode(rfb_format *fmt)
         decode_speed = decode_speed_type[0];
     }
 
+    DEBUG("fps %d decode_speed %s bps %d width  %d height %d",fps, decode_speed, bps, width, height);
 
     AVDictionary* options = NULL;
 
 #ifdef _WIN32
     /* 截屏 */
-    av_dict_set(&options,"framerate","15",0);
+    av_dict_set(&options,"framerate","22",0);
     av_dict_set(&options,"draw_mouse","0",0);               //鼠标
     AVInputFormat *ifmt=av_find_input_format("gdigrab");
     if(avformat_open_input(&format_ctx,"desktop",ifmt, &options)!=0)
@@ -117,26 +121,27 @@ void ffmpeg_encode(rfb_format *fmt)
 		goto run_end;
     }
 
-//rect:
 
-	width = codec_ctx->width > fmt->width ? codec_ctx->width : fmt->width;
-    height = codec_ctx->height > fmt->height ? codec_ctx->height : fmt->height;
 
+	width = codec_ctx->width;
+    height = codec_ctx->height;
     frame=av_frame_alloc();
     frame->width = codec_ctx->width;
     frame->height = codec_ctx->height;
+    //frame->format = codec_ctx->pix_fmt;
 
     frame_yuv=av_frame_alloc();
-    frame_yuv->width = fmt->width;
-    frame_yuv->height = fmt->height;
+    frame_yuv->width = width;
+    frame_yuv->height = height;
     frame_yuv->format = AV_PIX_FMT_YUV420P;
 
-    out_buffer = (uint8_t *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV420P, 1920, 1080));
-    avpicture_fill((AVPicture *)frame_yuv, out_buffer, AV_PIX_FMT_YUV420P, 1920, 1080);
+    out_buffer = (uint8_t *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV420P, width, height));
+    avpicture_fill((AVPicture *)frame_yuv, out_buffer, AV_PIX_FMT_YUV420P, width, height);
     packet=(AVPacket *)av_malloc(sizeof(AVPacket));
 #ifdef _WIN32
-    img_convert_ctx = sws_getContext(codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt, fmt->width, fmt->height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+    img_convert_ctx = sws_getContext(codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt, width, height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 #else
+
     img_convert_ctx = sws_getContext(codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt + 3, fmt->width, fmt->height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 #endif
 
@@ -152,12 +157,11 @@ void ffmpeg_encode(rfb_format *fmt)
     h264codec_ctx->codec_id = AV_CODEC_ID_H264;
     h264codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
     h264codec_ctx->pix_fmt = AV_PIX_FMT_YUV420P;
-
     h264codec_ctx->width = width;
     h264codec_ctx->height = height;
     h264codec_ctx->time_base.num = 1;
-    h264codec_ctx->time_base.den = 15;//帧率(既一秒钟多少张图片)
-    h264codec_ctx->bit_rate = fmt->bps;//bps; //比特率(调节这个大小可以改变编码后视频的质量)
+    h264codec_ctx->time_base.den = fps;//帧率(既一秒钟多少张图片)
+    h264codec_ctx->bit_rate = 2000000; //比特率(调节这个大小可以改变编码后视频的质量)
     h264codec_ctx->gop_size= 12;
     h264codec_ctx->qmin = 10;
     h264codec_ctx->qmax = 51;
@@ -167,12 +171,11 @@ void ffmpeg_encode(rfb_format *fmt)
 
     /* 设置编码质量 */
     AVDictionary *param = 0;
-    av_dict_set(&param, "preset", "ultrafast", 0);
+    av_dict_set(&param, "preset", decode_speed, 0);
     av_dict_set(&param, "tune", "zerolatency", 0);  //实现实时编码
 
     if (avcodec_open2(h264codec_ctx, h264codec,&param) < 0)
     {
-		
         DEBUG("Failed to open video encoder");
 		goto run_end;
     }
@@ -200,7 +203,7 @@ void ffmpeg_encode(rfb_format *fmt)
             }
             if(got_picture)
             {
-                sws_scale(img_convert_ctx, (const uint8_t* const*)frame->data, frame->linesize, 0, frame->height, frame_yuv->data, frame_yuv->linesize);
+                 sws_scale(img_convert_ctx, (const uint8_t* const*)frame->data, frame->linesize, 0, codec_ctx->height, frame_yuv->data, frame_yuv->linesize);
                 ret = avcodec_encode_video2(h264codec_ctx, packet,frame_yuv, &got_picture);
                 if(ret < 0)
                 {
@@ -244,7 +247,7 @@ run_end:
 
 void ffmpeg_decode(rfb_display *vid)
 {
-    uint8_t *out_buffer = NULL;
+    uint8_t *out_buffer;
     int ret, got_picture;
 
  	AVCodec *codec = NULL;
@@ -254,18 +257,15 @@ void ffmpeg_decode(rfb_display *vid)
  	struct SwsContext *img_convert_ctx = NULL;
 
 	QUEUE_INDEX *index = NULL;
-	
+
     codec = avcodec_find_decoder(AV_CODEC_ID_H264);
     if (!codec)
     {
         DIE("Codec not found");
     }
     codec_ctx = avcodec_alloc_context3(codec);
-
-#if 0
 	codec_ctx->thread_count = 4;
 	codec_ctx->thread_type = 2;
-#endif
 
     if (!codec_ctx)
     {
@@ -275,7 +275,7 @@ void ffmpeg_decode(rfb_display *vid)
         codec_ctx->flags |= AV_CODEC_FLAG_TRUNCATED; /* we do not send complete frames */
 
     if (avcodec_open2(codec_ctx, codec, NULL) < 0)
-    {
+     {
         DIE("Could not open codec");
     }
     frame = av_frame_alloc();
@@ -287,7 +287,7 @@ void ffmpeg_decode(rfb_display *vid)
 		{
 			if(empty_queue(&vids_queue[vid->id]))
 	        {
-				usleep(200);
+				usleep(2000);
 	            continue;
 	        }
 	        index = de_queue(&vids_queue[vid->id]);
@@ -300,13 +300,13 @@ void ffmpeg_decode(rfb_display *vid)
 			sleep(1);
 			continue;
 		}
+
 		ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, &packet);
         if (ret < 0)
         {
-            DEBUG("Decode Error.");
+            DEBUG("Decode Error.(解码错误)");
             continue;
         }
-
         if (got_picture)
         {
 			if(vid->play_flag == 2)
@@ -314,7 +314,6 @@ void ffmpeg_decode(rfb_display *vid)
 			else
        			update_texture(frame, &(vid->rect));
         }
-
         packet.data = NULL;
         packet.size = 0;
     }
@@ -334,9 +333,9 @@ void ffmpeg_decode(rfb_display *vid)
 	frame_yuv = NULL;
 	frame = NULL;
 	codec_ctx = NULL;	
-	index = NULL;
 	
 	clear_texture();
+	DEBUG("decode end");
 
 	return (void *)0;
 }

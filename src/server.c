@@ -212,15 +212,16 @@ void init_server()
 void exit_server()
 {
     void *tret = NULL;
-    pthread_join(pthread_display, &tret);  //等待线程同步
-    DEBUG("pthread_exit %d display", (int)tret);
     pthread_join(pthread_tcp, &tret);  //等待线程同步
     DEBUG("pthread_exit %d tcp", (int)tret);
     pthread_join(pthread_udp, &tret);  //等待线程同步
     DEBUG("pthread_exit %d udp", (int)tret);
 
+    pthread_join(pthread_display, &tret);  //等待线程同步
+    DEBUG("pthread_exit %d display", (int)tret);
 	destroy_socket();
 	destroy_display();
+	DEBUG("exit_server");
 }
 
 

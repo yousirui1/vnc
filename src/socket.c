@@ -131,6 +131,15 @@ void create_udp(char *ip, int port, rfb_display *display)
     {
         DEBUG("IP_MULTICAST_LOOP set fail!");
     }
+
+#ifdef _WIN32
+	sock_opt  = 1;
+	if (ioctlsocket(fd, FIONBIO,(u_long *)&sock_opt) == SOCKET_ERROR) 
+	{
+        DEBUG("fcntl F_SETFL fail");
+    }
+#endif
+
     memset(&recv_addr, 0, sizeof(recv_addr));
     recv_addr.sin_family = AF_INET;
     recv_addr.sin_addr.s_addr = htonl (INADDR_ANY);
@@ -174,13 +183,11 @@ int create_tcp()
     if( setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &sock_opt, sizeof(sock_opt)) !=0) goto end_out;
 
 #ifdef _WIN32
-#if 0
-    sock_opt = 1;
-    if(ioctlsocket(fd, FIONBIO, &sock_opt) == NO_ERROR)
-    {
-        DIE("can't set close-on-exec on server socket!");
+	sock_opt  = 1;
+	if (ioctlsocket(fd, FIONBIO,(u_long *)&sock_opt) == SOCKET_ERROR) 
+	{
+        DEBUG("fcntl F_SETFL fail");
     }
-#endif
 #else
     if (fcntl(fd, F_SETFD, 1) == -1)
     {
@@ -284,7 +291,14 @@ rfb_request *new_request()
 
 static rfb_request* remove_request(rfb_request *req)
 {
+
+	if(!req)
+		return NULL;
+
     rfb_request *next = req->next;
+
+	if(!next)
+		return NULL;	
 
     if(req->data_buf)
         free(req->data_buf);
@@ -577,10 +591,11 @@ void *thread_client_udp(void *param)
 void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *clients)
 {
     int i, ret, nready;
-    struct timeval tv;
     fd_set fds;
+    struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
+
     int sockfd = -1;
     socklen_t socklen = sizeof (struct sockaddr_in);
     unsigned int total_size = 0;
@@ -588,6 +603,7 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
     unsigned char *tmp;
     unsigned short count = 0;
 
+	int test = 0;
 	while(run_flag)
     {
         fds = allset;
@@ -626,19 +642,17 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 				{
 	               	en_queue(&vids_queue[i], clients[i].frame_buf + 8,  clients[i].frame_pos - 8, 0x0);
 					clients[i].frame_pos = 0;
-
 				}
-				else if(clients[i].frame_pos > clients[i].frame_size + 8)
+				else if(clients[i].frame_pos > clients[i].frame_size + 8 || clients[i].frame_pos > MAX_VIDSBUFSIZE)
 				{
 					clients[i].frame_pos = 0;
 				}
+
 				if(--nready <= 0)
 	              break;
-	       }
+			}
         }
     }
-
-	DEBUG("server udp close end");
 
     for(i = 0; i< display_size; i++)
     {
@@ -648,8 +662,7 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
             close_fd(clients[i].fd);
         DEBUG("udp close fd %d", clients[i].fd);
     }
-
-
+	DEBUG("server udp close end");
 }
 
 void create_h264_socket()
@@ -730,11 +743,14 @@ void server_tcp_loop(int listenfd)
             ret = fcntl(connfd,F_GETFL,0);
             if(ret < 0)
             {
+				DEBUG("fcntl connfd err");
                 close_fd(connfd);
                 continue;
             }
             if(fcntl(connfd, F_SETFL, ret | O_NONBLOCK) <0)
             {
+
+				DEBUG("fcntl connfd O_NONBLOCK err");
                 close_fd(connfd);
                 continue;
             }
@@ -742,6 +758,8 @@ void server_tcp_loop(int listenfd)
             /* recode client ip */
             if(inet_ntop(AF_INET,&cliaddr.sin_addr, conn->ip, sizeof(conn->ip)) == NULL)
             {
+
+				DEBUG("connfd inet_ntop err");
                 close_fd(connfd);
                 free(conn);
                 continue;
@@ -788,6 +806,8 @@ void server_tcp_loop(int listenfd)
                             continue;
                         if(read_msg_syn(current->head_buf) != DATA_SYN)
                         {
+
+                            DEBUG("close fd %d", sockfd);
                             close_fd(current->fd);
                             FD_CLR(current->fd, &allset);
                             current  = remove_request(current);
@@ -800,6 +820,8 @@ void server_tcp_loop(int listenfd)
 
                         if(current->data_size < 0 || current->data_size > CLIENT_BUF)
                         {
+
+                            DEBUG("close fd %d", sockfd);
                             close_fd(current->fd);
                             FD_CLR(current->fd, &allset);
                             current = remove_request(current);
@@ -810,6 +832,7 @@ void server_tcp_loop(int listenfd)
                             current->data_buf = (unsigned char*)malloc(current->data_size + 1);
                            if(!current->data_buf)
                             {
+                            	DEBUG("close fd %d", sockfd);
                                 close_fd(current->fd);
                                 FD_CLR(current->fd, &allset);
                                 current = remove_request(current);
@@ -874,10 +897,10 @@ void server_tcp_loop(int listenfd)
                 if(--nready <= 0)
                     break;
             }
-            current = current->next;
+			if(current)
+            	current = current->next;
         }
     }
-
 	DEBUG("server_tcp end");
 run_end:
 	current = request_ready;
@@ -891,6 +914,9 @@ run_end:
 		}
 		current = remove_request(current);
 	}
+
+	conn = NULL;
+	current = NULL;
 	request_ready = NULL;
 	close_fd(listenfd);
 	DEBUG("server_tcp end");

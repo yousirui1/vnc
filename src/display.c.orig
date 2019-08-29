@@ -13,7 +13,25 @@ static Window root;
 
 #include "base.h"
 
+<<<<<<< HEAD
 const char program_name[] = "remote monitor";
+=======
+#ifndef _WIN32
+	#include <X11/Xlib.h>
+	#include <X11/Xutil.h>      /* BitmapOpenFailed, etc.    */
+	#include <X11/cursorfont.h> /* pre-defined crusor shapes */
+	#include <linux/input.h>
+	
+static int fd_kbd = 0;
+static int fd_mouse  = 0;
+static Display *dpy = NULL;
+static Window root;
+#endif
+
+
+
+const char program_name[] = "ffplay";
+>>>>>>> b1a59b0fb8808c9519d1e4f9b62eeadb4672da9a
 
 int screen_width  = 0;
 int screen_height = 0;
@@ -59,7 +77,51 @@ static void send_control(char *buf, int data_len, int cmd)
 
 static int get_area(int x, int y)
 {
+<<<<<<< HEAD
 	return ((x/vids_width) + (y/vids_height) * window_size);
+=======
+    if(!texture || !renderer || !full_texture || !frame_yuv)
+        return;
+	if(loss_flag)
+	{
+		if(loss_count-- > 0)
+			return;
+		else
+		{
+			loss_count = 10;
+			loss_flag = 0;	
+		}
+	}	
+
+    pthread_mutex_lock(&renderer_mutex);
+	if(!rect)
+	{
+	 	SDL_Rect full_rect;
+ 
+		full_rect.x = 0;
+		full_rect.y = 0;
+		full_rect.w = screen_width;
+		full_rect.h = screen_height;
+
+        SDL_UpdateYUVTexture(full_texture, NULL,
+        frame_yuv->data[0], frame_yuv->linesize[0],
+        frame_yuv->data[1], frame_yuv->linesize[1],
+        frame_yuv->data[2], frame_yuv->linesize[2]);
+
+        SDL_RenderCopy(renderer, full_texture, NULL, &full_rect);
+	}
+	else
+	{
+    	SDL_UpdateYUVTexture(texture, NULL,
+        	frame_yuv->data[0], frame_yuv->linesize[0],
+        	frame_yuv->data[1], frame_yuv->linesize[1],
+        	frame_yuv->data[2], frame_yuv->linesize[2]);
+
+    	SDL_RenderCopy(renderer, texture, NULL, rect);
+	}
+    SDL_RenderPresent(renderer);
+    pthread_mutex_unlock(&renderer_mutex);
+>>>>>>> b1a59b0fb8808c9519d1e4f9b62eeadb4672da9a
 }
 
 #ifdef _WIN32
@@ -108,6 +170,86 @@ static void simulate_mouse(rfb_pointevent *point)
 static void simulate_keyboard(rfb_keyevent *key)
 {
 
+<<<<<<< HEAD
+=======
+static void simulate_mouse(rfb_pointevent *point)
+{
+ 
+#ifdef _WIN32
+	DWORD flags = MOUSEEVENTF_ABSOLUTE;
+	DWORD wheel_movement = 0;
+    flags |= MOUSEEVENTF_MOVE;
+
+	if(point->mask & MOUSE_LEFT_DOWN)
+    {
+        flags |= MOUSEEVENTF_LEFTDOWN;
+    }
+    if(point->mask & MOUSE_LEFT_UP)
+    {
+        flags |= MOUSEEVENTF_LEFTUP;
+    }
+    if(point->mask & MOUSE_RIGHT_DOWN)
+    {
+        flags |= MOUSEEVENTF_RIGHTDOWN;
+    }
+    if(point->mask & MOUSE_RIGHT_UP)
+    {
+        flags |= MOUSEEVENTF_RIGHTUP;
+    }
+
+	if(point->wheel)
+	{
+		flags |= MOUSEEVENTF_WHEEL;
+		if(point->wheel > 0)
+			wheel_movement = (DWORD)+120;	
+		else
+			wheel_movement = (DWORD)-120; 	
+	}
+    /* 计算相对位置 */
+    unsigned long x = (point->x * 65535) / (vids_width )  * (screen_width / screen_width);
+    unsigned long y = (point->y * 65535) / (vids_height ) * (screen_height /screen_height);
+
+	mouse_event(flags, (DWORD)x, (DWORD)y, wheel_movement, 0);
+
+#else
+	//XWarpPointer(dpy, None, root, 0, 0, 0, 0, point->x, point->y);
+	XTestFakeMotionEvent(dpy, 0, point->x, point->y, 0L);
+	int button = 0;
+	int down = 0;
+
+	if(point->mask & MOUSE_LEFT_DOWN)
+    {
+		button = 1;
+		down = 1;
+    }
+    if(point->mask & MOUSE_LEFT_UP)
+    {
+		button = 1;
+		down = 0;
+    }
+    if(point->mask & MOUSE_RIGHT_DOWN)
+    {
+		button = 3;
+		down = 1;
+    }
+    if(point->mask & MOUSE_RIGHT_UP)
+    {
+		button = 3;
+		down = 0;
+    }
+	if(point->mask)
+		XTestFakeButtonEvent(dpy, button, down, 0L);
+
+   	XFlush(dpy);
+
+#endif
+}
+
+
+
+static void simulate_key(rfb_keyevent *key)
+{
+>>>>>>> b1a59b0fb8808c9519d1e4f9b62eeadb4672da9a
 	/* a-z */
 	if(key->key >= 97 && key->key <= 122)
 	{
@@ -119,7 +261,6 @@ static void simulate_keyboard(rfb_keyevent *key)
 	{
 		key->key -= 1073741770;
 	}
-
 	else
 	{
 		switch(key->key)
@@ -229,13 +370,14 @@ static void simulate_keyboard(rfb_keyevent *key)
 				break;
 		}
 	}	
-
+#ifdef _WIN32
 	if(key->down)
     {
         keybd_event(key->key, 0, 0,0);
     }
     else
         keybd_event(key->key, 0,KEYEVENTF_KEYUP,0);
+<<<<<<< HEAD
 }
 #else
 
@@ -276,7 +418,18 @@ static void simulate_mouse(rfb_pointevent *point)
 }
 
 static void simulate_keyboard(rfb_keyevent *key)
+=======
+#else
+	XTestFakeKeyEvent(dpy, key->key, key->down, 0L);
+	XFlush(dpy);	
+#endif
+
+}
+
+void control_msg(rfb_request *req)
+>>>>>>> b1a59b0fb8808c9519d1e4f9b62eeadb4672da9a
 {
+
 	DEBUG("key->key %d", key->key);
 	/* a-z */
 	if(key->key >= 97 && key->key <= 122)
@@ -293,6 +446,7 @@ static void simulate_keyboard(rfb_keyevent *key)
 	{
 		switch(key->key)
 		{
+<<<<<<< HEAD
 			case SDLK_ESCAPE:
 				key->key = XK_Escape;
 				break;
@@ -481,10 +635,31 @@ void update_texture(AVFrame *frame_yuv, SDL_Rect *rect)
 
 
 static void refresh_loop_wait_event(SDL_Event *event)
+=======
+			rfb_pointevent *point = (rfb_pointevent *)&(req->data_buf[0]);
+			simulate_mouse(point);
+            break;
+		}
+		case 0x04:  //keyboard
+		{
+			rfb_keyevent *keyboard = (rfb_keyevent *)&(req->data_buf[0]);	
+			simulate_key(keyboard);
+			break;
+		}
+		case 0x05: //copy text
+			
+		
+		case 0x06:  //copy file
+			break;
+	}
+}
+
+void create_control(int id)
+>>>>>>> b1a59b0fb8808c9519d1e4f9b62eeadb4672da9a
 {
     //double remaining_time = 0.0;
     SDL_PumpEvents();
-    while (!SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) && run_flag)
+    while (!SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT))
     {
         SDL_PumpEvents();
     }
@@ -619,6 +794,7 @@ void control_msg(rfb_request *req)
 
 void event_loop()
 {
+<<<<<<< HEAD
 	SDL_Event event;
 	rfb_pointevent point = {0};
 	rfb_keyevent key = {0};
@@ -692,6 +868,13 @@ void event_loop()
             key.mod = event.key.keysym.mod; //*(SDL_GetKeyName(event.key.keysym.sym));
             key.down = 1;
             send_control((char *)&key, sizeof(rfb_keyevent), KEYBOARD);
+
+			if(event.key.keysym.sym == SDLK_ESCAPE)
+			{
+				//DEBUG("end control");	
+				//switch_mode(0);
+				//SDL_Quit();
+			}
 		}	
 		if(SDL_KEYUP == event.type)
 		{
@@ -708,25 +891,31 @@ void event_loop()
 #endif
 		}
 	}	
-	DEBUG("event_loop end");
+=======
+	if(!window)
+		return
+	SDL_HideWindow(window);
+>>>>>>> b1a59b0fb8808c9519d1e4f9b62eeadb4672da9a
 }
 
 
 /* 等待线程结束后销毁公共变量 */
 void destroy_display()
 {
+<<<<<<< HEAD
+    SDL_Quit();
 
     if(renderer)
         SDL_DestroyRenderer(renderer);
+
+    if(window)
+        SDL_DestroyWindow(window);
 
     if(texture)
         SDL_DestroyTexture(texture);
 
     if(full_texture)
         SDL_DestroyTexture(full_texture);
-
-    if(window)
-        SDL_DestroyWindow(window);
 
     if(displays)
         free(displays);
@@ -741,8 +930,6 @@ void destroy_display()
     renderer = NULL;
     full_texture = NULL;
     texture = NULL;
-
-    SDL_Quit();
 
     DEBUG("destroy_display end");
 }
@@ -809,9 +996,12 @@ void init_display()
         }
     }
 	clear_texture();
-	DEBUG("init display end");
+=======
+	if(!window)
+		return
+	SDL_ShowWindow(window);
+>>>>>>> b1a59b0fb8808c9519d1e4f9b62eeadb4672da9a
 }
-
 
 void create_display()
 {
@@ -847,37 +1037,28 @@ void create_display()
             ;//flags |= SDL_WINDOW_RESIZABLE;  //可以缩放暂时不支持
 
         window = SDL_CreateWindow(program_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, default_width, default_height, flags);
-
-        SDL_GetDisplayBounds(0, &full_rect);
-        //DEBUG("full_width %d full_height %d", full_rect.w, full_rect.h);
-
         if(!window_flag)
         {
+            SDL_GetDisplayBounds(0, &full_rect);
+            DEBUG("full_width %d full_height %d", full_rect.w, full_rect.h);
             screen_width = full_rect.w;
             screen_height = full_rect.h;
             full_rect.x = 0;
             full_rect.y = 0;
-            SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+            SDL_SetWindowSize(window, screen_width, screen_height);
+            SDL_SetWindowPosition(window, 0, 0);
+            //SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
         }
         else
         {
-
-        	SDL_SetWindowPosition(window, full_rect.w / 6, full_rect.h /6);
-
-            screen_width = full_rect.w / 3 *2;
-            screen_height = full_rect.h / 3 * 2;
-
+            screen_width = default_width;
+            screen_height = default_height;
 			full_rect.w = screen_width;
 			full_rect.h = screen_height;
             full_rect.x = 0;
             full_rect.y = 0;
-
-        	DEBUG("screen_width %d screen_height %d", screen_width, screen_height);
             //SDL_SetWindowPosition(window, fullRect.x, fullRect.y);
         }
-
-        SDL_SetWindowSize(window, screen_width, screen_height);
-
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
         if(window)
         {
@@ -922,6 +1103,53 @@ void create_display()
 	}
 }
 
+<<<<<<< HEAD
+=======
+
+int init_x11()
+{
+	int id;
+    if((dpy = XOpenDisplay(0)) == NULL)
+    {
+        DEBUG("");
+        goto err;
+    }
+    id = DefaultScreen(dpy);  //DISPLAY:= id
+    if(!(root = XRootWindow(dpy, id)))
+    {
+        DEBUG("");
+        goto err;
+    }
+	screen_width = DisplayWidth(dpy, id);
+    screen_height = DisplayHeight(dpy, id);
+
+		
+	fd_kbd = open("/dev/input/event2", O_RDWR);
+    if(fd_kbd <= 0)
+    {
+        DEBUG("");
+        goto err;
+    }
+
+    fd_mouse = open("/dev/input/event4", O_RDWR);
+    if(fd_mouse <= 0)
+    {
+        DEBUG("");
+        goto err;
+    }   
+    return 0;
+err:
+    if(fd_kbd)
+        close(fd_kbd);
+    if(fd_mouse)
+        close(fd_mouse);
+    if(dpy)
+        XCloseDisplay(dpy);
+    return -1;
+}
+
+
+>>>>>>> b1a59b0fb8808c9519d1e4f9b62eeadb4672da9a
 void *thread_display(void *param)
 {
     int ret;
@@ -944,3 +1172,79 @@ void *thread_display(void *param)
     create_display();
     return (void *)0;
 }
+
+
+<<<<<<< HEAD
+=======
+
+#if 0
+#define KEY_CAPS_LOCK 1<<13
+
+#define KEY_LEFT_SHITF 1<<1
+#define KEY_RIGHT_SHITF 1<<2
+
+#define KEY_LEFT_CTRL 1<<9
+#define KEY_RIGHT_CTRL 1<<10
+
+#define KEY_LEFT_ALT 1<<9
+#define KEY_RIGHT_ALT 1<<10
+
+#define KEY_LEFT_WIN 1<<7
+#define KEY_RIGHT_WIN 1<<8
+
+
+/*
+ *    // close caps lock  13bit  left 1bit right 1bit
+ * 	|-1bit-| -2bit-|-2bit-|-2bit-|-2bit-|-2bit-|-2bit-|
+ *    flag    win     alt	ctrl				 shift
+ *
+ *  // open caps lock  14bit  left 1bit right 1bit
+ * 	|-1bit-|-1bit-| -2bit-|-2bit-|-2bit-|-2bit-|-2bit-|-2bit-|
+ *    flag   caps 	 win     alt	ctrl				 shift
+ *
+ */
+
+
+	if(key->mod > 0x1000)
+	{
+		if(key->mod > 0x3000)   //open caps lock  14bit
+		{
+    		keybd_event(VK_CAPITAL, 0, key->down, 0);
+		}
+		if(key->mod & KEY_LEFT_SHITF || key->mod & KEY_RIGHT_SHITF)
+		{
+    		keybd_event(VK_SHIFT, 0, key->down, 0);
+			//DEBUG("ctrl key");
+		}
+		if(key->mod & KEY_LEFT_CTRL || key->mod & KEY_RIGHT_CTRL)
+		{
+			if(first_time)
+			{
+				first_time = 0;
+				DEBUG("ctrl key");
+    			keybd_event(VK_CONTROL, 0, key->down, 0);
+			}
+		}
+
+		if(key->mod & KEY_LEFT_WIN )
+		{
+			if(first_time)
+			{			
+    			keybd_event(VK_LWIN, 0, key->down, 0);
+			}
+			//DEBUG("ctrl key");
+		}
+		if(key->mod & KEY_RIGHT_WIN)
+		{
+    		keybd_event(VK_RWIN, 0, key->down, 0);
+			//DEBUG("ctrl key");
+		}
+
+		if(key->mod & KEY_LEFT_ALT || key->mod & KEY_RIGHT_ALT)
+		{
+    		keybd_event(VK_MENU, 0, key->down, 0);
+			//DEBUG("ctrl key");
+		}
+	}
+#endif
+>>>>>>> b1a59b0fb8808c9519d1e4f9b62eeadb4672da9a

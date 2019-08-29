@@ -106,6 +106,7 @@ int main(int argc, char *argv[])
 {
 	(void) time(&current_time);	
 
+start:
 	run_flag = 1;
 
     init_logs();
@@ -126,6 +127,8 @@ int main(int argc, char *argv[])
 	do_exit();
 	close_logs();
 	
+	sleep(1);
+	goto start;
 
 	return 0;
 }
