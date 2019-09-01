@@ -173,21 +173,26 @@ int create_tcp()
     int keepInterval = 3;   //3seconds inteval
     int keepCount = 5;      //retry count
 
-    fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd == -1)
     {
         DIE("unable to create socket");
     }
+
+    //if( setsockopt(fd, SOL_SOCKET, FIONBIO, &sock_opt, sizeof(sock_opt)) !=0) goto end_out;
 
     sock_opt = 1;
     if( setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &sock_opt, sizeof(sock_opt)) !=0) goto end_out;
 
 #ifdef _WIN32
 	sock_opt  = 1;
-	if (ioctlsocket(fd, FIONBIO,(u_long *)&sock_opt) == SOCKET_ERROR) 
+	if(server_flag)
 	{
-        DEBUG("fcntl F_SETFL fail");
-    }
+		if (ioctlsocket(fd, FIONBIO,(u_long *)&sock_opt) == SOCKET_ERROR) 
+		{
+        	DEBUG("fcntl F_SETFL fail");
+    	}
+	}
 #else
     if (fcntl(fd, F_SETFD, 1) == -1)
     {
@@ -205,12 +210,12 @@ int create_tcp()
     if( setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, (void*)&keepIdle, sizeof(keepIdle)) != 0) goto end_out;
     if( setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, (void *)&keepInterval, sizeof(keepInterval)) != 0) goto end_out;
 #endif
+
+
 	return fd;
 end_out:
     close_fd(fd);
     return -1;
-
-
 }
 
 
@@ -603,7 +608,6 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
     unsigned char *tmp;
     unsigned short count = 0;
 
-	int test = 0;
 	while(run_flag)
     {
         fds = allset;
@@ -643,7 +647,7 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 	               	en_queue(&vids_queue[i], clients[i].frame_buf + 8,  clients[i].frame_pos - 8, 0x0);
 					clients[i].frame_pos = 0;
 				}
-				else if(clients[i].frame_pos > clients[i].frame_size + 8 || clients[i].frame_pos > MAX_VIDSBUFSIZE)
+				else if(clients[i].frame_pos > clients[i].frame_size + 8 || clients[i].frame_pos >= MAX_VIDSBUFSIZE)
 				{
 					clients[i].frame_pos = 0;
 				}

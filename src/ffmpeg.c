@@ -56,7 +56,7 @@ void ffmpeg_encode(rfb_format *fmt)
 
 #ifdef _WIN32
     /* 截屏 */
-    av_dict_set(&options,"framerate","15",0);
+    av_dict_set(&options,"framerate","22",0);
     av_dict_set(&options,"draw_mouse","0",0);               //鼠标
     AVInputFormat *ifmt=av_find_input_format("gdigrab");
     if(avformat_open_input(&format_ctx,"desktop",ifmt, &options)!=0)
@@ -117,8 +117,6 @@ void ffmpeg_encode(rfb_format *fmt)
 		goto run_end;
     }
 
-//rect:
-
 	width = codec_ctx->width > fmt->width ? codec_ctx->width : fmt->width;
     height = codec_ctx->height > fmt->height ? codec_ctx->height : fmt->height;
 
@@ -156,7 +154,7 @@ void ffmpeg_encode(rfb_format *fmt)
     h264codec_ctx->width = width;
     h264codec_ctx->height = height;
     h264codec_ctx->time_base.num = 1;
-    h264codec_ctx->time_base.den = 15;//帧率(既一秒钟多少张图片)
+    h264codec_ctx->time_base.den = 22;//帧率(既一秒钟多少张图片)
     h264codec_ctx->bit_rate = fmt->bps;//bps; //比特率(调节这个大小可以改变编码后视频的质量)
     h264codec_ctx->gop_size= 12;
     h264codec_ctx->qmin = 10;
@@ -262,10 +260,8 @@ void ffmpeg_decode(rfb_display *vid)
     }
     codec_ctx = avcodec_alloc_context3(codec);
 
-#if 0
 	codec_ctx->thread_count = 4;
 	codec_ctx->thread_type = 2;
-#endif
 
     if (!codec_ctx)
     {
