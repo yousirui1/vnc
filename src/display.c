@@ -119,6 +119,11 @@ static void simulate_keyboard(rfb_keyevent *key)
 	{
 		key->key -= 1073741770;
 	}
+	/* 0- 9*/
+	else if(key->key >= 1073741913 && key->key <= 1073741921)
+	{
+		key->key -= 1073741864;
+	}
 
 	else
 	{
@@ -163,7 +168,7 @@ static void simulate_keyboard(rfb_keyevent *key)
 			case 1073742048: // "ctrl"
 				key->key = 0x11;
 				break;
-			case 1073741925: // "ctrl"
+			case 1073742052: // "ctrl"
 				key->key = 0x11;
 				break;
 			case 1073742049: // "shift"
@@ -225,6 +230,30 @@ static void simulate_keyboard(rfb_keyevent *key)
 				key->key = 0x25;
 				break;
 #endif
+			case 1073741907: //"Num Lock"
+				key->key = VK_NUMLOCK;
+				break;
+			case 1073741912: // "Enter"
+				key->key = 13;
+				break;
+			case 1073741908: //"/"
+				key->key = VK_DIVIDE;
+				break;
+			case 1073741909: // "*"
+				key->key = VK_MULTIPLY;
+				break;
+			case 1073741910: // "-"
+				key->key = VK_SUBTRACT;
+				break;				
+			case 1073741911: // "+"
+				key->key = VK_ADD;
+				break;
+			case 1073741923: // "."
+				key->key = VK_DECIMAL;
+				break;
+			case 1073741922: //"0"
+				key->key = 48;
+				break;
 			default:
 				break;
 		}
@@ -289,6 +318,12 @@ static void simulate_keyboard(rfb_keyevent *key)
 	{
 		key->key -= 1073676412;
 	}
+	/* 1- 9*/
+	else if(key->key >= 1073741913 && key->key <= 1073741922)
+	{
+		key->key -= 1073741864;
+	}
+
 	else
 	{
 		switch(key->key)
@@ -596,8 +631,10 @@ void close_display()
 			if(displays[i].req)
 				close_fd(displays[i].req->fd);
 			displays[i].play_flag = 0;
+			displays[i].req = NULL;
 		}
 	}
+	clear_texture();
 }
 
 void control_msg(rfb_request *req)
@@ -715,6 +752,13 @@ void event_loop()
 /* 等待线程结束后销毁公共变量 */
 void destroy_display()
 {
+	int i = 0;
+	void *tret = NULL;
+
+	for(i = 0; i < window_size * window_size ; i++ )
+	{
+		pthread_join(pthread_decodes[i], &tret);
+	}
 
     if(renderer)
         SDL_DestroyRenderer(renderer);
@@ -857,7 +901,11 @@ void create_display()
             screen_height = full_rect.h;
             full_rect.x = 0;
             full_rect.y = 0;
-            SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+            //SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+			//SDL_SetWindowSize(window, screen_width, screen_height);
+            SDL_SetWindowPosition(window, 0, 0);
+
+        	//SDL_SetWindowPosition(window, 0, 0);
         }
         else
         {
