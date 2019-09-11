@@ -66,7 +66,7 @@ struct rfb_format
     unsigned int height;
     unsigned int code;
     unsigned int data_port;
-    char play_flag;   			// 0 stop 1 play -1 pause 2 control
+    unsigned char play_flag;   			// 0 stop 1 play  2 control
 	unsigned char fps;
 	unsigned int bps;
 };

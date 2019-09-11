@@ -19,7 +19,7 @@ CONFIG_COMPILER=gnu
 
 outdir = ./bin
 
-exeobj = vnc
+exeobj = RemoteMonitor
 
 dllobj =  RemoteMonitor.dll
 
@@ -28,6 +28,7 @@ libobj = libRemoteMonitor.dll.a
 mainobj = main.o inirw.o queue.o  display.o socket.o server.o client.o log.o ffmpeg.o  external.o
 
 cppobj = 
+mainobj = main.o inirw.o queue.o  display.o socket.o server.o client.o log.o ffmpeg.o control.o 
 
 
 all: $(exeobj)
@@ -37,7 +38,7 @@ DEFINES := #-D DLL
 
 ifeq ($(TARGET_ARCH), arm)
 CFLAGS = -I. -I./include/ -I./SDL/include -I./ffmpeg/include \
-		 -L./SDL/lib -lSDL2 -lpthread -lX11 -lXtst \
+		 -L./SDL/lib -lSDL2 -lpthread   -lXtst  -lXext -lXinerama -lXrandr -lXfixes -lXdamage -lX11 \
 		 -L./ffmpeg/lib/arm -lavcodec -lavformat -lswscale -lavutil -lavdevice \
 		 -L./SDL/lib -lSDL2 -lpthread 
 else ifeq ($(TARGET_ARCH), x86)

@@ -23,15 +23,12 @@ exeobj = RemoteMonitor
 
 dllobj =  RemoteMonitor.dll
 
-<<<<<<< HEAD
 libobj = libRemoteMonitor.dll.a
 
 mainobj = main.o inirw.o queue.o  display.o socket.o server.o client.o log.o ffmpeg.o  external.o
 
 cppobj = 
-=======
 mainobj = main.o inirw.o queue.o  display.o socket.o server.o client.o log.o ffmpeg.o control.o 
->>>>>>> b1a59b0fb8808c9519d1e4f9b62eeadb4672da9a
 
 
 all: $(exeobj)

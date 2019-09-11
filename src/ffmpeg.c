@@ -56,7 +56,7 @@ void ffmpeg_encode(rfb_format *fmt)
 
 #ifdef _WIN32
     /* 截屏 */
-    av_dict_set(&options,"framerate","8",0);
+    av_dict_set(&options,"framerate","12",0);
     av_dict_set(&options,"draw_mouse","0",0);               //鼠标
     AVInputFormat *ifmt=av_find_input_format("gdigrab");
     if(avformat_open_input(&format_ctx,"desktop",ifmt, &options)!=0)
@@ -68,7 +68,7 @@ void ffmpeg_encode(rfb_format *fmt)
 
 	sprintf(video_size, "%dx%d", screen_width, screen_height);	
 
-    av_dict_set(&options,"framerate","8",0);
+    av_dict_set(&options,"framerate","12",0);
     //av_dict_set(&options,"follow_mouse","centered",0);        //鼠标
     av_dict_set(&options,"draw_mouse","0",0);               //鼠标
     av_dict_set(&options,"video_size",video_size,0);

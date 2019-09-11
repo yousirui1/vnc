@@ -513,7 +513,7 @@ void *thread_client_tcp(void *param)
     struct sched_param sched;
 
 	fd = *(int *)param;	
-
+#if 0
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {
@@ -526,6 +526,7 @@ void *thread_client_tcp(void *param)
     }
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
+#endif
 
     client_tcp_loop(fd);
 	return (void *)0;

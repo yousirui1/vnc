@@ -1,5 +1,7 @@
 #ifndef __VNCHOOKS_H__
 #define __VNCHOOKS_H__
+
+#ifdef _WIN32
 #include <windows.h>
 
 
@@ -11,5 +13,7 @@ extern int SetKeyboardHook(int active);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 #endif

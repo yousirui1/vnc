@@ -14,7 +14,6 @@ static Window root;
 #include "base.h"
 
 const char program_name[] = "remote monitor";
-
 int screen_width  = 0;
 int screen_height = 0;
 int vids_width = 0;
@@ -860,7 +859,6 @@ void init_display()
 	clear_texture();
 	DEBUG("init display end");
 }
-
 
 void create_display()
 {
