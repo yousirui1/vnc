@@ -1,39 +1,154 @@
-In file included from ./src/socket.c:1:0:
-./include/base.h:138:0: warning: "max" redefined
- #define max(a,b)    (((a) > (b)) ? (a) : (b))
- 
-In file included from c:\program files\git\mingw32\include\windows.h:42:0,
-                 from ./include/base.h:16,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
- #define max(a,b) ((a)>(b)?(a):(b))
- 
-In file included from ./src/socket.c:1:0:
-./include/base.h:139:0: warning: "min" redefined
- #define min(a,b)    (((a) < (b)) ? (a) : (b))
- 
-In file included from c:\program files\git\mingw32\include\windows.h:42:0,
-                 from ./include/base.h:16,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
- #define min(a,b) ((a)<(b)?(a):(b))
- 
+./src/socket.c:1:18: error: stray '#' in program
+ total_connections#include "base.h"
+                  ^
+./src/socket.c:1:1: error: unknown type name 'total_connections'
+ total_connections#include "base.h"
+ ^~~~~~~~~~~~~~~~~
+./src/socket.c:1:27: error: expected '=', ',', ';', 'asm' or '__attribute__' before string constant
+ total_connections#include "base.h"
+                           ^~~~~~~~
+In file included from ./src/socket.c:2:0:
+./include/msg.h:84:24: error: field 'recv_addr' has incomplete type
+     struct sockaddr_in recv_addr;
+                        ^~~~~~~~~
+./include/msg.h:85:24: error: field 'send_addr' has incomplete type
+     struct sockaddr_in send_addr;
+                        ^~~~~~~~~
+./src/socket.c: In function 'read_msg_syn':
+./src/socket.c:16:34: error: 'DATA_SYN_OFFSET' undeclared (first use in this function)
+     return *(unsigned char*)&buf[DATA_SYN_OFFSET];
+                                  ^~~~~~~~~~~~~~~
+./src/socket.c:16:34: note: each undeclared identifier is reported only once for each function it appears in
+./src/socket.c: In function 'read_msg_order':
+./src/socket.c:21:36: error: 'DATA_ORDER_OFFSET' undeclared (first use in this function)
+     return *(unsigned short *)&buf[DATA_ORDER_OFFSET];
+                                    ^~~~~~~~~~~~~~~~~
+./src/socket.c: In function 'read_msg_size':
+./src/socket.c:26:24: error: 'DATA_LEN_OFFSET' undeclared (first use in this function)
+     return *(int*)&buf[DATA_LEN_OFFSET];
+                        ^~~~~~~~~~~~~~~
+./src/socket.c: In function 'close_fd':
+./src/socket.c:34:9: warning: implicit declaration of function 'closesocket' [-Wimplicit-function-declaration]
+         closesocket(fd);
+         ^~~~~~~~~~~
+./src/socket.c: In function 'recv_msg':
+./src/socket.c:49:15: warning: implicit declaration of function 'recv' [-Wimplicit-function-declaration]
+         cnt = recv(fd,tmp + read_cnt ,len - read_cnt,0);
+               ^~~~
+./src/socket.c:58:20: error: 'errno' undeclared (first use in this function)
+                 if(errno == EINTR || errno == EAGAIN)
+                    ^~~~~
+./src/socket.c:58:29: error: 'EINTR' undeclared (first use in this function)
+                 if(errno == EINTR || errno == EAGAIN)
+                             ^~~~~
+./src/socket.c:58:47: error: 'EAGAIN' undeclared (first use in this function)
+                 if(errno == EINTR || errno == EAGAIN)
+                                               ^~~~~~
+./src/socket.c: In function 'send_msg':
+./src/socket.c:77:16: warning: implicit declaration of function 'send' [-Wimplicit-function-declaration]
+         cnt =  send(fd, tmp + send_cnt ,len - send_cnt,0);
+                ^~~~
+./src/socket.c:80:16: error: 'errno' undeclared (first use in this function)
+             if(errno == EINTR || errno == EAGAIN)
+                ^~~~~
+./src/socket.c:80:25: error: 'EINTR' undeclared (first use in this function)
+             if(errno == EINTR || errno == EAGAIN)
+                         ^~~~~
+./src/socket.c:80:43: error: 'EAGAIN' undeclared (first use in this function)
+             if(errno == EINTR || errno == EAGAIN)
+                                           ^~~~~~
+./src/socket.c: In function 'create_udp':
+./src/socket.c:92:2: warning: implicit declaration of function 'DEBUG' [-Wimplicit-function-declaration]
+  DEBUG("udp ip %s, port %d", ip, port);
+  ^~~~~
+./src/socket.c:96:24: error: storage size of 'send_addr' isn't known
+     struct sockaddr_in send_addr,recv_addr;
+                        ^~~~~~~~~
+./src/socket.c:96:34: error: storage size of 'recv_addr' isn't known
+     struct sockaddr_in send_addr,recv_addr;
+                                  ^~~~~~~~~
+./src/socket.c:99:28: error: invalid application of 'sizeof' to incomplete type 'struct sockaddr_in'
+     int socklen =  sizeof (struct sockaddr_in);
+                            ^~~~~~
+./src/socket.c:103:10: warning: implicit declaration of function 'socket' [-Wimplicit-function-declaration]
+     fd = socket (AF_INET, SOCK_DGRAM, 0);
+          ^~~~~~
+./src/socket.c:103:18: error: 'AF_INET' undeclared (first use in this function)
+     fd = socket (AF_INET, SOCK_DGRAM, 0);
+                  ^~~~~~~
+./src/socket.c:103:27: error: 'SOCK_DGRAM' undeclared (first use in this function)
+     fd = socket (AF_INET, SOCK_DGRAM, 0);
+                           ^~~~~~~~~~
+./src/socket.c:106:9: warning: implicit declaration of function 'DIE' [-Wimplicit-function-declaration]
+         DIE("socket creating err in udptalk");
+         ^~~
+./src/socket.c:113:30: warning: implicit declaration of function 'htons' [-Wimplicit-function-declaration]
+         send_addr.sin_port = htons (port);
+                              ^~~~~
+./src/socket.c:114:37: warning: implicit declaration of function 'inet_addr' [-Wimplicit-function-declaration]
+         send_addr.sin_addr.s_addr = inet_addr(ip);
+                                     ^~~~~~~~~
+./src/socket.c:118:9: warning: implicit declaration of function 'setsockopt' [-Wimplicit-function-declaration]
+     if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR , (char *)&sock_opt, sizeof(sock_opt)) < 0)
+         ^~~~~~~~~~
+./src/socket.c:118:24: error: 'SOL_SOCKET' undeclared (first use in this function)
+     if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR , (char *)&sock_opt, sizeof(sock_opt)) < 0)
+                        ^~~~~~~~~~
+./src/socket.c:118:36: error: 'SO_REUSEADDR' undeclared (first use in this function)
+     if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR , (char *)&sock_opt, sizeof(sock_opt)) < 0)
+                                    ^~~~~~~~~~~~
+./src/socket.c:124:36: error: 'SO_SNDBUF' undeclared (first use in this function)
+     if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char *)&sock_opt, sizeof (sock_opt)) == -1)
+                                    ^~~~~~~~~
+./src/socket.c:130:36: error: 'SO_RCVBUF' undeclared (first use in this function)
+     if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char *)&sock_opt, sizeof (sock_opt)) == -1)
+                                    ^~~~~~~~~
+./src/socket.c:137:6: warning: implicit declaration of function 'ioctlsocket' [-Wimplicit-function-declaration]
+  if (ioctlsocket(fd, FIONBIO,(u_long *)&sock_opt) == SOCKET_ERROR)
+      ^~~~~~~~~~~
+./src/socket.c:137:22: error: 'FIONBIO' undeclared (first use in this function)
+  if (ioctlsocket(fd, FIONBIO,(u_long *)&sock_opt) == SOCKET_ERROR)
+                      ^~~~~~~
+./src/socket.c:137:31: error: 'u_long' undeclared (first use in this function)
+  if (ioctlsocket(fd, FIONBIO,(u_long *)&sock_opt) == SOCKET_ERROR)
+                               ^~~~~~
+./src/socket.c:137:39: error: expected expression before ')' token
+  if (ioctlsocket(fd, FIONBIO,(u_long *)&sock_opt) == SOCKET_ERROR)
+                                       ^
+./src/socket.c:137:54: error: 'SOCKET_ERROR' undeclared (first use in this function)
+  if (ioctlsocket(fd, FIONBIO,(u_long *)&sock_opt) == SOCKET_ERROR)
+                                                      ^~~~~~~~~~~~
+./src/socket.c:145:33: warning: implicit declaration of function 'htonl' [-Wimplicit-function-declaration]
+     recv_addr.sin_addr.s_addr = htonl (INADDR_ANY);
+                                 ^~~~~
+./src/socket.c:145:40: error: 'INADDR_ANY' undeclared (first use in this function)
+     recv_addr.sin_addr.s_addr = htonl (INADDR_ANY);
+                                        ^~~~~~~~~~
+./src/socket.c:149:9: warning: implicit declaration of function 'bind' [-Wimplicit-function-declaration]
+     if (bind(fd, (struct sockaddr *) &recv_addr,sizeof (struct sockaddr_in)) == -1)
+         ^~~~
+./src/socket.c:149:57: error: invalid application of 'sizeof' to incomplete type 'struct sockaddr_in'
+     if (bind(fd, (struct sockaddr *) &recv_addr,sizeof (struct sockaddr_in)) == -1)
+                                                         ^~~~~~
+./src/socket.c:96:34: warning: unused variable 'recv_addr' [-Wunused-variable]
+     struct sockaddr_in send_addr,recv_addr;
+                                  ^~~~~~~~~
+./src/socket.c:96:24: warning: unused variable 'send_addr' [-Wunused-variable]
+     struct sockaddr_in send_addr,recv_addr;
+                        ^~~~~~~~~
 ./src/socket.c: In function 'create_tcp':
-./src/socket.c:186:41: error: 'opt' undeclared (first use in this function)
-  if (ioctlsocket(fd, FIONBIO,(u_long *)&opt) == SOCKET_ERROR)
-                                         ^~~
-./src/socket.c:186:41: note: each undeclared identifier is reported only once for each function it appears in
-./src/socket.c:209:50: warning: passing argument 4 of 'setsockopt' from incompatible pointer type [-Wincompatible-pointer-types]
+./src/socket.c:176:17: error: 'AF_INET' undeclared (first use in this function)
+     fd = socket(AF_INET, SOCK_STREAM, 0);
+                 ^~~~~~~
+./src/socket.c:176:26: error: 'SOCK_STREAM' undeclared (first use in this function)
+     fd = socket(AF_INET, SOCK_STREAM, 0);
+                          ^~~~~~~~~~~
+./src/socket.c:185:24: error: 'SOL_SOCKET' undeclared (first use in this function)
      if( setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &sock_opt, sizeof(sock_opt)) !=0) goto end_out;
-                                                  ^
-In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
-                 from c:\program files\git\mingw32\include\_winsock.h:50,
-                 from c:\program files\git\mingw32\include\windows.h:85,
-                 from ./include/base.h:16,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\winsock.h:599:32: note: expected 'const char *' but argument is of type 'int *'
- WINSOCK_API_LINKAGE int PASCAL setsockopt (SOCKET, int, int, const char *, int);
-                                ^~~~~~~~~~
+                        ^~~~~~~~~~
+./src/socket.c:185:36: error: 'SO_REUSEADDR' undeclared (first use in this function)
+     if( setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &sock_opt, sizeof(sock_opt)) !=0) goto end_out;
+                                    ^~~~~~~~~~~~
 ./src/socket.c:174:9: warning: unused variable 'keepCount' [-Wunused-variable]
      int keepCount = 5;      //retry count
          ^~~~~~~~~
@@ -46,113 +161,547 @@ c:\program files\git\mingw32\include\winsock.h:599:32: note: expected 'const cha
 ./src/socket.c:171:9: warning: unused variable 'keepAlive' [-Wunused-variable]
      int keepAlive = 1;      //heart echo open
          ^~~~~~~~~
+./src/socket.c: In function 'bind_server':
+./src/socket.c:229:24: error: storage size of 'server_sockaddr' isn't known
+     struct sockaddr_in server_sockaddr;
+                        ^~~~~~~~~~~~~~~
+./src/socket.c:232:34: error: 'AF_INET' undeclared (first use in this function)
+     server_sockaddr.sin_family = AF_INET;
+                                  ^~~~~~~
+./src/socket.c:233:45: error: 'INADDR_ANY' undeclared (first use in this function)
+     server_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+                                             ^~~~~~~~~~
+./src/socket.c:245:9: warning: implicit declaration of function 'listen' [-Wimplicit-function-declaration]
+     if (listen(fd, max_connections) == -1)
+         ^~~~~~
+./src/socket.c:245:20: error: 'max_connections' undeclared (first use in this function)
+     if (listen(fd, max_connections) == -1)
+                    ^~~~~~~~~~~~~~~
+./src/socket.c:229:24: warning: unused variable 'server_sockaddr' [-Wunused-variable]
+     struct sockaddr_in server_sockaddr;
+                        ^~~~~~~~~~~~~~~
+./src/socket.c: In function 'connect_server':
+./src/socket.c:260:24: error: storage size of 'client_sockaddr' isn't known
+     struct sockaddr_in client_sockaddr;
+                        ^~~~~~~~~~~~~~~
+./src/socket.c:263:34: error: 'AF_INET' undeclared (first use in this function)
+     client_sockaddr.sin_family = AF_INET;
+                                  ^~~~~~~
+./src/socket.c:267:11: warning: implicit declaration of function 'connect' [-Wimplicit-function-declaration]
+     while(connect(fd, (struct sockaddr *)&client_sockaddr, sizeof(client_sockaddr)) != 0)
+           ^~~~~~~
+./src/socket.c:270:9: warning: implicit declaration of function 'sleep' [-Wimplicit-function-declaration]
+         sleep(1);
+         ^~~~~
+./src/socket.c:260:24: warning: unused variable 'client_sockaddr' [-Wunused-variable]
+     struct sockaddr_in client_sockaddr;
+                        ^~~~~~~~~~~~~~~
+./src/socket.c: In function 'new_request':
+./src/socket.c:284:40: warning: implicit declaration of function 'malloc' [-Wimplicit-function-declaration]
+     rfb_request* req = (rfb_request *) malloc(sizeof (rfb_request));
+                                        ^~~~~~
+./src/socket.c:284:40: warning: incompatible implicit declaration of built-in function 'malloc'
+./src/socket.c:284:40: note: include '<stdlib.h>' or provide a declaration of 'malloc'
+./src/socket.c: In function 'remove_request':
+./src/socket.c:311:9: warning: implicit declaration of function 'free' [-Wimplicit-function-declaration]
+         free(req->data_buf);
+         ^~~~
+./src/socket.c:311:9: warning: incompatible implicit declaration of built-in function 'free'
+./src/socket.c:311:9: note: include '<stdlib.h>' or provide a declaration of 'free'
+./src/socket.c:316:9: error: 'displays' undeclared (first use in this function)
+         displays[req->display_id].req = NULL;
+         ^~~~~~~~
+./src/socket.c:318:3: warning: implicit declaration of function 'clear_texture' [-Wimplicit-function-declaration]
+   clear_texture();
+   ^~~~~~~~~~~~~
+./src/socket.c:325:5: warning: incompatible implicit declaration of built-in function 'free'
+     free(req);
+     ^~~~
+./src/socket.c:325:5: note: include '<stdlib.h>' or provide a declaration of 'free'
+./src/socket.c: In function 'send_request':
+./src/socket.c:348:17: warning: incompatible implicit declaration of built-in function 'malloc'
+     char *tmp = malloc(HEAD_LEN + req->data_size + 1);
+                 ^~~~~~
+./src/socket.c:348:17: note: include '<stdlib.h>' or provide a declaration of 'malloc'
+./src/socket.c:357:5: warning: incompatible implicit declaration of built-in function 'free'
+     free(tmp);
+     ^~~~
+./src/socket.c:357:5: note: include '<stdlib.h>' or provide a declaration of 'free'
+./src/socket.c: In function 'h264_send_data':
+./src/socket.c:367:14: error: 'DATA_SIZE' undeclared (first use in this function)
+     char buf[DATA_SIZE + 8] = {0};
+              ^~~~~~~~~
+./src/socket.c:375:19: warning: implicit declaration of function 'min' [-Wimplicit-function-declaration]
+         dataLen = min(pending, DATA_SIZE);
+                   ^~~
+./src/socket.c:381:13: warning: implicit declaration of function 'sendto' [-Wimplicit-function-declaration]
+             sendto(client_display.fd, buf,  dataLen + 8, 0,
+             ^~~~~~
+./src/socket.c:381:20: error: 'client_display' undeclared (first use in this function)
+             sendto(client_display.fd, buf,  dataLen + 8, 0,
+                    ^~~~~~~~~~~~~~
+./src/socket.c:367:10: warning: unused variable 'buf' [-Wunused-variable]
+     char buf[DATA_SIZE + 8] = {0};
+          ^~~
 ./src/socket.c: In function 'client_tcp_loop':
-./src/socket.c:418:45: warning: pointer targets in passing argument 2 of 'recv' differ in signedness [-Wpointer-sign]
-                 if((ret = recv(current->fd, current->head_buf+current->data_pos,HEAD_LEN - current ->data_pos, 0)) <= 0)
-                                             ^~~~~~~
-In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
-                 from c:\program files\git\mingw32\include\_winsock.h:50,
-                 from c:\program files\git\mingw32\include\windows.h:85,
-                 from ./include/base.h:16,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\winsock.h:595:32: note: expected 'char *' but argument is of type 'unsigned char *'
- WINSOCK_API_LINKAGE int PASCAL recv (SOCKET, char *, int, int);
-                                ^~~~
-./src/socket.c:460:45: warning: pointer targets in passing argument 2 of 'recv' differ in signedness [-Wpointer-sign]
-                 if((ret = recv(current->fd, current->data_buf + current->data_pos, current->data_size - current ->data_pos,0)) <= 0)
-                                             ^~~~~~~
-In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
-                 from c:\program files\git\mingw32\include\_winsock.h:50,
-                 from c:\program files\git\mingw32\include\windows.h:85,
-                 from ./include/base.h:16,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\winsock.h:595:32: note: expected 'char *' but argument is of type 'unsigned char *'
- WINSOCK_API_LINKAGE int PASCAL recv (SOCKET, char *, int, int);
-                                ^~~~
-./src/socket.c:473:21: warning: implicit declaration of function 'process_client_msg' [-Wimplicit-function-declaration]
+./src/socket.c:400:5: error: unknown type name 'fd_set'
+     fd_set fds;
+     ^~~~~~
+./src/socket.c:402:12: error: 'client_req' undeclared (first use in this function)
+  current = client_req;
+            ^~~~~~~~~~
+./src/socket.c:404:17: error: storage size of 'tv' isn't known
+  struct timeval tv;
+                 ^~
+./src/socket.c:408:8: error: 'run_flag' undeclared (first use in this function)
+  while(run_flag)
+        ^~~~~~~~
+./src/socket.c:410:9: warning: implicit declaration of function 'FD_ZERO' [-Wimplicit-function-declaration]
+         FD_ZERO(&fds);
+         ^~~~~~~
+./src/socket.c:411:9: warning: implicit declaration of function 'FD_SET' [-Wimplicit-function-declaration]
+         FD_SET(sockfd, &fds);
+         ^~~~~~
+./src/socket.c:412:15: warning: implicit declaration of function 'select' [-Wimplicit-function-declaration]
+         ret = select(sockfd + 1, &fds, NULL, NULL, &tv);
+               ^~~~~~
+./src/socket.c:416:7: error: 'errno' undeclared (first use in this function)
+    if(errno == EINTR)
+       ^~~~~
+./src/socket.c:416:16: error: 'EINTR' undeclared (first use in this function)
+    if(errno == EINTR)
+                ^~~~~
+./src/socket.c:418:21: error: 'EBADF' undeclared (first use in this function)
+    else if(errno != EBADF)
+                     ^~~~~
+./src/socket.c:421:6: warning: implicit declaration of function 'FD_ISSET' [-Wimplicit-function-declaration]
+   if(FD_ISSET(sockfd, &fds))
+      ^~~~~~~~
+./src/socket.c:429:55: error: 'EAGAIN' undeclared (first use in this function)
+                         if(errno == EINTR || errno == EAGAIN)
+                                                       ^~~~~~
+./src/socket.c:438:55: error: 'DATA_SYN' undeclared (first use in this function)
+                 if(read_msg_syn(current->head_buf) != DATA_SYN)
+                                                       ^~~~~~~~
+./src/socket.c:449:67: error: 'CLIENT_BUF' undeclared (first use in this function)
+                 if(current->data_size < 0 || current->data_size > CLIENT_BUF)
+                                                                   ^~~~~~~~~~
+./src/socket.c:457:57: warning: incompatible implicit declaration of built-in function 'malloc'
+                     current->data_buf = (unsigned char*)malloc(current->data_size + 1);
+                                                         ^~~~~~
+./src/socket.c:457:57: note: include '<stdlib.h>' or provide a declaration of 'malloc'
+./src/socket.c:480:21: warning: implicit declaration of function 'process_client_msg' [-Wimplicit-function-declaration]
                      process_client_msg(current);
                      ^~~~~~~~~~~~~~~~~~
+./src/socket.c:484:21: warning: incompatible implicit declaration of built-in function 'free'
+                     free(current->data_buf);
+                     ^~~~
+./src/socket.c:484:21: note: include '<stdlib.h>' or provide a declaration of 'free'
+./src/socket.c:504:3: warning: incompatible implicit declaration of built-in function 'free'
+   free(current);
+   ^~~~
+./src/socket.c:504:3: note: include '<stdlib.h>' or provide a declaration of 'free'
+./src/socket.c:404:17: warning: unused variable 'tv' [-Wunused-variable]
+  struct timeval tv;
+                 ^~
+./src/socket.c: In function 'thread_client_tcp':
+./src/socket.c:512:5: error: unknown type name 'pthread_attr_t'
+     pthread_attr_t st_attr;
+     ^~~~~~~~~~~~~~
+./src/socket.c:513:24: error: storage size of 'sched' isn't known
+     struct sched_param sched;
+                        ^~~~~
+./src/socket.c:517:11: warning: implicit declaration of function 'pthread_attr_init' [-Wimplicit-function-declaration]
+     ret = pthread_attr_init(&st_attr);
+           ^~~~~~~~~~~~~~~~~
+./src/socket.c:522:11: warning: implicit declaration of function 'pthread_attr_setschedpolicy' [-Wimplicit-function-declaration]
+     ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+           ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+./src/socket.c:522:49: error: 'SCHED_FIFO' undeclared (first use in this function)
+     ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+                                                 ^~~~~~~~~~
+./src/socket.c:527:28: error: 'SCHED_PRIORITY_UDP' undeclared (first use in this function)
+     sched.sched_priority = SCHED_PRIORITY_UDP;
+                            ^~~~~~~~~~~~~~~~~~
+./src/socket.c:528:11: warning: implicit declaration of function 'pthread_attr_setschedparam' [-Wimplicit-function-declaration]
+     ret = pthread_attr_setschedparam(&st_attr, &sched);
+           ^~~~~~~~~~~~~~~~~~~~~~~~~~
+./src/socket.c:513:24: warning: unused variable 'sched' [-Wunused-variable]
+     struct sched_param sched;
+                        ^~~~~
 ./src/socket.c: In function 'client_udp_loop':
-./src/socket.c:550:3: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
+./src/socket.c:538:5: error: unknown type name 'fd_set'
+     fd_set fds;
+     ^~~~~~
+./src/socket.c:539:5: error: unknown type name 'socklen_t'
+     socklen_t socklen = sizeof (struct sockaddr_in);
+     ^~~~~~~~~
+./src/socket.c:539:33: error: invalid application of 'sizeof' to incomplete type 'struct sockaddr_in'
+     socklen_t socklen = sizeof (struct sockaddr_in);
+                                 ^~~~~~
+./src/socket.c:540:15: error: 'client_display' undeclared (first use in this function)
+  int sockfd = client_display.fd;
+               ^~~~~~~~~~~~~~
+./src/socket.c:544:8: error: 'run_flag' undeclared (first use in this function)
+  while(run_flag)
+        ^~~~~~~~
+./src/socket.c:557:3: warning: implicit declaration of function 'usleep' [-Wimplicit-function-declaration]
    usleep(20000);
    ^~~~~~
-In file included from ./include/base.h:7:0,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
- int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
-                             ^~~~~~
-./src/socket.c:532:15: warning: unused variable 'socklen' [-Wunused-variable]
+./src/socket.c:539:15: warning: unused variable 'socklen' [-Wunused-variable]
      socklen_t socklen = sizeof (struct sockaddr_in);
                ^~~~~~~
-./src/socket.c:531:12: warning: unused variable 'fds' [-Wunused-variable]
+./src/socket.c:538:12: warning: unused variable 'fds' [-Wunused-variable]
      fd_set fds;
             ^~~
-./src/socket.c:530:9: warning: unused variable 'ret' [-Wunused-variable]
+./src/socket.c:537:9: warning: unused variable 'ret' [-Wunused-variable]
      int ret;
          ^~~
-./src/socket.c: In function 'server_udp_loop':
-./src/socket.c:607:6: warning: unused variable 'test' [-Wunused-variable]
-  int test = 0;
-      ^~~~
-./src/socket.c:605:20: warning: unused variable 'count' [-Wunused-variable]
-     unsigned short count = 0;
-                    ^~~~~
-./src/socket.c:603:18: warning: unused variable 'offset' [-Wunused-variable]
-     unsigned int offset = 0;
-                  ^~~~~~
-./src/socket.c:602:18: warning: unused variable 'total_size' [-Wunused-variable]
-     unsigned int total_size = 0;
-                  ^~~~~~~~~~
+./src/socket.c: In function 'thread_client_udp':
+./src/socket.c:574:5: error: unknown type name 'pthread_attr_t'
+     pthread_attr_t st_attr;
+     ^~~~~~~~~~~~~~
+./src/socket.c:575:24: error: storage size of 'sched' isn't known
+     struct sched_param sched;
+                        ^~~~~
+./src/socket.c:584:49: error: 'SCHED_FIFO' undeclared (first use in this function)
+     ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+                                                 ^~~~~~~~~~
+./src/socket.c:589:28: error: 'SCHED_PRIORITY_UDP' undeclared (first use in this function)
+     sched.sched_priority = SCHED_PRIORITY_UDP;
+                            ^~~~~~~~~~~~~~~~~~
+./src/socket.c:592:16: error: 'server_ip' undeclared (first use in this function)
+     create_udp(server_ip, fmt->data_port, &client_display);
+                ^~~~~~~~~
+./src/socket.c:592:44: error: 'client_display' undeclared (first use in this function)
+     create_udp(server_ip, fmt->data_port, &client_display);
+                                            ^~~~~~~~~~~~~~
+./src/socket.c:575:24: warning: unused variable 'sched' [-Wunused-variable]
+     struct sched_param sched;
+                        ^~~~~
+./src/socket.c: At top level:
+./src/socket.c:599:51: error: unknown type name 'fd_set'
+ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *clients)
+                                                   ^~~~~~
 ./src/socket.c: In function 'create_h264_socket':
-./src/socket.c:680:3: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
-   usleep(10000);
-   ^~~~~~
-In file included from ./include/base.h:7:0,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
- int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
-                             ^~~~~~
+./src/socket.c:679:5: error: unknown type name 'fd_set'
+     fd_set allset;
+     ^~~~~~
+./src/socket.c:683:30: error: 'display_size' undeclared (first use in this function)
+     DEBUG("display_size %d", display_size);
+                              ^~~~~~~~~~~~
+./src/socket.c:685:9: error: 'displays' undeclared (first use in this function)
+  while(!displays)
+         ^~~~~~~~
+./src/socket.c:691:34: error: 'h264_port' undeclared (first use in this function)
+         create_udp(NULL, i + 1 + h264_port, &displays[i]);
+                                  ^~~~~~~~~
+./src/socket.c:695:5: warning: implicit declaration of function 'server_udp_loop' [-Wimplicit-function-declaration]
+     server_udp_loop(display_size, maxfd, allset, displays);
+     ^~~~~~~~~~~~~~~
 ./src/socket.c: In function 'server_tcp_loop':
-./src/socket.c:792:53: warning: pointer targets in passing argument 2 of 'recv' differ in signedness [-Wpointer-sign]
-                         if((ret = recv(current->fd, current->head_buf+current->data_pos,HEAD_LEN - current ->data_pos, 0)) <= 0)
-                                                     ^~~~~~~
-In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
-                 from c:\program files\git\mingw32\include\_winsock.h:50,
-                 from c:\program files\git\mingw32\include\windows.h:85,
-                 from ./include/base.h:16,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\winsock.h:595:32: note: expected 'char *' but argument is of type 'unsigned char *'
- WINSOCK_API_LINKAGE int PASCAL recv (SOCKET, char *, int, int);
-                                ^~~~
-./src/socket.c:847:53: warning: pointer targets in passing argument 2 of 'recv' differ in signedness [-Wpointer-sign]
-                         if((ret = recv(current->fd, current->data_buf + current->data_pos, current->data_size - current ->data_pos,0)) <= 0)
-                                                     ^~~~~~~
-In file included from c:\program files\git\mingw32\include\winsock2.h:62:0,
-                 from c:\program files\git\mingw32\include\_winsock.h:50,
-                 from c:\program files\git\mingw32\include\windows.h:85,
-                 from ./include/base.h:16,
-                 from ./src/socket.c:1:
-c:\program files\git\mingw32\include\winsock.h:595:32: note: expected 'char *' but argument is of type 'unsigned char *'
- WINSOCK_API_LINKAGE int PASCAL recv (SOCKET, char *, int, int);
-                                ^~~~
-./src/socket.c:863:32: warning: implicit declaration of function 'process_server_msg' [-Wimplicit-function-declaration]
+./src/socket.c:704:5: error: unknown type name 'fd_set'
+     fd_set rset, allset;
+     ^~~~~~
+./src/socket.c:706:24: error: storage size of 'cliaddr' isn't known
+     struct sockaddr_in cliaddr;
+                        ^~~~~~~
+./src/socket.c:707:5: error: unknown type name 'socklen_t'
+     socklen_t clilen = sizeof(cliaddr);
+     ^~~~~~~~~
+./src/socket.c:709:20: error: storage size of 'tv' isn't known
+     struct timeval tv;
+                    ^~
+./src/socket.c:723:8: error: 'run_flag' undeclared (first use in this function)
+  while(run_flag)
+        ^~~~~~~~
+./src/socket.c:729:17: error: 'errno' undeclared (first use in this function)
+              if(errno == EINTR)
+                 ^~~~~
+./src/socket.c:729:26: error: 'EINTR' undeclared (first use in this function)
+              if(errno == EINTR)
+                          ^~~~~
+./src/socket.c:731:30: error: 'EBADF' undeclared (first use in this function)
+             else if(errno != EBADF)
+                              ^~~~~
+./src/socket.c:739:22: warning: implicit declaration of function 'accept' [-Wimplicit-function-declaration]
+             connfd = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
+                      ^~~~~~
+./src/socket.c:793:7: error: 'DEAD' undeclared (first use in this function)
+    if(DEAD == current->status)
+       ^~~~
+./src/socket.c:797:5: warning: implicit declaration of function 'FD_CLR' [-Wimplicit-function-declaration]
+     FD_CLR(current->fd, &allset);
+     ^~~~~~
+./src/socket.c:804:66: error: 'DONE' undeclared (first use in this function)
+                 if(current->status != DEAD || current->status != DONE)
+                                                                  ^~~~
+./src/socket.c:812:63: error: 'EAGAIN' undeclared (first use in this function)
+                                 if(errno == EINTR || errno == EAGAIN)
+                                                               ^~~~~~
+./src/socket.c:824:63: error: 'DATA_SYN' undeclared (first use in this function)
+                         if(read_msg_syn(current->head_buf) != DATA_SYN)
+                                                               ^~~~~~~~
+./src/socket.c:838:75: error: 'CLIENT_BUF' undeclared (first use in this function)
+                         if(current->data_size < 0 || current->data_size > CLIENT_BUF)
+                                                                           ^~~~~~~~~~
+./src/socket.c:849:65: warning: incompatible implicit declaration of built-in function 'malloc'
+                             current->data_buf = (unsigned char*)malloc(current->data_size + 1);
+                                                                 ^~~~~~
+./src/socket.c:849:65: note: include '<stdlib.h>' or provide a declaration of 'malloc'
+./src/socket.c:879:32: warning: implicit declaration of function 'process_server_msg' [-Wimplicit-function-declaration]
                              if(process_server_msg(current))
                                 ^~~~~~~~~~~~~~~~~~
-./src/socket.c:906:1: warning: label 'run_end' defined but not used [-Wunused-label]
+./src/socket.c:890:29: warning: incompatible implicit declaration of built-in function 'free'
+                             free(current->data_buf);
+                             ^~~~
+./src/socket.c:890:29: note: include '<stdlib.h>' or provide a declaration of 'free'
+./src/socket.c:922:1: warning: label 'run_end' defined but not used [-Wunused-label]
  run_end:
  ^~~~~~~
+./src/socket.c:709:20: warning: unused variable 'tv' [-Wunused-variable]
+     struct timeval tv;
+                    ^~
+./src/socket.c:706:24: warning: unused variable 'cliaddr' [-Wunused-variable]
+     struct sockaddr_in cliaddr;
+                        ^~~~~~~
 ./src/socket.c: In function 'load_wsa':
-./src/socket.c:936:16: warning: 'return' with a value, in function returning void
+./src/socket.c:947:5: error: unknown type name 'WSADATA'
+     WSADATA wsData = {0};
+     ^~~~~~~
+./src/socket.c:948:13: warning: implicit declaration of function 'WSAStartup' [-Wimplicit-function-declaration]
+     if(0 != WSAStartup(0x202, &wsData))
+             ^~~~~~~~~~
+./src/socket.c:951:9: warning: implicit declaration of function 'WSACleanup' [-Wimplicit-function-declaration]
+         WSACleanup();
+         ^~~~~~~~~~
+./src/socket.c:952:16: warning: 'return' with a value, in function returning void
          return -1;
                 ^
-./src/socket.c:928:6: note: declared here
+./src/socket.c:944:6: note: declared here
  void load_wsa()
       ^~~~~~~~
 ./src/socket.c: In function 'destroy_socket':
-./src/socket.c:948:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+./src/socket.c:963:9: warning: incompatible implicit declaration of built-in function 'free'
+         free(vids_buf);
+         ^~~~
+./src/socket.c:963:9: note: include '<stdlib.h>' or provide a declaration of 'free'
+./src/socket.c:965:9: warning: incompatible implicit declaration of built-in function 'free'
+         free(vids_queue);
+         ^~~~
+./src/socket.c:965:9: note: include '<stdlib.h>' or provide a declaration of 'free'
+./src/socket.c:964:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
      if(vids_queue)
      ^~
-./src/socket.c:950:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
+./src/socket.c:966:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
   vids_buf = NULL;
   ^~~~~~~~
+./src/socket.c: In function 'thread_server_tcp':
+./src/socket.c:980:5: error: unknown type name 'pthread_attr_t'
+     pthread_attr_t st_attr;
+     ^~~~~~~~~~~~~~
+./src/socket.c:981:24: error: storage size of 'sched' isn't known
+     struct sched_param sched;
+                        ^~~~~
+./src/socket.c:990:49: error: 'SCHED_FIFO' undeclared (first use in this function)
+     ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+                                                 ^~~~~~~~~~
+./src/socket.c:995:28: error: 'SCHED_PRIORITY_UDP' undeclared (first use in this function)
+     sched.sched_priority = SCHED_PRIORITY_UDP;
+                            ^~~~~~~~~~~~~~~~~~
+./src/socket.c:981:24: warning: unused variable 'sched' [-Wunused-variable]
+     struct sched_param sched;
+                        ^~~~~
+./src/socket.c: In function 'thread_server_udp':
+./src/socket.c:1005:5: error: unknown type name 'pthread_attr_t'
+     pthread_attr_t st_attr;
+     ^~~~~~~~~~~~~~
+./src/socket.c:1006:24: error: storage size of 'sched' isn't known
+     struct sched_param sched;
+                        ^~~~~
+./src/socket.c:1013:49: error: 'SCHED_FIFO' undeclared (first use in this function)
+     ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+                                                 ^~~~~~~~~~
+./src/socket.c:1018:28: error: 'SCHED_PRIORITY_UDP' undeclared (first use in this function)
+     sched.sched_priority = SCHED_PRIORITY_UDP;
+                            ^~~~~~~~~~~~~~~~~~
+./src/socket.c:1006:24: warning: unused variable 'sched' [-Wunused-variable]
+     struct sched_param sched;
+                        ^~~~~
+./src/socket.c: In function 'read_msg_syn':
+./src/socket.c:17:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+./src/socket.c: In function 'read_msg_order':
+./src/socket.c:22:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+./src/socket.c: In function 'read_msg_size':
+./src/socket.c:27:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
 make: *** [socket.o] Error 1
+make: *** Waiting for unfinished jobs....
+In file included from ./src/external.c:1:0:
+./include/base.h:138:0: warning: "max" redefined
+ #define max(a,b)    (((a) > (b)) ? (a) : (b))
+ 
+In file included from c:\program files\git\mingw32\include\windows.h:42:0,
+                 from ./include/base.h:16,
+                 from ./src/external.c:1:
+c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
+ #define max(a,b) ((a)>(b)?(a):(b))
+ 
+In file included from ./src/external.c:1:0:
+./include/base.h:139:0: warning: "min" redefined
+ #define min(a,b)    (((a) < (b)) ? (a) : (b))
+ 
+In file included from c:\program files\git\mingw32\include\windows.h:42:0,
+                 from ./include/base.h:16,
+                 from ./src/external.c:1:
+c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
+ #define min(a,b) ((a)<(b)?(a):(b))
+ 
+./src/external.c: In function 'StopMonitorServer':
+./src/external.c:53:5: warning: implicit declaration of function 'do_exit' [-Wimplicit-function-declaration]
+     do_exit();
+     ^~~~~~~
+./src/external.c: In function 'DisconnectAllClient':
+./src/external.c:66:2: warning: implicit declaration of function 'close_display' [-Wimplicit-function-declaration]
+  close_display();
+  ^~~~~~~~~~~~~
+./src/external.c: In function 'ExitControl':
+./src/external.c:73:2: warning: implicit declaration of function 'switch_mode' [-Wimplicit-function-declaration]
+  switch_mode(0);
+  ^~~~~~~~~~~
+./src/external.c: In function 'SetPageAttribute':
+./src/external.c:119:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+In file included from ./src/ffmpeg.c:11:0:
+./include/base.h:138:0: warning: "max" redefined
+ #define max(a,b)    (((a) > (b)) ? (a) : (b))
+ 
+In file included from c:\program files\git\mingw32\include\windows.h:42:0,
+                 from ./include/base.h:16,
+                 from ./src/ffmpeg.c:11:
+c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
+ #define max(a,b) ((a)>(b)?(a):(b))
+ 
+In file included from ./src/ffmpeg.c:11:0:
+./include/base.h:139:0: warning: "min" redefined
+ #define min(a,b)    (((a) < (b)) ? (a) : (b))
+ 
+In file included from c:\program files\git\mingw32\include\windows.h:42:0,
+                 from ./include/base.h:16,
+                 from ./src/ffmpeg.c:11:
+c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
+ #define min(a,b) ((a)<(b)?(a):(b))
+ 
+./src/ffmpeg.c: In function 'ffmpeg_encode':
+./src/ffmpeg.c:31:5: warning: 'av_register_all' is deprecated [-Wdeprecated-declarations]
+     av_register_all();
+     ^~~~~~~~~~~~~~~
+In file included from ./src/ffmpeg.c:2:0:
+./ffmpeg/include/libavformat/avformat.h:2025:6: note: declared here
+ void av_register_all(void);
+      ^~~~~~~~~~~~~~~
+./src/ffmpeg.c:33:5: warning: implicit declaration of function 'avdevice_register_all' [-Wimplicit-function-declaration]
+     avdevice_register_all();
+     ^~~~~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:91:9: warning: 'codec' is deprecated [-Wdeprecated-declarations]
+         if(format_ctx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO)
+         ^~
+In file included from ./src/ffmpeg.c:2:0:
+./ffmpeg/include/libavformat/avformat.h:877:21: note: declared here
+     AVCodecContext *codec;
+                     ^~~~~
+./src/ffmpeg.c:102:5: warning: 'codec' is deprecated [-Wdeprecated-declarations]
+     codec_ctx=format_ctx->streams[videoindex]->codec;
+     ^~~~~~~~~
+In file included from ./src/ffmpeg.c:2:0:
+./ffmpeg/include/libavformat/avformat.h:877:21: note: declared here
+     AVCodecContext *codec;
+                     ^~~~~
+./src/ffmpeg.c:132:5: warning: 'avpicture_get_size' is deprecated [-Wdeprecated-declarations]
+     out_buffer = (uint8_t *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV420P, 1920, 1080));
+     ^~~~~~~~~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:5449:5: note: declared here
+ int avpicture_get_size(enum AVPixelFormat pix_fmt, int width, int height);
+     ^~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:133:5: warning: 'avpicture_fill' is deprecated [-Wdeprecated-declarations]
+     avpicture_fill((AVPicture *)frame_yuv, out_buffer, AV_PIX_FMT_YUV420P, 1920, 1080);
+     ^~~~~~~~~~~~~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:5434:5: note: declared here
+ int avpicture_fill(AVPicture *picture, const uint8_t *ptr,
+     ^~~~~~~~~~~~~~
+./src/ffmpeg.c:194:13: warning: 'avcodec_decode_video2' is deprecated [-Wdeprecated-declarations]
+             ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, packet);
+             ^~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:4770:5: note: declared here
+ int avcodec_decode_video2(AVCodecContext *avctx, AVFrame *picture,
+     ^~~~~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:202:17: warning: 'avcodec_encode_video2' is deprecated [-Wdeprecated-declarations]
+                 ret = avcodec_encode_video2(h264codec_ctx, packet,frame_yuv, &got_picture);
+                 ^~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:5401:5: note: declared here
+ int avcodec_encode_video2(AVCodecContext *avctx, AVPacket *avpkt,
+     ^~~~~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:210:9: warning: 'av_free_packet' is deprecated [-Wdeprecated-declarations]
+         av_free_packet(packet);
+         ^~~~~~~~~~~~~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:4415:6: note: declared here
+ void av_free_packet(AVPacket *pkt);
+      ^~~~~~~~~~~~~~
+./src/ffmpeg.c:226:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+     if(format_ctx)
+     ^~
+./src/ffmpeg.c:228:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
+  if(packet)
+  ^~
+./src/ffmpeg.c:229:3: warning: 'av_free_packet' is deprecated [-Wdeprecated-declarations]
+   av_free_packet(packet);
+   ^~~~~~~~~~~~~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:4415:6: note: declared here
+ void av_free_packet(AVPacket *pkt);
+      ^~~~~~~~~~~~~~
+./src/ffmpeg.c:19:17: warning: variable 'decode_speed' set but not used [-Wunused-but-set-variable]
+     const char *decode_speed = NULL;
+                 ^~~~~~~~~~~~
+./src/ffmpeg.c:17:39: warning: variable 'fps' set but not used [-Wunused-but-set-variable]
+     int  i, videoindex, ret, quality, fps,  got_picture;
+                                       ^~~
+./src/ffmpeg.c: In function 'ffmpeg_decode':
+./src/ffmpeg.c:286:5: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
+     usleep(200);
+     ^~~~~~
+In file included from ./include/base.h:7:0,
+                 from ./src/ffmpeg.c:11:
+c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
+ int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
+                             ^~~~~~
+./src/ffmpeg.c:305:3: warning: 'avcodec_decode_video2' is deprecated [-Wdeprecated-declarations]
+   ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, &packet);
+   ^~~
+In file included from ./src/ffmpeg.c:1:0:
+./ffmpeg/include/libavcodec/avcodec.h:4770:5: note: declared here
+ int avcodec_decode_video2(AVCodecContext *avctx, AVFrame *picture,
+     ^~~~~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:331:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+     if(codec_ctx)
+     ^~
+./src/ffmpeg.c:334:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
+  img_convert_ctx = NULL;
+  ^~~~~~~~~~~~~~~
+./src/ffmpeg.c:343:9: warning: 'return' with a value, in function returning void
+  return (void *)0;
+         ^
+./src/ffmpeg.c:243:6: note: declared here
+ void ffmpeg_decode(rfb_display *vid)
+      ^~~~~~~~~~~~~

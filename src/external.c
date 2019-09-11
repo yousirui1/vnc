@@ -71,6 +71,7 @@ CAPTUREANDCAST_API int DisconnectAllClient()
 CAPTUREANDCAST_API int ExitControl()
 {
 	switch_mode(0);
+	sleep(1);
 	return 0;
 }
 

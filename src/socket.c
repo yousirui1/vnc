@@ -185,14 +185,16 @@ int create_tcp()
     if( setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &sock_opt, sizeof(sock_opt)) !=0) goto end_out;
 
 #ifdef _WIN32
-	sock_opt  = 1;
+#if 0
+	u_long opt  = 1;
 	if(server_flag)
 	{
-		if (ioctlsocket(fd, FIONBIO,(u_long *)&sock_opt) == SOCKET_ERROR) 
+		if (ioctlsocket(fd, FIONBIO,(u_long *)&opt) == SOCKET_ERROR) 
 		{
         	DEBUG("fcntl F_SETFL fail");
     	}
 	}
+#endif
 #else
     if (fcntl(fd, F_SETFD, 1) == -1)
     {
@@ -298,12 +300,12 @@ static rfb_request* remove_request(rfb_request *req)
 {
 
 	if(!req)
+	{
+		DEBUG("remove_request req is NULL");	
 		return NULL;
+	}
 
     rfb_request *next = req->next;
-
-	if(!next)
-		return NULL;	
 
     if(req->data_buf)
         free(req->data_buf);
@@ -322,6 +324,7 @@ static rfb_request* remove_request(rfb_request *req)
     req->prev = NULL;
     free(req);
     total_connections--;
+	DEBUG("remove_request ");
     return next;
 }
 
@@ -598,8 +601,8 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
     int i, ret, nready;
     fd_set fds;
     struct timeval tv;
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
+    tv.tv_sec = 0;
+    tv.tv_usec = 2000;
 
     int sockfd = -1;
     socklen_t socklen = sizeof (struct sockaddr_in);
@@ -637,7 +640,6 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 	
 	            tmp = &(clients[i].frame_buf[clients[i].frame_pos]);
 	            clients[i].frame_pos += ret;
-
 				if(tmp[0] == 0xff && tmp[1] == 0xff)
 				{
 	            	clients[i].frame_size = *((unsigned int *)&tmp[4]);
@@ -646,10 +648,12 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 				{
 	               	en_queue(&vids_queue[i], clients[i].frame_buf + 8,  clients[i].frame_pos - 8, 0x0);
 					clients[i].frame_pos = 0;
+					clients[i].frame_size = 0;
 				}
 				else if(clients[i].frame_pos > clients[i].frame_size + 8 || clients[i].frame_pos >= MAX_VIDSBUFSIZE)
 				{
 					clients[i].frame_pos = 0;
+					clients[i].frame_size = 0;
 				}
 
 				if(--nready <= 0)
@@ -703,8 +707,8 @@ void server_tcp_loop(int listenfd)
     socklen_t clilen = sizeof(cliaddr);
 
     struct timeval tv;
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
+    tv.tv_sec = 0;
+    tv.tv_usec = 200;
     maxfd = listenfd;
 	
 
@@ -725,7 +729,7 @@ void server_tcp_loop(int listenfd)
              if(errno == EINTR)
                 continue;
             else if(errno != EBADF)
-				DIE("select %s", strerror(ret));
+				DIE("select %d %s ", errno, strerror(errno));
         }
 
         nready = ret;
@@ -785,6 +789,15 @@ void server_tcp_loop(int listenfd)
         {
             if((sockfd = current->fd) < 0)
                 continue;
+
+			if(DEAD == current->status)
+			{
+				DEBUG("close DEAD fd %d", current->fd);
+				close_fd(current->fd);
+				FD_CLR(current->fd, &allset);
+				current = remove_request(current);
+				continue;
+			}
 
             if(FD_ISSET(sockfd, &rset))
             {

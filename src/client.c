@@ -118,6 +118,7 @@ void create_encode(rfb_format *fmt)
     {
         DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
     }
+	
 }
 
 
@@ -154,6 +155,7 @@ void exit_client()
 {
     void *tret = NULL;
     pthread_join(pthread_display, (void**)tret);  //等待线程同步
+	DEBUG("pthread_exit display");
     pthread_join(pthread_tcp, (void**)tret);  //等待线程同步
 	DEBUG("pthread_exit client tcp");
 }

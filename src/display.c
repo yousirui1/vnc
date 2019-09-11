@@ -621,19 +621,24 @@ void switch_mode(int id)
 
 void close_display()
 {
-	DEBUG("total %d", total_connections);
 	int i;
 	for(i = 0; i < display_size; i++)
 	{
+		if(!displays)
+			return;	
+
 		if(displays[i].play_flag == 1)
 		{
-			//process_server_msg(displays[i].req);
 			if(displays[i].req)
-				close_fd(displays[i].req->fd);
+			{
+				process_server_msg(displays[i].req);
+				displays[i].req->status = DEAD;
+			}
 			displays[i].play_flag = 0;
 			displays[i].req = NULL;
 		}
 	}
+	DEBUG("close_display OK");
 	clear_texture();
 }
 
@@ -968,6 +973,8 @@ void create_display()
 #endif
 
 	}
+	DEBUG("display exit");
+	
 }
 
 void *thread_display(void *param)

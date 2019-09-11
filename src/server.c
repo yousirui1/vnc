@@ -53,7 +53,7 @@ static int recv_options(rfb_request *req)
             if(!displays[i].play_flag)      //存在空闲的分屏, 发送play命令
             {
                 displays[i].req = req;
-                displays[i].play_flag = 1;  
+                displays[i].fmt.play_flag =  displays[i].play_flag = 1;
                 fmt->width = vids_width;
                 fmt->height = vids_height;
                 fmt->play_flag = 0x01;
@@ -64,6 +64,8 @@ static int recv_options(rfb_request *req)
                 break;
             }
         }
+		DEBUG("displays[1].play_flag %d", displays[1].play_flag);
+		DEBUG("total_connections %d", total_connections);
 
 		if(fmt->play_flag)
 		{
