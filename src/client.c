@@ -2,120 +2,150 @@
 #include "msg.h"
 
 rfb_request *client_req = NULL;
-rfb_display client_display = {0};
+rfb_display cli_display = {0};
 
-static int server_s = -1;
 static pthread_t pthread_tcp, pthread_display;
+
+static int send_pipe(char *buf, short cmd, int size)
+{
+    int ret;
+    set_request_head(buf, 0, cmd, size);
+    ret = send_msg(pipe_cli[0], buf, size + HEAD_LEN);
+    return ret;
+}
 
 static int recv_options(rfb_request *req)
 {
-    if(read_msg_order(req->head_buf) == 0x02)
+    if(read_msg_order(req->head_buf) == OPTIONS_MSG_RET)
     {
+		int ret;
         rfb_format *fmt = (rfb_format *)&req->data_buf[0];
          DEBUG("fmt->width %d fmt->height %d fmt->code %d,"
           " fmt->data_port %d fmt->play_flag %d  fmt->bps %d fmt->fps%d",
              fmt->width, fmt->height,fmt->code, fmt->data_port,fmt->play_flag, fmt->bps, fmt->fps);
 
-		client_display.play_flag = fmt->play_flag;
-		memcpy(&(client_display.fmt), fmt, sizeof(rfb_format));
+		cli_display.play_flag = fmt->play_flag;
+		memcpy(&(cli_display.fmt), fmt, sizeof(rfb_format));
+		ret = send_pipe(req->head_buf, CLI_UDP_MSG, 0);
 
-		if(fmt->play_flag == 1)
+		if(SUCCESS == ret)
 		{
 			req->status = PLAY;
-            create_encode(&client_display.fmt);
 		}
-
-		if(fmt->play_flag == 2)
-		{
-			/* 获取服务端分辨率用于控制坐标转换 */
-			vids_width = fmt->width;   
-			vids_height = fmt->height;
-			req->status = CONTROL;
-            create_encode(&client_display.fmt);
-		}
-		else
-		{
-			DEBUG("OPTIONS");
-			req->status = OPTIONS;
-		}
+#if 0
+		sleep(5);
+		ret = send_pipe(req->head_buf, CLI_DONE_MSG, 0);
+		char s = 'S';
+		send_msg(pipe_event[1], &s, 1);
+		
+#endif
+		return ret;
     }
+	return ERROR;
 }
 
 static int send_options(rfb_request *req)
 {
+	int ret;
+	if(req->data_size < sizeof(rfb_format))
+	{
+		DEBUG("send_options realloc");
+		req->data_buf = realloc(req->data_buf, sizeof(rfb_format) + 1);
+	}	
     req->data_size = sizeof(rfb_format);
-    req->data_buf = malloc(req->data_size + 1);
     rfb_format *fmt = (rfb_format *)&req->data_buf[0];
-    fmt->width = 1280;
-    fmt->height = 720;
+    fmt->width = screen_width;
+    fmt->height = screen_height;
     fmt->code = 0;
     fmt->data_port = 0;
     fmt->play_flag = 0;
     fmt->bps = 2000000;
     fmt->fps = default_fps;
 
-    set_request_head(req, 2, sizeof(rfb_format));
+    set_request_head(req->head_buf, 0, OPTIONS_MSG, sizeof(rfb_format));
     req->status = OPTIONS;
-    return send_request(req);
+	ret = send_request(req);
+	free(req->data_buf);	
+	
+	if(SUCCESS != ret)
+        return ERROR;
+
+    req->status = OPTIONS;
+    return SUCCESS;
 }
 
 static int recv_login(rfb_request *req)
 {
-    if(read_msg_order(req->head_buf) == 0x01)
+    if(read_msg_order(req->head_buf) == LOGIN_MSG_RET)
     {
+		int ret;
         int server_major = 0, server_minor = 0;
+		int client_major = 0, client_minor = 0;
         sscanf(req->data_buf, VERSIONFORMAT, &server_major, &server_minor);
         DEBUG(VERSIONFORMAT, server_major, server_minor);
+		get_version(&client_major, &client_minor);
+		if(server_major == client_major || server_minor == client_minor)
+        {
+        	send_options(req);
+            if(ret == SUCCESS)
+            {
+                DEBUG("login ok !!");
+                return SUCCESS;
+            }
+        }
+        else
+        {
+            DEBUG("version not equel server: "VERSIONFORMAT" client: "VERSIONFORMAT"", server_major,
+                    server_minor, client_major, client_minor);
+        }
         free(req->data_buf);
-        send_options(req);
     }
+	return ERROR;
 }
 
 static int send_login(rfb_request *req)
 {
     int ret;
-    int server_major = 0, server_minor = 0;
+	int client_major = 0, client_minor = 0;
 
-	set_request_head(req, 0x01, sz_verformat);
+	get_version(&client_major, &client_minor);
+	DEBUG("client version :"VERSIONFORMAT, client_major, client_minor);
 	
     req->data_size = sz_verformat;
-    req->data_buf = malloc(req->data_size + 1);
+    req->data_buf = (unsigned char *)malloc(req->data_size + 1);
+    sprintf(req->data_buf, VERSIONFORMAT, client_major, client_minor);
 
-    sprintf(req->data_buf, VERSIONFORMAT, server_major, server_minor);
-
-    set_request_head(req, 1, sz_verformat);
-    req->status = LOGIN;
-
+	set_request_head(req->head_buf, 0,  LOGIN_MSG, SZ_VERFORMAT);
     ret = send_request(req);
     free(client_req->data_buf);
-    return ret;
+
+	if(SUCCESS != ret)
+		return ERROR;	
+
+    req->status = LOGIN;
+    return SUCCESS;
 }
 
 
-
-void create_encode(rfb_format *fmt)
+int process_client_pipe(char *msg, int len)
 {
     int ret;
-    pthread_t pthread_udp, pthread_encode;
-
-    ret = pthread_create(&pthread_udp, NULL, thread_client_udp, fmt);
-    if(0 != ret)
+    DEBUG("pipe msg type %02X CLI_READY_MSG %02X", read_msg_order(msg), CLI_READY_MSG);
+    switch(read_msg_order(msg))
     {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+        case CLI_READY_MSG:
+            //send_ready(&m_client);
+            break;
+        case CLI_PLAY_MSG:
+            //send_play(&m_client);
+            break;
     }
-    ret = pthread_create(&pthread_encode, NULL, thread_encode, fmt);
-    if(0 != ret)
-    {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-    }
-	
 }
-
-
 
 int process_client_msg(rfb_request *req)
 {
     int ret = 0;
+	DEBUG("process_client_msg   !!!");
     switch(req->status)
     {
         case READ_HEADER:
@@ -141,11 +171,9 @@ int process_client_msg(rfb_request *req)
 }
 
 
-void exit_client()
+static void do_exit()
 {
     void *tret = NULL;
-    pthread_join(pthread_display, (void**)tret);  //等待线程同步
-	DEBUG("pthread_exit display");
     pthread_join(pthread_tcp, (void**)tret);  //等待线程同步
 	DEBUG("pthread_exit client tcp");
 }
@@ -153,40 +181,47 @@ void exit_client()
 void init_client()
 {
     int ret = -1;
+	int server_s;
 
-	//create_display();
+	get_screen_size(&screen_width, &screen_height);
 
     server_s = create_tcp();
-#ifndef _WIN32
-	init_x11();
-#endif
-
-    if(!server_s)
+    if(server_s == -1)
     {
-        DIE("create tcp err");
+        DEBUG("create tcp err");
+		return;
     }
+
     ret = connect_server(server_s, server_ip, server_port);
 	if(0 != ret)
 	{
-		return;
+		DEBUG("connect server ip: %s port %d error", server_ip, server_port);
+		goto run_out;
 	}
 	
 	client_req = new_request();
 	if(!client_req)
 	{
-        DIE("create tcp err");
+		//DEBUG("malloc cli->head_buf sizeof: %d error :%s", HEAD_LEN, strerror(errno));
+		goto run_out;
 	}
 	client_req->fd = server_s;
 
 	ret = pthread_create(&pthread_tcp, NULL, thread_client_tcp, &server_s);
     if(0 != ret)
     {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+		DEBUG("pthread create client tcp ret: %d error: %s",ret, strerror(ret));
+		goto run_out;
     }
-
 	ret = send_login(client_req);
 	if(0 != ret)
 	{
-		DIE("login_server err");
+		DEBUG("send_login error");
+		goto run_out;
 	}
+	do_exit();
+
+run_out:
+	close_fd(server_s);
+	return;
 }

@@ -36,11 +36,11 @@
 
 #define __DEBUG__
 #ifdef __DEBUG__
-#define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__);\
-                        log_msg("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__);
+#define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\r\n", __LINE__, ##__VA_ARGS__);\
+                        log_msg("File: "__FILE__", Line: %05d: "format"\r\n", __LINE__, ##__VA_ARGS__);
 
-#define DIE(format,...) printf("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__);\
-                        err_msg("File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__);\
+#define DIE(format,...) printf("File: "__FILE__", Line: %05d: "format"\r\n", __LINE__, ##__VA_ARGS__);\
+                        err_msg("File: "__FILE__", Line: %05d: "format"\r\n", __LINE__, ##__VA_ARGS__);\
                         exit(1)
 #else
 #define DEBUG(format,...)
@@ -136,6 +136,40 @@
 
 #define MOUSE_WHEEL_DOWN 1<<5
 #define MOUSE_WHEEL_UP 	1<<6
+
+
+/* msg */
+#define LOGIN_MSG               0x01
+#define LOGIN_MSG_RET           0x02
+#define OPTIONS_MSG             0x03
+#define OPTIONS_MSG_RET         0x04
+#define READY_MSG               0x05
+#define READY_MSG_RET           0x06
+#define PLAY_MSG                0x07
+#define PLAY_MSG_RET            0x08
+
+
+/* pipe type */
+#define CLIENT_MSG              0x00
+#define SERVER_MSG              0x01
+#define USB_MSG                 0x02
+#define EVENT_MSG               0x03
+#define THRIFT_MSG              0x04
+
+
+/* pipe msg */
+#define CLI_UDP_MSG             0x01
+#define CLI_READY_MSG           0x02
+#define CLI_PLAY_MSG            0x03
+#define CLI_CONTROL_MSG         0x04
+#define CLI_DONE_MSG            0x05
+#define CLI_DEAD_MSG            0x06
+
+#define SER_READY_MSG           0x01
+#define SER_PLAY_MSG            0x02
+#define SER_DONE_MSG            0x03
+
+
 
 
 #ifndef __cplusplus

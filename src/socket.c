@@ -102,11 +102,11 @@ int send_msg(const int fd, const char *buf, const int len)
         {
             if(errno == EINTR || errno == EAGAIN)
                 continue;
-            return 1;
+            return ERROR;
         }
         send_cnt += cnt;
     }
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -351,34 +351,35 @@ static rfb_request* remove_request(rfb_request *req)
     return next;
 }
 
-void set_request_head(rfb_request *req, short cmd, int data_size)
+void set_request_head(char *buf, char encrypt_flag, short cmd, int data_size)
 {
-	if(!req)
+	if(!buf)
 		return;
-    rfb_head *head = (rfb_head *)&(req->head_buf[0]);
+    rfb_head *head = (rfb_head *)&buf[0];
     head->syn = 0xff;
     head->encrypt_flag = 0; //加密
     head->cmd = cmd;
-    req->data_size = head->data_size = data_size;
+    head->data_size = data_size;
 }
 
 
 int send_request(rfb_request *req)
 {
+	int ret;
     if(!req || !req->fd)
-        return -1;
+        return ERROR;
 
     char *tmp = malloc(HEAD_LEN + req->data_size + 1);
     if(!tmp)
     {
-        return -1;
+        return ERROR;
     }
     memcpy(tmp, req->head_buf, HEAD_LEN);
     memcpy(tmp + HEAD_LEN, req->data_buf, req->data_size);
-    send_msg(req->fd, tmp, HEAD_LEN + req->data_size);
+    ret = send_msg(req->fd, tmp, HEAD_LEN + req->data_size);
 
     free(tmp);
-	return 0;
+	return ret;
 }
 
 
@@ -401,16 +402,16 @@ void h264_send_data(char *data, int len, int key_flag)
         {   
             memcpy(buf + 8, ptr, dataLen);
             ptr += dataLen;
-            sendto(client_display.fd, buf,  dataLen + 8, 0, 
-					(struct  sockaddr *)&(client_display.send_addr), sizeof (client_display.send_addr));
+            sendto(cli_display.fd, buf,  dataLen + 8, 0, 
+					(struct  sockaddr *)&(cli_display.send_addr), sizeof (cli_display.send_addr));
             first = 0;
         }   
         else
         {   
             memcpy(buf, ptr, dataLen);
             ptr += dataLen;
-            sendto(client_display.fd, buf,  dataLen, 0, 
-				(struct sockaddr *)&(client_display.send_addr), sizeof (client_display.send_addr));
+            sendto(cli_display.fd, buf,  dataLen, 0, 
+				(struct sockaddr *)&(cli_display.send_addr), sizeof (cli_display.send_addr));
         }   
         pending -= dataLen;
     }    
@@ -419,21 +420,36 @@ void h264_send_data(char *data, int len, int key_flag)
 /**************client *******************/
 void client_tcp_loop(int sockfd)
 {
-	int ret;    
-    fd_set fds;
+	
+    int maxfd = 0;
+    int nready, ret, i, maxi = 0;
+    fd_set reset, allset;
+
 	rfb_request *current = NULL;
 	current = client_req;
 
-	struct timeval tv;
+    struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
 
-	while(run_flag)
-    {   
-        FD_ZERO(&fds);
-        FD_SET(sockfd, &fds);
-        ret = select(sockfd + 1, &fds, NULL, NULL, &tv);
+    FD_ZERO(&allset);
+    FD_SET(sockfd, &allset);
+    FD_SET(pipe_cli[0], &allset);
 
+    maxfd = maxfd > sockfd ? maxfd : sockfd;
+    maxfd = maxfd > pipe_cli[0] ? maxfd : pipe_cli[0];
+
+    char buf[DATA_SIZE] = {0};
+    char *tmp = &buf[HEAD_LEN];
+
+    //struct client *current = &m_client;
+	char stop = 'S';
+
+	for(;;)
+    {   
+		tv.tv_sec = 1;
+        reset = allset;
+        ret = select(sockfd + 1, &reset, NULL, NULL, &tv);
 		if(ret == -1)
 		{
 			if(errno == EINTR)
@@ -441,7 +457,27 @@ void client_tcp_loop(int sockfd)
 			else if(errno != EBADF)
 				DIE("select %s", strerror(ret));
 		}		
-		if(FD_ISSET(sockfd, &fds))
+		DEBUG("client udp loop");
+		nready = ret;
+        /* pipe msg */
+        if(FD_ISSET(pipe_cli[0], &reset))
+        {
+            DEBUG("pipe cli msg !!!!");
+            ret = recv(pipe_cli[0], (void *)buf, sizeof(buf), 0);
+            if(ret >= HEAD_LEN)
+            {
+                process_client_pipe(buf, ret);
+            }
+			else if(ret == 1)
+			{
+				if(buf[0] == 'S')
+					break;	
+			}
+            if(--nready <= 0)
+                continue;
+        }
+
+		if(FD_ISSET(sockfd, &reset))
 		{
 			if(current->has_read_head == 0)
             {   
@@ -452,6 +488,7 @@ void client_tcp_loop(int sockfd)
                         if(errno == EINTR || errno == EAGAIN)
                             continue;
                     }
+					send_msg(pipe_event[1], &stop, 1);
                     DEBUG("close fd %d", sockfd);
 					goto run_end;
                 }
@@ -494,6 +531,7 @@ void client_tcp_loop(int sockfd)
                         if(errno == EINTR || errno == EAGAIN)
                             continue;
                     }
+					send_msg(pipe_event[1], &stop, 1);
                     DEBUG("close fd %d", sockfd);
 					goto run_end;
                 }
@@ -516,9 +554,10 @@ void client_tcp_loop(int sockfd)
                     continue;
                 }
             }
+			if(--nready <= 0)
+                continue;
         }
     }    
-
 
 run_end:
 	if(run_flag)
@@ -561,9 +600,9 @@ void client_udp_loop()
     int ret;    
     fd_set fds;
     socklen_t socklen = sizeof (struct sockaddr_in);
-	int sockfd = client_display.fd;
+	int sockfd = cli_display.fd;
 
-	rfb_display *client = &client_display;
+	rfb_display *client = &cli_display;
 	
 	while(run_flag)
     {   
@@ -613,7 +652,7 @@ void *thread_client_udp(void *param)
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
-    create_udp(server_ip, fmt->data_port, &client_display);
+    create_udp(server_ip, fmt->data_port, &cli_display);
     client_udp_loop();
 	return (void *)0;
 }
@@ -771,7 +810,7 @@ void server_tcp_loop(int listenfd)
             conn->data_size = HEAD_LEN;
 
 #ifdef _WIN32
-            //memcpy(&cliaddr.sin_addr, conn->ip, sizeof(conn->ip));
+			 memcpy(conn->ip,inet_ntoa(cliaddr.sin_addr), sizeof(conn->ip));
 #else
             ret = fcntl(connfd,F_GETFL,0);
             if(ret < 0)
@@ -848,8 +887,7 @@ void server_tcp_loop(int listenfd)
                             continue;
                         if(read_msg_syn(current->head_buf) != DATA_SYN)
                         {
-
-                            DEBUG("close fd %d", sockfd);
+                            DEBUG("SYS close fd %d", sockfd);
                             close_fd(current->fd);
                             FD_CLR(current->fd, &allset);
                             current  = remove_request(current);

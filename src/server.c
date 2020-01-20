@@ -6,33 +6,14 @@ static int server_s = -1;
 static pthread_t pthread_tcp, pthread_udp , pthread_display;
 
 
-static int recv_login(rfb_request *req)
-{
-	if(read_msg_order(req->head_buf) == 0x01)
-	{
-		int server_major = 0, server_minor = 0;
-		if (sscanf((char *)req->data_buf, VERSIONFORMAT,
-                    &server_major, &server_minor) != 2)
-				;
-		sprintf((char *)req->data_buf, VERSIONFORMAT, 3, server_minor + 1);
-		DEBUG("recv_login server_major %d server_minor %d", server_major, server_minor);
-		req->status = OPTIONS;
-		return send_request(req);
-	}
-    else
-    {
-		return -1;
-    }
-}
-
 static int recv_options(rfb_request *req)
 {
-	if(read_msg_order(req->head_buf) == 0x02)
+	if(read_msg_order(req->head_buf) == OPTIONS_MSG)
 	{
 		int i = 0;
 		rfb_format *fmt = (rfb_format *)&req->data_buf[0];
-        DEBUG("fmt->width %d, fmt->height %d fmt->code %d fmt->data_port %d", 
-				fmt->width, fmt->height, fmt->code, fmt->data_port);	
+        DEBUG("fmt->width %d, fmt->height %d fmt->code %d fmt->data_port %d fmt->bps %d fmt->fps", 
+				fmt->width, fmt->height, fmt->code, fmt->data_port, fmt->bps, fmt->fps);	
 		
 		fmt->play_flag = 0;
 		fmt->data_port = 0;
@@ -46,7 +27,6 @@ static int recv_options(rfb_request *req)
 		{
 			return send_request(req);	
 		}
-	
 	
 		for(i = 0; i < display_size; i++)   //ready play
         {
@@ -72,6 +52,7 @@ static int recv_options(rfb_request *req)
         	req->status = DONE;
 			status = PLAY;
 		}
+		set_request_head(req->head_buf, 0, OPTIONS_MSG_RET, sizeof(rfb_format));	
         return send_request(req);
 	}
 	else
@@ -84,7 +65,8 @@ static int send_control(rfb_request *req)
 {
 	DEBUG("send_control");
 	int ret = -1;
-	set_request_head(req, 0x02, sizeof(rfb_format));	
+	set_request_head(req->head_buf, 0, 0x02, sizeof(rfb_format));	
+	req->data_size = sizeof(rfb_format);
 	req->data_buf = malloc(sizeof(rfb_format) + 1);	
 	memset(req->data_buf, 0, sizeof(rfb_format));
 	rfb_format *fmt = (rfb_format *)&req->data_buf[0];
@@ -108,8 +90,8 @@ static int send_play(rfb_request *req)
 {
 	int ret;
 	req->status = DONE;
-	set_request_head(req, 0x02, sizeof(rfb_format));	
-
+	set_request_head(req->head_buf, 0, 0x02, sizeof(rfb_format));	
+	req->data_size = sizeof(rfb_format);
 	rfb_format *fmt = (rfb_format *)&req->data_buf[0];
 	fmt->play_flag = 0x01;
 
@@ -127,14 +109,61 @@ static int send_done(rfb_request *req)
 	DEBUG("send_done ");
 	int ret = -1;
 	req->status = OPTIONS;
-	set_request_head(req, 0x02, sizeof(rfb_format));	
+	set_request_head(req->head_buf, 0, 0x02, sizeof(rfb_format));	
 	req->data_buf = malloc(sizeof(rfb_format) + 1);	
+	req->data_size = sizeof(rfb_format);
 	memset(req->data_buf, 0, sizeof(rfb_format));
 	ret = send_request(req);		
 	free(req->data_buf);
     req->data_buf = NULL;
 	DEBUG("req->play_id %d", req->display_id);
     return ret;
+}
+
+
+static int send_login(rfb_request *req)
+{
+    int ret;
+    int server_major = 0, server_minor = 0;
+    get_version(&server_major, &server_minor);
+    sprintf(req->data_buf, VERSIONFORMAT, server_major, server_minor);
+	req->data_size = SZ_VERFORMAT;
+    set_request_head(req->head_buf, 0, LOGIN_MSG_RET, SZ_VERFORMAT);
+    ret = send_request(req);
+
+    if(SUCCESS != ret)
+        return ERROR;
+
+    req->status = OPTIONS;
+    return SUCCESS;
+
+}
+
+static int recv_login(rfb_request *req)
+{
+	if(read_msg_order(req->head_buf) == LOGIN_MSG)
+	{
+		int ret;
+		int server_major = 0, server_minor = 0;
+		int client_major = 0, client_minor = 0;
+		get_version(&server_major, &server_minor);
+		sscanf((char *)req->data_buf, VERSIONFORMAT, &client_major, &client_minor);
+		if(server_major == client_major && server_minor == client_minor)
+		{
+			ret = send_login(req);
+			if(ret == SUCCESS)
+			{
+				DEBUG("client ip: %s login ok!!", req->ip);
+                return SUCCESS;
+			}
+		}
+		else
+		{
+            DEBUG("version not equel server: "VERSIONFORMAT" client: "VERSIONFORMAT"", server_major,
+                    server_minor, client_major, client_minor);
+		}		
+	}
+  	return ERROR; 
 }
 
 
@@ -168,8 +197,6 @@ int process_server_msg(rfb_request *req)
     }
     return ret;
 }
-
-
 
 
 void init_server()

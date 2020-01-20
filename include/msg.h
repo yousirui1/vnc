@@ -5,6 +5,7 @@
 
 #define HEAD_LEN 8
 #define sz_verformat 20
+#define SZ_VERFORMAT 20
 
 enum control_msg_type{
 	MOUSE = 0x03,
@@ -86,7 +87,6 @@ typedef struct _rfb_display
             
 	pthread_mutex_t mtx;
     pthread_cond_t cond;
-
 
     rfb_request *req;
 	rfb_format fmt;

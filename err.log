@@ -1,111 +1,78 @@
-In file included from ./src/display.c:12:0:
+In file included from ./src/event.c:1:0:
 ./include/base.h:51:0: warning: "ERROR" redefined
  #define ERROR  1
  
 In file included from c:\program files\git\mingw32\include\windows.h:46:0,
                  from ./include/base.h:16,
-                 from ./src/display.c:12:
+                 from ./src/event.c:1:
 c:\program files\git\mingw32\include\wingdi.h:348:0: note: this is the location of the previous definition
  #define ERROR       0
  
-In file included from ./src/display.c:12:0:
-./include/base.h:142:0: warning: "max" redefined
+In file included from ./src/event.c:1:0:
+./include/base.h:176:0: warning: "max" redefined
  #define max(a,b)    (((a) > (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:16,
-                 from ./src/display.c:12:
+                 from ./src/event.c:1:
 c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
  #define max(a,b) ((a)>(b)?(a):(b))
  
-In file included from ./src/display.c:12:0:
-./include/base.h:143:0: warning: "min" redefined
+In file included from ./src/event.c:1:0:
+./include/base.h:177:0: warning: "min" redefined
  #define min(a,b)    (((a) < (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:16,
-                 from ./src/display.c:12:
+                 from ./src/event.c:1:
 c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
  #define min(a,b) ((a)<(b)?(a):(b))
  
-./src/display.c: In function 'send_control':
-./src/display.c:187:2: warning: implicit declaration of function 'set_request_head' [-Wimplicit-function-declaration]
-  set_request_head(control_display->req, cmd, data_len);
-  ^~~~~~~~~~~~~~~~
-./src/display.c:188:36: warning: pointer targets in assignment differ in signedness [-Wpointer-sign]
-     control_display->req->data_buf = buf;
-                                    ^
-./src/display.c: In function 'update_frame':
-./src/display.c:240:22: error: 'frame_queue' undeclared (first use in this function)
-    frame_queue_push(&frame_queue);
-                      ^~~~~~~~~~~
-./src/display.c:240:22: note: each undeclared identifier is reported only once for each function it appears in
-./src/display.c: In function 'start_display':
-./src/display.c:304:2: warning: implicit declaration of function 'process_server_msg' [-Wimplicit-function-declaration]
-  process_server_msg(cli->req);
-  ^~~~~~~~~~~~~~~~~~
-./src/display.c: In function 'stop_display':
-./src/display.c:319:2: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
-  usleep(200000);   //等待200ms 客户端结束
-  ^~~~~~
-In file included from ./include/base.h:7:0,
-                 from ./src/display.c:12:
-c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
- int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
-                             ^~~~~~
-./src/display.c:321:2: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
-  usleep(200000);   //等待200ms 客户端断开
-  ^~~~~~
-In file included from ./include/base.h:7:0,
-                 from ./src/display.c:12:
-c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
- int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
-                             ^~~~~~
-./src/display.c: In function 'stop_control':
-./src/display.c:367:2: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
-  usleep(200000);
-  ^~~~~~
-In file included from ./include/base.h:7:0,
-                 from ./src/display.c:12:
-c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
- int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
-                             ^~~~~~
-./src/display.c: In function 'sdl_loop':
-./src/display.c:515:4: warning: implicit declaration of function 'stop_server' [-Wimplicit-function-declaration]
-    stop_server();  //通过callback 返回给dll
-    ^~~~~~~~~~~
-At top level:
-./src/display.c:176:12: warning: 'frame_queue_nb_remaining' defined but not used [-Wunused-function]
- static int frame_queue_nb_remaining(FrameQueue *f)
-            ^~~~~~~~~~~~~~~~~~~~~~~~
-./src/display.c:158:13: warning: 'frame_queue_pop' defined but not used [-Wunused-function]
- static void frame_queue_pop(FrameQueue *f)
-             ^~~~~~~~~~~~~~~
-./src/display.c:145:15: warning: 'frame_queue_peek_readable' defined but not used [-Wunused-function]
- static Frame *frame_queue_peek_readable(FrameQueue *f)
-               ^~~~~~~~~~~~~~~~~~~~~~~~~
-./src/display.c:139:15: warning: 'frame_queue_peek_last' defined but not used [-Wunused-function]
- static Frame *frame_queue_peek_last(FrameQueue *f)
-               ^~~~~~~~~~~~~~~~~~~~~
-./src/display.c:133:15: warning: 'frame_queue_peek_next' defined but not used [-Wunused-function]
- static Frame *frame_queue_peek_next(FrameQueue *f)
-               ^~~~~~~~~~~~~~~~~~~~~
-./src/display.c:127:15: warning: 'frame_queue_peek' defined but not used [-Wunused-function]
- static Frame *frame_queue_peek(FrameQueue *f)
-               ^~~~~~~~~~~~~~~~
-./src/display.c:120:13: warning: 'frame_queue_signal' defined but not used [-Wunused-function]
- static void frame_queue_signal(FrameQueue *f)
-             ^~~~~~~~~~~~~~~~~~
-./src/display.c:50:15: warning: 'frame_queue_peek_writable' defined but not used [-Wunused-function]
- static Frame *frame_queue_peek_writable(FrameQueue *f)
-               ^~~~~~~~~~~~~~~~~~~~~~~~~
-./src/display.c:38:18: warning: 'font' defined but not used [-Wunused-variable]
- static TTF_Font *font = NULL;
-                  ^~~~
-./src/display.c:37:21: warning: 'ttf_texture' defined but not used [-Wunused-variable]
- static SDL_Texture *ttf_texture = NULL;
-                     ^~~~~~~~~~~
-./src/display.c:36:17: warning: 'rect' defined but not used [-Wunused-variable]
- static SDL_Rect rect;
-                 ^~~~
-make: *** [display.o] Error 1
+./src/event.c: In function 'process_ser':
+./src/event.c:42:27: warning: pointer targets in passing argument 1 of 'read_msg_order' differ in signedness [-Wpointer-sign]
+     switch(read_msg_order(msg))
+                           ^~~
+In file included from ./include/base.h:35:0,
+                 from ./src/event.c:1:
+./include/global.h:49:16: note: expected 'unsigned char *' but argument is of type 'char *'
+ unsigned short read_msg_order(unsigned char * buf);
+                ^~~~~~~~~~~~~~
+./src/event.c:41:9: warning: unused variable 'index' [-Wunused-variable]
+     int index = 0;
+         ^~~~~
+./src/event.c:40:9: warning: unused variable 'ret' [-Wunused-variable]
+     int ret;
+         ^~~
+./src/event.c:62:1: warning: no return statement in function returning non-void [-Wreturn-type]
+ }
+ ^
+./src/event.c: In function 'process_cli':
+./src/event.c:71:27: warning: pointer targets in passing argument 1 of 'read_msg_order' differ in signedness [-Wpointer-sign]
+     switch(read_msg_order(msg))
+                           ^~~
+In file included from ./include/base.h:35:0,
+                 from ./src/event.c:1:
+./include/global.h:49:16: note: expected 'unsigned char *' but argument is of type 'char *'
+ unsigned short read_msg_order(unsigned char * buf);
+                ^~~~~~~~~~~~~~
+./src/event.c:76:22: error: invalid type argument of '->' (have 'rfb_format {aka struct rfb_format}')
+    if(cli_display.fmt->play_flag == 1)
+                      ^~
+./src/event.c:79:14: warning: implicit declaration of function 'create_encode' [-Wimplicit-function-declaration]
+              create_encode(&cli_display.fmt);
+              ^~~~~~~~~~~~~
+./src/event.c:82:22: error: invalid type argument of '->' (have 'rfb_format {aka struct rfb_format}')
+    if(cli_display.fmt->play_flag == 2)
+                      ^~
+./src/event.c:85:18: error: 'fmt' undeclared (first use in this function)
+     vids_width = fmt->width;
+                  ^~~
+./src/event.c:85:18: note: each undeclared identifier is reported only once for each function it appears in
+./src/event.c:68:11: warning: unused variable 'tmp' [-Wunused-variable]
+     char *tmp = &msg[HEAD_LEN];
+           ^~~
+./src/event.c: In function 'event_loop':
+./src/event.c:136:11: warning: unused variable 'tmp' [-Wunused-variable]
+     char *tmp = &buf[HEAD_LEN];
+           ^~~
+make: *** [event.o] Error 1

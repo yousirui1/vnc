@@ -4,10 +4,10 @@
 FILE *fp_err = NULL;
 FILE *fp_log = NULL;
 
-//char *err_name = "err.log";
-//char *log_name = "screen.log";
-char *err_name = "c://Users//Public//Documents//YZYEduClient//vnc_err.log";
-char *log_name = "c://Users//Public//Documents//YZYEduClient//vnc.log";
+char *err_name = "log/err.log";
+char *log_name = "log/screen.log";
+//char *err_name = "c://Users//Public//Documents//YZYEduClient//vnc_err.log";
+//char *log_name = "c://Users//Public//Documents//YZYEduClient//vnc.log";
 
 void init_logs()
 {

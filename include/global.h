@@ -77,7 +77,7 @@ extern int width,height, vids_width, vids_height;
 extern unsigned char **vids_buf;
 extern QUEUE *vids_queue;
 extern int display_size;
-extern rfb_display client_display ;
+extern rfb_display cli_display ;
 extern int screen_height, screen_width;
 extern rfb_display *control_display;
 

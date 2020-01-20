@@ -191,11 +191,56 @@ static void send_control(char *buf, int data_len, int cmd)
     control_display->req->data_buf = NULL;
 }
 
+int get_screen_size(int *temp_w, int *temp_h)
+{
+#ifdef _WIN32
+    SDL_GetWindowSize(window, temp_w, temp_h);
+    //*tmp_x = FFALIGN(*tmp_x, 16);
+    //*tmp_y = FFALIGN(*tmp_y, 16);
+    return SUCCESS;
+#else
+    int id;
+    Display *dpy = NULL;
+    Window root;
+
+    if((dpy = XOpenDisplay(0)) == NULL)
+    {
+        DEBUG("XOpenDisplay error");
+        return ERROR;
+    }
+
+    id = DefaultScreen(dpy);
+    if(!(root = XRootWindow(dpy, id)))
+    {
+        DEBUG("get XRootWindow id: %d error", id);
+        if(dpy)
+            XCloseDisplay(dpy);
+        return ERROR;
+    }
+
+    *temp_w = DisplayWidth(dpy, id);
+    *temp_h = DisplayHeight(dpy, id);
+
+
+    if(dpy)
+        XCloseDisplay(dpy);
+
+    if(!(*temp_w) || !(*temp_h))
+        return ERROR;
+    else
+        return SUCCESS;
+#endif
+}
+
+
+
 static void do_exit()
 {
 
 
 }
+
+
 
 static int get_area(int x, int y)
 {
@@ -682,7 +727,7 @@ int create_display()
     if(!display_disable)
     {
         DEBUG("create window ");
-        int flags = SDL_WINDOW_HIDDEN;  //SDL_WINDOW_SHOWN SDL_WINDOW_HIDDEN
+        int flags = SDL_WINDOW_SHOWN;  //SDL_WINDOW_SHOWN SDL_WINDOW_HIDDEN
         if(borderless)                  //无边框
             flags |= SDL_WINDOW_BORDERLESS;
         else
@@ -734,29 +779,9 @@ int create_display()
 			goto run_out;
         }
     }
-    if(server_flag)
-    {
-		show_window();
-        init_display();
-        sdl_loop();
-    }
-	else
-	{
-#ifndef _WIN32
-		int id;
-    	if((dpy = XOpenDisplay(0)) == NULL)
-    	{
-			DIE("XOpenDisplay err");
-    	}
-    	id = DefaultScreen(dpy);  //DISPLAY:= id
-    	if(!(root = XRootWindow(dpy, id)))
-    	{
-			DIE("XRootWindow err");
-    	}
-#endif
-
-	}
-	DEBUG("display exit");
+    init_display();
+    sdl_loop();
+   	DEBUG("display exit");
 
 run_out:
 	do_exit();	
