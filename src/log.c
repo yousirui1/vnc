@@ -4,28 +4,57 @@
 FILE *fp_err = NULL;
 FILE *fp_log = NULL;
 
-char *err_name = "log/err.log";
-char *log_name = "log/screen.log";
-//char *err_name = "c://Users//Public//Documents//YZYEduClient//vnc_err.log";
-//char *log_name = "c://Users//Public//Documents//YZYEduClient//vnc.log";
-
 void init_logs()
 {
-    if(err_name)
+    struct tm *t;
+    char c_dir[MAX_FILENAMELEN];
+    struct stat file_state;
+    int ret;
+
+    (void)time(&current_time);
+    t = localtime(&current_time);
+
+    /* ¼ì²éÎÄ¼þ¼Ð×´Ì¬ */
+    ret = stat(LOG_DIR, &file_state);
+    if(ret < 0)
     {
-		fp_err = fopen(err_name, "wb");
-        if(!fp_err)
+        if(errno == ENOENT)
         {
-			DEBUG("fopen err_name %s", err_name);
+#ifdef _WIN32
+			ret = mkdir(LOG_DIR);
+#else
+            ret = mkdir(LOG_DIR, 0755);
+#endif       
+            if(ret < 0)
+            {
+                return ERROR;
+            }
         }
     }
-    if(log_name)
+    sprintf(c_dir, "%s/%s-%4.4d%2.2d%2.2d.log", LOG_DIR, program_name, (1900+t->tm_year), (1+t->tm_mon), t->tm_mday);
+
+    ret = stat(c_dir, &file_state);
+    if(ret < 0)
     {
-		fp_log = fopen(log_name, "wb");
-        if(!fp_log)
+        if(errno == ENOENT)
         {
-			DEBUG("fopen log_name %s", log_name);
+            fp_log = fopen(c_dir, "wb");
         }
+    }
+    else
+    {
+        fp_log = fopen(c_dir, "ab");
+    }
+
+    if(!fp_log)
+    {
+        DEBUG("fopen log error ");
+    }
+
+    fp_err = fopen(LOG_ERR_FILE, "ab");
+    if(!fp_err)
+    {
+        DEBUG("fopen err_log error");
     }
 }
 
@@ -50,11 +79,12 @@ void log_msg(const char *fmt, ...)
 
 	if(!fp_log)
 		return;
+
     va_start(ap, fmt);
     vsprintf(ptr, fmt, ap);
     va_end(ap);
 
-    fprintf(fp_log, "%s", buf);
+    fprintf(fp_log, "%s:%s",get_commonlog_time(), buf);
     fflush(fp_log);
 }
 
@@ -66,12 +96,12 @@ void err_msg(const char *fmt, ...)
 
 	if(!fp_err)
 		return;
-		
+
     va_start(ap, fmt);
     vsprintf(ptr, fmt, ap);
     va_end(ap);
 
-    fprintf(fp_err, "%s", buf);
+    fprintf(fp_err, "%s:%s",get_commonlog_time(), buf);
     fflush(fp_err);
 }
 

@@ -1,4 +1,10 @@
 #include "base.h"
+#ifndef _WIN32
+    #include <X11/Xlib.h>
+    #include <X11/Xutil.h>      /* BitmapOpenFailed, etc.    */
+    #include <X11/cursorfont.h> /* pre-defined crusor shapes */
+    #include <linux/input.h>
+#endif
 
 #ifdef _WIN32
 static void simulate_mouse(rfb_pointevent *point)

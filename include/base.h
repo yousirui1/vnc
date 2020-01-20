@@ -11,11 +11,14 @@
 #include <fcntl.h>
 #include <math.h>
 #include <stdlib.h>
+#include <memory.h>
+#include <stdint.h>
 
 #ifdef _WIN32
     #include <windows.h>
     #include <winsock2.h>
     #include <ws2tcpip.h>    
+	#include <sys/stat.h>
 #else
     #include <sys/syscall.h>
     #include <sys/epoll.h>
@@ -24,12 +27,14 @@
     #include <sys/wait.h>
     #include <sys/utsname.h>
     #include <sys/resource.h>
-
+	#include <sys/utsname.h>
+	#include <sys/ioctl.h>
 
     #include <netinet/tcp.h>
     #include <netinet/in.h>
     #include <arpa/inet.h>
     #include <netdb.h>
+	#include <net/if.h>
 #endif
 
 #include "global.h"
@@ -41,7 +46,7 @@
 
 #define DIE(format,...) printf("File: "__FILE__", Line: %05d: "format"\r\n", __LINE__, ##__VA_ARGS__);\
                         err_msg("File: "__FILE__", Line: %05d: "format"\r\n", __LINE__, ##__VA_ARGS__);\
-                        exit(1)
+						pthread_exit((void *)1)
 #else
 #define DEBUG(format,...)
 #define DIE(format,...) DEBUG(format);exit(1)
@@ -50,7 +55,10 @@
 #define SUCCESS 0
 #define ERROR 	1
 
+#define LOG_DIR  "./log"
+#define LOG_ERR_FILE "./log/err.log"
 
+#define MAX_FILENAMELEN 256
 /* config */
 #define CONFIG_FILE "config.ini"
 
@@ -86,6 +94,9 @@
 
 /* sock */
 #define VERSIONFORMAT "RFB %03d.%03d"
+
+#define MAX_WIDTH 	1920
+#define MAX_HEIGHT 	1080
 
 #define REQUEST_TIMEOUT             60
 

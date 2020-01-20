@@ -1,78 +1,82 @@
-In file included from ./src/event.c:1:0:
+In file included from ./src/log.c:1:0:
 ./include/base.h:51:0: warning: "ERROR" redefined
  #define ERROR  1
  
 In file included from c:\program files\git\mingw32\include\windows.h:46:0,
                  from ./include/base.h:16,
-                 from ./src/event.c:1:
+                 from ./src/log.c:1:
 c:\program files\git\mingw32\include\wingdi.h:348:0: note: this is the location of the previous definition
  #define ERROR       0
  
-In file included from ./src/event.c:1:0:
+In file included from ./src/log.c:1:0:
 ./include/base.h:176:0: warning: "max" redefined
  #define max(a,b)    (((a) > (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:16,
-                 from ./src/event.c:1:
+                 from ./src/log.c:1:
 c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
  #define max(a,b) ((a)>(b)?(a):(b))
  
-In file included from ./src/event.c:1:0:
+In file included from ./src/log.c:1:0:
 ./include/base.h:177:0: warning: "min" redefined
  #define min(a,b)    (((a) < (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:16,
-                 from ./src/event.c:1:
+                 from ./src/log.c:1:
 c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
  #define min(a,b) ((a)<(b)?(a):(b))
  
-./src/event.c: In function 'process_ser':
-./src/event.c:42:27: warning: pointer targets in passing argument 1 of 'read_msg_order' differ in signedness [-Wpointer-sign]
-     switch(read_msg_order(msg))
-                           ^~~
-In file included from ./include/base.h:35:0,
-                 from ./src/event.c:1:
-./include/global.h:49:16: note: expected 'unsigned char *' but argument is of type 'char *'
- unsigned short read_msg_order(unsigned char * buf);
-                ^~~~~~~~~~~~~~
-./src/event.c:41:9: warning: unused variable 'index' [-Wunused-variable]
-     int index = 0;
-         ^~~~~
-./src/event.c:40:9: warning: unused variable 'ret' [-Wunused-variable]
-     int ret;
-         ^~~
-./src/event.c:62:1: warning: no return statement in function returning non-void [-Wreturn-type]
- }
- ^
-./src/event.c: In function 'process_cli':
-./src/event.c:71:27: warning: pointer targets in passing argument 1 of 'read_msg_order' differ in signedness [-Wpointer-sign]
-     switch(read_msg_order(msg))
-                           ^~~
-In file included from ./include/base.h:35:0,
-                 from ./src/event.c:1:
-./include/global.h:49:16: note: expected 'unsigned char *' but argument is of type 'char *'
- unsigned short read_msg_order(unsigned char * buf);
-                ^~~~~~~~~~~~~~
-./src/event.c:76:22: error: invalid type argument of '->' (have 'rfb_format {aka struct rfb_format}')
-    if(cli_display.fmt->play_flag == 1)
-                      ^~
-./src/event.c:79:14: warning: implicit declaration of function 'create_encode' [-Wimplicit-function-declaration]
-              create_encode(&cli_display.fmt);
-              ^~~~~~~~~~~~~
-./src/event.c:82:22: error: invalid type argument of '->' (have 'rfb_format {aka struct rfb_format}')
-    if(cli_display.fmt->play_flag == 2)
-                      ^~
-./src/event.c:85:18: error: 'fmt' undeclared (first use in this function)
-     vids_width = fmt->width;
-                  ^~~
-./src/event.c:85:18: note: each undeclared identifier is reported only once for each function it appears in
-./src/event.c:68:11: warning: unused variable 'tmp' [-Wunused-variable]
-     char *tmp = &msg[HEAD_LEN];
-           ^~~
-./src/event.c: In function 'event_loop':
-./src/event.c:136:11: warning: unused variable 'tmp' [-Wunused-variable]
-     char *tmp = &buf[HEAD_LEN];
-           ^~~
-make: *** [event.o] Error 1
+./src/log.c: In function 'init_logs':
+./src/log.c:10:16: error: 'MAX_FILENAMELEN' undeclared (first use in this function)
+     char c_dir[MAX_FILENAMELEN];
+                ^~~~~~~~~~~~~~~
+./src/log.c:10:16: note: each undeclared identifier is reported only once for each function it appears in
+./src/log.c:11:17: error: storage size of 'file_state' isn't known
+     struct stat file_state;
+                 ^~~~~~~~~~
+./src/log.c:18:11: warning: implicit declaration of function 'stat' [-Wimplicit-function-declaration]
+     ret = stat(LOG_DIR, &file_state);
+           ^~~~
+./src/log.c:18:16: error: 'LOG_DIR' undeclared (first use in this function)
+     ret = stat(LOG_DIR, &file_state);
+                ^~~~~~~
+In file included from ./src/log.c:1:0:
+./include/base.h:51:16: warning: 'return' with a value, in function returning void
+ #define ERROR  1
+                ^
+./src/log.c:30:24: note: in expansion of macro 'ERROR'
+                 return ERROR;
+                        ^~~~~
+./src/log.c:7:6: note: declared here
+ void init_logs()
+      ^~~~~~~~~
+./src/log.c:54:20: error: 'LOG_ERR_FILE' undeclared (first use in this function)
+     fp_err = fopen(LOG_ERR_FILE, "ab");
+                    ^~~~~~~~~~~~
+./src/log.c:11:17: warning: unused variable 'file_state' [-Wunused-variable]
+     struct stat file_state;
+                 ^~~~~~~~~~
+./src/log.c:10:10: warning: unused variable 'c_dir' [-Wunused-variable]
+     char c_dir[MAX_FILENAMELEN];
+          ^~~~~
+./src/log.c: In function 'close_logs':
+./src/log.c:66:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+     if(fp_log)
+     ^~
+./src/log.c:69:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
+  fp_err = NULL;
+  ^~~~~~
+./src/log.c: In function 'log_msg':
+./src/log.c:87:29: warning: implicit declaration of function 'get_commonlog_time' [-Wimplicit-function-declaration]
+     fprintf(fp_log, "%s:%s",get_commonlog_time(), buf);
+                             ^~~~~~~~~~~~~~~~~~
+./src/log.c:87:23: warning: format '%s' expects argument of type 'char *', but argument 3 has type 'int' [-Wformat=]
+     fprintf(fp_log, "%s:%s",get_commonlog_time(), buf);
+                       ^
+./src/log.c: In function 'err_msg':
+./src/log.c:104:23: warning: format '%s' expects argument of type 'char *', but argument 3 has type 'int' [-Wformat=]
+     fprintf(fp_err, "%s:%s",get_commonlog_time(), buf);
+                       ^
+make: *** [log.o] Error 1
