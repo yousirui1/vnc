@@ -154,7 +154,7 @@ void init_client()
 {
     int ret = -1;
 
-	create_display();
+	//create_display();
 
     server_s = create_tcp();
 #ifndef _WIN32

@@ -18,6 +18,7 @@ typedef struct input_stream
     AVCodecContext *codec_ctx;
     AVFrame *frame;
 	AVFrame *frame_yuv;
+    AVPacket *packet;
     struct SwsContext *img_convert_ctx;
 }input_stream;
 

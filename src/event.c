@@ -1,6 +1,38 @@
 #include "base.h"
 #include "msg.h"
 
+static pthread_t pthread_cli_udp, pthread_cli_encode;
+
+
+static void do_exit()
+{
+    void *tret = NULL;
+    /* client pthread*/
+    if(!server_flag)
+    {
+        pthread_join(pthread_cli_udp, (void **)tret);
+        pthread_join(pthread_cli_encode, (void **)tret);
+    }
+}
+
+#if 0
+static int send_pipe(char *buf, short cmd, int size, int msg_type)
+{
+    int ret = SUCCESS;
+    set_request_head(buf, 0x0, cmd, size);
+    switch(msg_type)
+    {
+        case CLIENT_MSG:
+            ret = send_msg(pipe_cli[1], buf, size + HEAD_LEN);
+            break;
+        case SERVER_MSG:
+            ret = send_msg(pipe_ser[1], buf, size + HEAD_LEN);
+            break;
+    }
+    return ret;
+}
+#endif
+
 
 /* 线程的创建和检测释放 */
 void event_loop()
@@ -30,7 +62,12 @@ void event_loop()
 
         ret = select(maxfd + 1, &reset, NULL, NULL, &tv);
 		DEBUG("event loop");
+		
+
+
 	}
+
+	do_exit();
 }
 
 

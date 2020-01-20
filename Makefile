@@ -41,9 +41,9 @@ CFLAGS = -I. -I./include/ -I./SDL/include -I./ffmpeg/include \
 		 -L./ffmpeg/lib/arm -lavcodec -lavformat -lswscale -lavutil -lavdevice \
 		 -L./SDL/lib -lSDL2 -lpthread 
 else ifeq ($(TARGET_ARCH), x86)
-CFLAGS = -I. -I./include/ -I./SDL/include/win -I./ffmpeg/include \
+CFLAGS = -I. -I./include/ -I./SDL/x86/include -I./ffmpeg/include \
          -L./ffmpeg/lib/win -lavcodec -lavformat -lswscale -lavutil -lavdevice \
-         -L./SDL/lib/win -lSDL2 -lmingw32 -lm -lws2_32  -lpthreadGC2 -lgdi32 \
+         -L./SDL/x86/lib -lSDL2 -lSDL2_ttf -lmingw32 -lm -lws2_32  -lpthreadGC2 -lgdi32 \
 		 #-mwindows
 else
 endif
@@ -66,7 +66,7 @@ ifeq ($(TARGET_ARCH), arm)
 else ifeq ($(TARGET_ARCH), x86)
 	$(CP) ./lib/*.dll ./bin
 	$(CP) ./ffmpeg/bin/*.dll ./bin
-	$(CP) ./SDL/bin/*.dll ./bin
+	$(CP) ./SDL/x86/bin/*.dll ./bin
 endif
 	@echo "Build $(TARGET_ARCH) program  OK"
 	
@@ -86,7 +86,7 @@ $(dllobj):$(mainobj) $(cppobj)
 ifeq ($(TARGET_ARCH), x86)
 	$(CP) ./lib/*.dll ./bin
 	$(CP) ./ffmpeg/bin/*.dll ./bin
-	$(CP) ./SDL/bin/*.dll ./bin
+	$(CP) ./SDL/x86/bin/*.dll ./bin
 endif
 
 

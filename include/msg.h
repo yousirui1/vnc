@@ -84,6 +84,10 @@ typedef struct _rfb_display
     struct sockaddr_in recv_addr;
     struct sockaddr_in send_addr;
             
+	pthread_mutex_t mtx;
+    pthread_cond_t cond;
+
+
     rfb_request *req;
 	rfb_format fmt;
 	
