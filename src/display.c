@@ -13,7 +13,6 @@ static Window root;
 
 #include "base.h"
 
-const char program_name[] = "remote monitor";
 int screen_width  = 0;
 int screen_height = 0;
 int vids_width = 0;
@@ -658,7 +657,7 @@ void control_msg(rfb_request *req)
 	}
 }
 
-void event_loop()
+void sdl_loop()
 {
 	SDL_Event event;
 	rfb_pointevent point = {0};
@@ -953,7 +952,7 @@ void create_display()
     {
         show_window();
         init_display();
-        event_loop();
+        sdl_loop();
     }
 	else
 	{

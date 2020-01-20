@@ -177,16 +177,13 @@ void init_server()
 	int ret = -1;
 	display_size = window_size * window_size;
 
-#ifdef _WIN32
-    load_wsa();
-#endif
 	server_s = create_tcp();
 
 	if(server_s == -1)
 	{
 		DIE("create socket err");
 	}	
-	if(bind_server(server_s, client_port) == -1)
+	if(bind_socket(server_s, client_port) == -1)
     {
         DIE("bind port %d err", client_port);
     }

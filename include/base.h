@@ -47,6 +47,9 @@
 #define DIE(format,...) DEBUG(format);exit(1)
 #endif
 
+#define SUCCESS 0
+#define ERROR 	1
+
 
 /* config */
 #define CONFIG_FILE "config.ini"
@@ -82,7 +85,7 @@
 #define DEFAULT_PORT_VALUE 22000
 
 /* sock */
-#define VERSIONFORMAT "RFB %03d.%03d\n"
+#define VERSIONFORMAT "RFB %03d.%03d"
 
 #define REQUEST_TIMEOUT             60
 
@@ -102,6 +105,7 @@
 #define SCHED_PRIORITY_TCP 1
 #define SCHED_PRIORITY_UDP 2
 #define SCHED_PRIORITY_DISPLAY 3
+#define SCHED_PRIORITY_THRIFT 4
 
 
 /* packet */

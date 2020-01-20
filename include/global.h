@@ -18,6 +18,11 @@ extern int control_flag;
 extern int status;
 extern time_t last_time;
 extern time_t current_time;
+extern const char program_name[];
+
+extern int pipe_ser[2];
+extern int pipe_cli[2];
+extern int pipe_event[2];
 
 
 
@@ -56,6 +61,9 @@ int read_profile_string( const char *section, const char *key,char *value, int s
 int read_profile_int( const char *section, const char *key,int default_value, const char *file);
 int write_profile_string( const char *section, const char *key,const char *value, const char *file);
 
+
+/* event.c */
+void *thread_event(void *param);
 
 
 /* control.c */

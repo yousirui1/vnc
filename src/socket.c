@@ -39,6 +39,29 @@ void close_fd(int fd)
 }
 
 
+int load_wsa()
+{
+#ifdef _WIN32
+    WSADATA wsData = {0};
+    if(0 != WSAStartup(0x202, &wsData))
+    {
+        DEBUG("WSAStartup  fail");
+        WSACleanup();
+        return ERROR;
+    }
+#endif
+    return SUCCESS;
+}
+
+void unload_wsa()
+{
+#ifdef _WIN32
+    WSACleanup();
+#endif
+}
+
+
+
 int recv_msg(const int fd,char* buf, const int len)
 {
     char * tmp = buf;
@@ -221,7 +244,7 @@ end_out:
 }
 
 
-int bind_server(int fd, int port)
+int bind_socket(int fd, int port)
 {
 
     DEBUG("server bind port %d", port);
@@ -942,18 +965,6 @@ run_end:
 
 
 
-void load_wsa()
-{
-#ifdef _WIN32
-    WSADATA wsData = {0};
-    if(0 != WSAStartup(0x202, &wsData))
-    {
-        DEBUG("WSAStartup  fail");
-        WSACleanup();
-        return -1;
-    }
-#endif
-}
 
 /*
  * 等线程结束后最后销毁公共变量

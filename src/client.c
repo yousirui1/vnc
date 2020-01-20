@@ -156,10 +156,6 @@ void init_client()
 
 	create_display();
 
-#ifdef _WIN32
-    load_wsa();
-#endif
-	
     server_s = create_tcp();
 #ifndef _WIN32
 	init_x11();

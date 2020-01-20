@@ -1,1 +1,160 @@
-make: *** No rule to make target 'control.c', needed by 'control.o'.  Stop.
+In file included from ./src/ffmpeg.c:2:0:
+./include/base.h:51:0: warning: "ERROR" redefined
+ #define ERROR  1
+ 
+In file included from c:\program files\git\mingw32\include\windows.h:46:0,
+                 from ./include/base.h:16,
+                 from ./src/ffmpeg.c:2:
+c:\program files\git\mingw32\include\wingdi.h:348:0: note: this is the location of the previous definition
+ #define ERROR       0
+ 
+In file included from ./src/ffmpeg.c:2:0:
+./include/base.h:142:0: warning: "max" redefined
+ #define max(a,b)    (((a) > (b)) ? (a) : (b))
+ 
+In file included from c:\program files\git\mingw32\include\windows.h:42:0,
+                 from ./include/base.h:16,
+                 from ./src/ffmpeg.c:2:
+c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
+ #define max(a,b) ((a)>(b)?(a):(b))
+ 
+In file included from ./src/ffmpeg.c:2:0:
+./include/base.h:143:0: warning: "min" redefined
+ #define min(a,b)    (((a) < (b)) ? (a) : (b))
+ 
+In file included from c:\program files\git\mingw32\include\windows.h:42:0,
+                 from ./include/base.h:16,
+                 from ./src/ffmpeg.c:2:
+c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
+ #define min(a,b) ((a)<(b)?(a):(b))
+ 
+./src/ffmpeg.c: In function 'clean_encode':
+./src/ffmpeg.c:33:9: warning: 'av_free_packet' is deprecated [-Wdeprecated-declarations]
+         av_free_packet(out->packet);
+         ^~~~~~~~~~~~~~
+In file included from ./include/ffmpeg.h:4:0,
+                 from ./src/ffmpeg.c:4:
+./ffmpeg/include/libavcodec/avcodec.h:4415:6: note: declared here
+ void av_free_packet(AVPacket *pkt);
+      ^~~~~~~~~~~~~~
+./src/ffmpeg.c: In function 'ffmpeg_encode':
+./src/ffmpeg.c:54:5: warning: 'av_register_all' is deprecated [-Wdeprecated-declarations]
+     av_register_all();
+     ^~~~~~~~~~~~~~~
+In file included from ./include/ffmpeg.h:5:0,
+                 from ./src/ffmpeg.c:4:
+./ffmpeg/include/libavformat/avformat.h:2025:6: note: declared here
+ void av_register_all(void);
+      ^~~~~~~~~~~~~~~
+./src/ffmpeg.c:56:5: warning: implicit declaration of function 'avdevice_register_all' [-Wimplicit-function-declaration]
+     avdevice_register_all();
+     ^~~~~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:97:9: warning: 'codec' is deprecated [-Wdeprecated-declarations]
+         if(format_ctx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO)
+         ^~
+In file included from ./include/ffmpeg.h:5:0,
+                 from ./src/ffmpeg.c:4:
+./ffmpeg/include/libavformat/avformat.h:877:21: note: declared here
+     AVCodecContext *codec;
+                     ^~~~~
+./src/ffmpeg.c:108:5: warning: 'codec' is deprecated [-Wdeprecated-declarations]
+     codec_ctx=format_ctx->streams[videoindex]->codec;
+     ^~~~~~~~~
+In file included from ./include/ffmpeg.h:5:0,
+                 from ./src/ffmpeg.c:4:
+./ffmpeg/include/libavformat/avformat.h:877:21: note: declared here
+     AVCodecContext *codec;
+                     ^~~~~
+./src/ffmpeg.c:138:5: warning: 'avpicture_get_size' is deprecated [-Wdeprecated-declarations]
+     out_buffer = (uint8_t *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV420P, 1920, 1080));
+     ^~~~~~~~~~
+In file included from ./include/ffmpeg.h:4:0,
+                 from ./src/ffmpeg.c:4:
+./ffmpeg/include/libavcodec/avcodec.h:5449:5: note: declared here
+ int avpicture_get_size(enum AVPixelFormat pix_fmt, int width, int height);
+     ^~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:139:5: warning: 'avpicture_fill' is deprecated [-Wdeprecated-declarations]
+     avpicture_fill((AVPicture *)frame_yuv, out_buffer, AV_PIX_FMT_YUV420P, 1920, 1080);
+     ^~~~~~~~~~~~~~
+In file included from ./include/ffmpeg.h:4:0,
+                 from ./src/ffmpeg.c:4:
+./ffmpeg/include/libavcodec/avcodec.h:5434:5: note: declared here
+ int avpicture_fill(AVPicture *picture, const uint8_t *ptr,
+     ^~~~~~~~~~~~~~
+./src/ffmpeg.c:202:13: warning: 'avcodec_decode_video2' is deprecated [-Wdeprecated-declarations]
+             ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, packet);
+             ^~~
+In file included from ./include/ffmpeg.h:4:0,
+                 from ./src/ffmpeg.c:4:
+./ffmpeg/include/libavcodec/avcodec.h:4770:5: note: declared here
+ int avcodec_decode_video2(AVCodecContext *avctx, AVFrame *picture,
+     ^~~~~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:210:17: warning: 'avcodec_encode_video2' is deprecated [-Wdeprecated-declarations]
+                 ret = avcodec_encode_video2(h264codec_ctx, packet,frame_yuv, &got_picture);
+                 ^~~
+In file included from ./include/ffmpeg.h:4:0,
+                 from ./src/ffmpeg.c:4:
+./ffmpeg/include/libavcodec/avcodec.h:5401:5: note: declared here
+ int avcodec_encode_video2(AVCodecContext *avctx, AVPacket *avpkt,
+     ^~~~~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:218:9: warning: 'av_free_packet' is deprecated [-Wdeprecated-declarations]
+         av_free_packet(packet);
+         ^~~~~~~~~~~~~~
+In file included from ./include/ffmpeg.h:4:0,
+                 from ./src/ffmpeg.c:4:
+./ffmpeg/include/libavcodec/avcodec.h:4415:6: note: declared here
+ void av_free_packet(AVPacket *pkt);
+      ^~~~~~~~~~~~~~
+./src/ffmpeg.c:234:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+     if(format_ctx)
+     ^~
+./src/ffmpeg.c:236:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
+  if(packet)
+  ^~
+./src/ffmpeg.c:237:3: warning: 'av_free_packet' is deprecated [-Wdeprecated-declarations]
+   av_free_packet(packet);
+   ^~~~~~~~~~~~~~
+In file included from ./include/ffmpeg.h:4:0,
+                 from ./src/ffmpeg.c:4:
+./ffmpeg/include/libavcodec/avcodec.h:4415:6: note: declared here
+ void av_free_packet(AVPacket *pkt);
+      ^~~~~~~~~~~~~~
+./src/ffmpeg.c:42:17: warning: unused variable 'decode_speed' [-Wunused-variable]
+     const char *decode_speed = NULL;
+                 ^~~~~~~~~~~~
+./src/ffmpeg.c: In function 'ffmpeg_decode':
+./src/ffmpeg.c:289:10: error: 'input_stream {aka struct input_stream}' has no member named 'packet'
+     input.packet = packet;
+          ^
+./src/ffmpeg.c:337:5: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
+     usleep(200);
+     ^~~~~~
+In file included from ./include/base.h:7:0,
+                 from ./src/ffmpeg.c:2:
+c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
+ int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
+                             ^~~~~~
+./src/ffmpeg.c:355:3: warning: 'avcodec_decode_video2' is deprecated [-Wdeprecated-declarations]
+   ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, &packet);
+   ^~~
+In file included from ./include/ffmpeg.h:4:0,
+                 from ./src/ffmpeg.c:4:
+./ffmpeg/include/libavcodec/avcodec.h:4770:5: note: declared here
+ int avcodec_decode_video2(AVCodecContext *avctx, AVFrame *picture,
+     ^~~~~~~~~~~~~~~~~~~~~
+./src/ffmpeg.c:386:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+     if(codec_ctx)
+     ^~
+./src/ffmpeg.c:389:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
+  img_convert_ctx = NULL;
+  ^~~~~~~~~~~~~~~
+./src/ffmpeg.c:398:9: warning: 'return' with a value, in function returning void
+  return (void *)0;
+         ^
+./src/ffmpeg.c:271:6: note: declared here
+ void ffmpeg_decode(rfb_display *vid)
+      ^~~~~~~~~~~~~
+./src/ffmpeg.c:377:1: warning: label 'run_out' defined but not used [-Wunused-label]
+ run_out:
+ ^~~~~~~
+make: *** [ffmpeg.o] Error 1
