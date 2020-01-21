@@ -43,7 +43,7 @@ static int area_id = -1;
 
 rfb_display *displays = NULL;
 rfb_display *control_display = NULL;
-pthread_t *pthread_decodes = NULL;
+//pthread_t *pthread_decodes = NULL;
 pthread_mutex_t renderer_mutex;
 
 /* 获取一个可写的Frame写入 */
@@ -334,6 +334,8 @@ static void refresh_loop_wait_event(SDL_Event *event)
     SDL_PumpEvents();
     while (!SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) && run_flag)
     {
+		usleep(200000);
+		//DEBUG("refresh_loop_wait_event");
         SDL_PumpEvents();
     }
 }
@@ -573,10 +575,12 @@ void destroy_display()
 	int i = 0;
 	void *tret = NULL;
 
+#if 0
 	for(i = 0; i < window_size * window_size ; i++ )
 	{
 		pthread_join(pthread_decodes[i], &tret);
 	}
+#endif
 
     if(renderer)
         SDL_DestroyRenderer(renderer);
@@ -593,19 +597,18 @@ void destroy_display()
     if(displays)
         free(displays);
 
-    if(pthread_decodes)
-        free(pthread_decodes);
+    //if(pthread_decodes)
+        //free(pthread_decodes);
 
     control_display = NULL;
     displays = NULL;
-    pthread_decodes = NULL;
+    //pthread_decodes = NULL;
     window = NULL;
     renderer = NULL;
     full_texture = NULL;
     texture = NULL;
 
     SDL_Quit();
-
     DEBUG("destroy_display end");
 }
 
@@ -623,7 +626,7 @@ int init_display()
     vids_buf = (unsigned char **)malloc(display_size * sizeof(unsigned char *));
 
     displays = (rfb_display *)malloc(sizeof(rfb_display) * window_size * window_size);
-    pthread_decodes = (pthread_t *)malloc(sizeof(pthread_t) * window_size * window_size);
+    //pthread_decodes = (pthread_t *)malloc(sizeof(pthread_t) * window_size * window_size);
 	
 	/* 局部画板 */
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, vids_width, vids_height);
@@ -632,7 +635,7 @@ int init_display()
 	full_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
 
 
-	if(!vids_queue || !vids_buf || !displays || !pthread_decodes || !texture ||!full_texture)
+	if(!vids_queue || !vids_buf || !displays || !texture ||!full_texture)
 	{
 		DEBUG("display_size: %d malloc vids_queue vids_buf texture full_texture and displays one error :%s",
                 display_size, strerror(errno));
@@ -664,15 +667,7 @@ int init_display()
             memset(vids_buf[id], 0, MAX_VIDSBUFSIZE);
             /* 创建窗口的对应队列 */
             init_queue(&(vids_queue[id]), vids_buf[id], MAX_VIDSBUFSIZE);
-
-            /* 创建对应窗口的显示线程 */
-            ret = pthread_create(&(pthread_decodes[id]), NULL, thread_decode, &(displays[id]));
-            if(0 != ret)
-            {
-                DEBUG("ThreadDisp err %d,  %s",ret , strerror(ret));
-				goto run_out;
-            }
-        }
+         }
     }
 	clear_texture();
 	DEBUG("init display end");
@@ -775,7 +770,7 @@ int create_display()
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
         if(window)
         {
-     //       renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+     		//renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
             if(!renderer)
             {
                 DEBUG("Failed to initialize a hardware accelerated renderer: %s", SDL_GetError());
@@ -816,7 +811,7 @@ void *thread_display(void *param)
     {
         DEBUG("ThreadMain set SCHED_FIFO error");
     }
-    sched.sched_priority = SCHED_PRIORITY_UDP;
+    sched.sched_priority = SCHED_PRIORITY_THRIFT;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
     sdl_loop();

@@ -68,7 +68,10 @@ void ffmpeg_encode(rfb_format *fmt)
 #ifdef _WIN32
     /* 截屏 */
     av_dict_set(&options,"framerate","12",0);
-    //av_dict_set(&options,"draw_mouse","0",0);               //鼠标
+	//if()														 //远程控制时不截取鼠标信息
+	{
+    	//av_dict_set(&options,"draw_mouse","0",0);               //鼠标
+	}
     AVInputFormat *ifmt=av_find_input_format("gdigrab");
     if(avformat_open_input(&format_ctx,"desktop",ifmt, &options)!=0)
     {
@@ -78,7 +81,6 @@ void ffmpeg_encode(rfb_format *fmt)
 	char video_size[12] = {0};
 
 	sprintf(video_size, "%dx%d", screen_width, screen_height);	
-
     av_dict_set(&options,"framerate","12",0);
     //av_dict_set(&options,"follow_mouse","centered",0);        //鼠标
     av_dict_set(&options,"draw_mouse","0",0);               //鼠标
@@ -190,12 +192,6 @@ void ffmpeg_encode(rfb_format *fmt)
 	pthread_cleanup_push(clean_encode,(void *)&out);
 	for(;;)
     {
-		if(cli_display.play_flag == 0)
-		{
-			DEBUG("client encode end");
-			break;
-		}
-		
         /* 读取截屏中的数据--->packet  */
         if(av_read_frame(format_ctx, packet) < 0)
         {
@@ -283,7 +279,7 @@ void ffmpeg_decode(rfb_display *vid)
  	AVCodec *codec = NULL;
  	AVCodecContext *codec_ctx = NULL;
  	AVFrame *frame = NULL, *frame_yuv = NULL;
- 	AVPacket *packet = NULL;
+ 	AVPacket packet = {0};
  	struct SwsContext *img_convert_ctx = NULL;
 
 	QUEUE_INDEX *index = NULL;
@@ -293,10 +289,10 @@ void ffmpeg_decode(rfb_display *vid)
     input.codec_ctx = codec_ctx;
     input.frame = frame;
     input.frame_yuv = frame_yuv;
-    input.packet = packet;
-    input.img_convert_ctx = img_convert_ctx;
+    //input.packet = packet;
+   	input.img_convert_ctx = img_convert_ctx;
 	
-   const char *decoder_name [] = {"h264_rkvpu", "h264", "h264_qsv"};
+   	const char *decoder_name [] = {"h264_rkvpu", "h264", "h264_qsv"};
 
     for(i = 0; decoder_name[i] != NULL; i++)
     {
@@ -329,38 +325,39 @@ void ffmpeg_decode(rfb_display *vid)
 
     frame = av_frame_alloc();
     //frame_yuv = av_frame_alloc();
-	packet=(AVPacket *)av_malloc(sizeof(AVPacket));
+	//packet=(AVPacket *)av_malloc(sizeof(AVPacket));
     //out_buffer = (uint8_t *)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_YUV420P, MAX_WIDTH, MAX_HEIGHT, 1));
     //if(!frame || !frame_yuv || !out_buffer ||!packet)
-	if(!frame || !packet)	
+		
+	if(!frame)	
     {
         DEBUG("frame or frame_yuv pkt packet malloc error :%s", strerror(errno));
         goto run_out;
     }
 	pthread_cleanup_push(clean_decode, NULL);
+	/* packet 不能用指针 否则会异常 */
 	for(;;)
     {
-		//if(vid->play_flag > 0)
 		if(empty_queue(&vids_queue[vid->id]))
 	    {
 			pthread_cond_wait(&(vid->cond), &(vid->mtx));
 	        continue;
 	    }
 	    index = de_queue(&vids_queue[vid->id]);
-		packet->size = index->uiSize;
-		packet->data = index->pBuf;
+		packet.size = index->uiSize;
+		packet.data = index->pBuf;
 	    de_queuePos(&vids_queue[vid->id]);
 
-		ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, packet);
-
+		ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, &packet);
         if (got_picture)
         {
-			if(vid->play_flag == 2)
-       			update_texture(frame, NULL);
-			else
-       			update_texture(frame, &(vid->rect));
+			//if(vid->play_flag == 2)
+       			//update_texture(frame, NULL);
+			//else
+       		update_texture(frame, &(vid->rect));
         }
-		av_free_packet(packet);
+		//av_free_packet(packet);
+		av_packet_unref(&packet);
     }
 	pthread_cleanup_pop(0);
 run_out:

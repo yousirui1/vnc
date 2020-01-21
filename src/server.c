@@ -28,125 +28,21 @@ static int send_pipe(char *buf, short cmd, int size)
     return ret;
 }
 
-#if 0
-static int send_dead()
+
+static int send_done(rfb_request *req)
 {
-
-
-}
-
-
-static int send_done()
-{
-
-
-}
-#endif
-
-
-
-static int send_ready(rfb_request *req)
-{
-	int ret;
-	unsigned char *buf = NULL;
-	*(int *)&req->data_buf[0] = PLAY;
-	set_request_head(req->head_buf, 0, READY_MSG_RET, sizeof(int));
-	ret = send_request(req);
-	buf = (unsigned char *)malloc(sizeof(int) + HEAD_LEN + 1);
-	if(!buf)
-		return ERROR;
-
-	set_request_head(buf, 0, SER_PLAY_MSG, sizeof(int));
-	*(int *)&buf[HEAD_LEN] = 0;
-	
-	ret = send_pipe(buf, SER_PLAY_MSG, sizeof(int));
-		
-	if(SUCCESS != ret)
-		return ERROR;
-	
-	req->status = PLAY;
-	return SUCCESS;
-}
-
-static int recv_ready(rfb_request *req)
-{
-	if(read_msg_order(req->head_buf) == READY_MSG)
-	{
-		int ret, code;
-		code = *(int *)&req->data_buf[0];
-		if(code == 200)
-		{
-			ret = send_ready(req);	
-			return SUCCESS;	
-		}
-	}
-	return ERROR;	
-}
-
-
-
-static int send_options()
-{
-
-
-
-}
-
-
-static int recv_options(rfb_request *req)
-{
-	if(read_msg_order(req->head_buf) == OPTIONS_MSG)
-	{
-		int i = 0;
-		rfb_format *fmt = (rfb_format *)&req->data_buf[0];
-        DEBUG("fmt->width %d, fmt->height %d fmt->code %d fmt->data_port %d fmt->bps %d fmt->fps", 
-				fmt->width, fmt->height, fmt->code, fmt->data_port, fmt->bps, fmt->fps);	
-		
-		fmt->play_flag = 0;
-		fmt->data_port = 0;
-	
-		while(!displays)
-		{
-			usleep(2000);
-		}	
-		
-		if(status == CONTROL)
-		{
-			return send_request(req);	
-		}
-	
-		for(i = 0; i < display_size; i++)   //ready play
-        {
-            if(!displays[i].play_flag)      //存在空闲的分屏, 发送play命令
-            {
-                displays[i].req = req;
-                displays[i].fmt.play_flag =  displays[i].play_flag = 1;
-                fmt->width = vids_width;
-                fmt->height = vids_height;
-                fmt->play_flag = 0x01;
-                fmt->data_port = i + h264_port + 1;
-                req->display_id = i;
-				memcpy(&(displays[i].fmt), fmt, sizeof(rfb_format));
-                DEBUG("req->display_id %d", i);
-                break;
-            }
-        }
-		DEBUG("displays[1].play_flag %d", displays[1].play_flag);
-		DEBUG("total_connections %d", total_connections);
-
-		if(fmt->play_flag)
-		{
-        	req->status = DONE;
-			status = PLAY;
-		}
-		req->status = READY;
-		set_request_head(req->head_buf, 0, OPTIONS_MSG_RET, sizeof(rfb_format));	
-        return send_request(req);
-	}
-	else
-	{
-		return -1;	
-	}
+	DEBUG("send_done ");
+	int ret = -1;
+	req->status = OPTIONS;
+	set_request_head(req->head_buf, 0, 0x02, sizeof(rfb_format));	
+	req->data_buf = malloc(sizeof(rfb_format) + 1);	
+	req->data_size = sizeof(rfb_format);
+	memset(req->data_buf, 0, sizeof(rfb_format));
+	ret = send_request(req);		
+	free(req->data_buf);
+    req->data_buf = NULL;
+	DEBUG("req->play_id %d", req->display_id);
+    return ret;
 }
 
 static int send_control(rfb_request *req)
@@ -192,20 +88,105 @@ static int send_play(rfb_request *req)
     return ret;
 }
 
-static int send_done(rfb_request *req)
+static int send_ready(rfb_request *req)
 {
-	DEBUG("send_done ");
-	int ret = -1;
-	req->status = OPTIONS;
-	set_request_head(req->head_buf, 0, 0x02, sizeof(rfb_format));	
-	req->data_buf = malloc(sizeof(rfb_format) + 1);	
-	req->data_size = sizeof(rfb_format);
-	memset(req->data_buf, 0, sizeof(rfb_format));
-	ret = send_request(req);		
-	free(req->data_buf);
-    req->data_buf = NULL;
-	DEBUG("req->play_id %d", req->display_id);
-    return ret;
+	int ret;
+	unsigned char *buf = NULL;
+	*(int *)&req->data_buf[0] = PLAY;
+	set_request_head(req->head_buf, 0, READY_MSG_RET, sizeof(int));
+	ret = send_request(req);
+	buf = (unsigned char *)malloc(sizeof(int) + HEAD_LEN + 1);
+	if(!buf)
+		return ERROR;
+
+	//set_request_head(buf, 0, SER_PLAY_MSG, sizeof(int));
+	//*(int *)&buf[HEAD_LEN] = 0;
+	
+	//ret = send_pipe(buf, SER_PLAY_MSG, sizeof(int));
+		
+	if(SUCCESS != ret)
+		return ERROR;
+	
+	req->status = PLAY;
+	return SUCCESS;
+}
+
+static int recv_ready(rfb_request *req)
+{
+	if(read_msg_order(req->head_buf) == READY_MSG)
+	{
+		int ret, code;
+		code = *(int *)&req->data_buf[0];
+		if(code == 200)
+		{
+			ret = send_ready(req);	
+			return SUCCESS;	
+		}
+	}
+	return ERROR;	
+}
+
+
+static int send_options()
+{
+
+
+
+}
+
+
+static int recv_options(rfb_request *req)
+{
+	if(read_msg_order(req->head_buf) == OPTIONS_MSG)
+	{
+		int i = 0;
+		rfb_format *fmt = (rfb_format *)&req->data_buf[0];
+        DEBUG("fmt->width %d, fmt->height %d fmt->code %d fmt->data_port %d fmt->bps %d fmt->fps", 
+				fmt->width, fmt->height, fmt->code, fmt->data_port, fmt->bps, fmt->fps);	
+		
+		fmt->play_flag = 0;
+		fmt->data_port = 0;
+		char buf[128] = {0};
+		char *tmp = &buf[HEAD_LEN];
+
+		if(status == CONTROL)
+		{
+			return send_request(req);	
+		}
+		for(i = 0; i < display_size; i++)   //ready play
+        {
+            if(!displays[i].play_flag)      //存在空闲的分屏, 发送play命令
+            {
+                displays[i].req = req;
+                displays[i].fmt.play_flag =  displays[i].play_flag = 1;
+                fmt->width = vids_width;
+                fmt->height = vids_height;
+                fmt->play_flag = 0x01;
+                fmt->data_port = i + h264_port + 1;
+                req->display_id = i;
+				memcpy(&(displays[i].fmt), fmt, sizeof(rfb_format));
+				*(int *)&tmp[0] = i;
+				send_pipe(buf, SER_PLAY_MSG, sizeof(int));
+                DEBUG("req->display_id %d", i);
+                break;
+            }
+        }
+		DEBUG("displays[1].play_flag %d", displays[1].play_flag);
+		DEBUG("total_connections %d", total_connections);
+
+		if(fmt->play_flag)
+		{
+        	req->status = DONE;
+			status = PLAY;
+		}
+		req->status = READY;
+		set_request_head(req->head_buf, 0, OPTIONS_MSG_RET, sizeof(rfb_format));	
+        return send_request(req);
+	}
+	else
+	{
+		return -1;	
+	}
 }
 
 
@@ -280,7 +261,7 @@ int process_server_msg(rfb_request *req)
             ret = send_done(req);
 			break;
         case DEAD:
-
+				
         default:
             break;
     }
@@ -328,12 +309,14 @@ void init_server()
         goto run_out;
 	}
 
+#if 0
 	ret = pthread_create(&pthread_display, NULL, thread_display, NULL);
     if(0 != ret)
     {
         DEBUG("pthread create display ret: %d error:%s", ret, strerror(ret));
         goto run_out;
     }
+#endif
 
     ret = pthread_create(&pthread_tcp, NULL, thread_server_tcp, &server_s);
     if(0 != ret)
@@ -350,6 +333,7 @@ void init_server()
         goto run_out;
     }
 
+	sdl_loop();
 	do_exit();
 run_out:
 	close_fd(server_s);

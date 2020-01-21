@@ -13,9 +13,9 @@ static void do_exit()
         pthread_join(pthread_cli_udp, (void **)tret);
         pthread_join(pthread_cli_encode, (void **)tret);
     }
-	else
+	else 	//server pthread
 	{
-
+		
 	}
 }
 
@@ -38,59 +38,28 @@ static int send_pipe(char *buf, short cmd, int size, int msg_type)
 static int process_ser(char *msg, int len)
 {
     int ret;
-    int index = 0;
+	//char *tmp = &msg[0];
+    int index = *(int *)&msg[HEAD_LEN];
+	DEBUG("display index %d --------------------- ", index);
+
+	if(index < 0 || index > display_size)
+		return;
+
     switch(read_msg_order(msg))
     {
         case SER_PLAY_MSG:          //创建解码线程
         {
-            //ret = pthread_create(&displays[index].pthread_decode, NULL, thread_decode, &displays[index]);
-            //ret = pthread_create(display[index]->pthread_udp, NULL, thread_server_udp);
+            ret = pthread_create(&displays[index].pthread_decode, NULL, thread_decode, &displays[index]);
             break;
         }
         case SER_DONE_MSG:          //断开连接 销毁解码线程
         {
-#if 0
-            if(display[index] && display[index]->pthread_decode)
-            {
-                pthread_cancel(client[index]->pthread_decode);
-                free(client[index]->pthread_decode);
-            }
-#endif
+            //pthread_cancel(displays[index].pthread_decode);
             break;
         }
     }
+
 }
-
-#if 0
-if(cli_display.fmt.play_flag == 1)
-	{
-		//req->status = PLAY;
-    	create_encode(&cli_display.fmt);
-	}
-
-	if(cli_display.fmt.play_flag == 2)
-	{
-		/* 获取服务端分辨率用于控制坐标转换 */
-		vids_width = cli_display.fmt.width;   
-		vids_height = cli_display.fmt.height;
-		//req->status = CONTROL;
-    	create_encode(&cli_display.fmt);
-	}
-    int ret;
-    pthread_t pthread_udp, pthread_encode;
-
-    ret = pthread_create(&pthread_udp, NULL, thread_client_udp, fmt);
-    if(0 != ret)
-    {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-    }
-    ret = pthread_create(&pthread_encode, NULL, thread_encode, fmt);
-    if(0 != ret)
-    {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
-    }
-
-#endif
 
 
 static int process_cli(char *msg, int len)
@@ -115,6 +84,7 @@ static int process_cli(char *msg, int len)
         }
         case CLI_CONTROL_MSG:
         {
+            //pthread_cancel(pthread_cli_encode);
             //ret = pthread_create(&pthread_cli_encode, NULL, thread_encode, (void *)&cli->fmt);
             //send_pipe(msg, CLI_PLAY_MSG, 0, CLIENT_MSG);
             break;

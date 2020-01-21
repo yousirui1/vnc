@@ -746,10 +746,7 @@ void create_h264_socket()
     //vids_buf = (unsigned char **)malloc(display_size * sizeof(unsigned char *));
     DEBUG("display_size %d", display_size);
 
-	while(!displays)
-	{
-		usleep(10000);
-	}
+
     for(i = 0; i < display_size; i++)
     {
         create_udp(NULL, i + 1 + h264_port, &displays[i]);
@@ -786,6 +783,7 @@ void server_tcp_loop(int listenfd)
 
 	while(run_flag)
     {
+    	tv.tv_sec = 1;
         rset = allset; // structure assignment
         ret = select(maxfd + 1, &rset, NULL, NULL, &tv);
         if(ret == -1)

@@ -87,6 +87,7 @@ typedef struct _rfb_display
             
 	pthread_mutex_t mtx;
     pthread_cond_t cond;
+	pthread_t pthread_decode;
 
     rfb_request *req;
 	rfb_format fmt;
