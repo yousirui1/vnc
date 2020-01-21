@@ -4,6 +4,7 @@
 int server_flag = 0;
 int client_port = -1, control_port = -1, h264_port = -1,  window_flag = 0, window_size = 0;
 int default_fps = 0;
+int default_size = 3;
 int max_connections = -1; 
 int server_port = -1;
 char *server_ip = NULL;

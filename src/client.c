@@ -14,6 +14,90 @@ static int send_pipe(char *buf, short cmd, int size)
     return ret;
 }
 
+/* stop send play */
+static int recv_play(rfb_request *req)
+{
+#if 0
+	if(read_msg_order(req->head_buf) == READY_MSG_RET)
+	{
+		int mode = *(int *)&req->data_buf[0];
+		switch(mode)
+		{
+				
+
+		}	
+	}
+#endif
+}
+
+/* start send play */
+static int send_play(rfb_request *req)
+{
+#if 0
+	int ret;
+	if(req->data_size < sizeof(int))
+	{
+		req->data_buf = realloc(req->data_buf, sizeof(int) + 1);
+	}
+	//req->data_buf[0] = 	200;
+	
+	//set_request_head(cli->head_buf, 0, READY_MSG, 0);
+	//ret = send_request(cli);
+	
+	if(SUCCESS != ret)
+		return ERROR;
+		
+	req->status = READY;
+#endif
+	return SUCCESS;
+}
+
+static int recv_ready(rfb_request *req)
+{
+	if(read_msg_order(req->head_buf) == READY_MSG_RET)
+	{
+		int ret;
+		int mode = *(int *)&req->data_buf[0];
+        switch(mode)
+        {
+            case PLAY:                  //远程监控
+                ret = send_pipe(req->head_buf, CLI_PLAY_MSG, 0);
+                break;
+            case CONTROL:               //远程控制
+                break;
+                ret = send_pipe(req->head_buf, CLI_CONTROL_MSG, 0);
+            case DONE:                  //销毁线程, 等待命令
+                ret = send_pipe(req->head_buf, CLI_DONE_MSG, 0);
+                break;
+            case DEAD:                  //断开连接
+                ret = send_pipe(req->head_buf, CLI_DEAD_MSG, 0);
+                break;
+        }
+		return ret;
+	}
+	return ERROR;
+}
+
+static int send_ready(rfb_request *req)
+{
+	int ret;
+	if(req->data_size < sizeof(int))
+	{
+		req->data_buf = realloc(req->data_buf, sizeof(int) + 1);
+	}
+	*(int *)&req->data_buf[0] = 200;
+	
+	set_request_head(req->head_buf, 0, READY_MSG, sizeof(int));
+	req->data_size = sizeof(int);
+	ret = send_request(req);
+	
+	if(SUCCESS != ret)
+		return ERROR;
+		
+	req->status = READY;
+	return SUCCESS;
+}
+
 static int recv_options(rfb_request *req)
 {
     if(read_msg_order(req->head_buf) == OPTIONS_MSG_RET)
@@ -27,18 +111,7 @@ static int recv_options(rfb_request *req)
 		cli_display.play_flag = fmt->play_flag;
 		memcpy(&(cli_display.fmt), fmt, sizeof(rfb_format));
 		ret = send_pipe(req->head_buf, CLI_UDP_MSG, 0);
-
-		if(SUCCESS == ret)
-		{
-			req->status = PLAY;
-		}
-#if 0
-		sleep(5);
-		ret = send_pipe(req->head_buf, CLI_DONE_MSG, 0);
-		char s = 'S';
-		send_msg(pipe_event[1], &s, 1);
-		
-#endif
+		ret = send_ready(req);
 		return ret;
     }
 	return ERROR;
@@ -148,19 +221,25 @@ int process_client_msg(rfb_request *req)
 	DEBUG("process_client_msg   !!!");
     switch(req->status)
     {
-        case READ_HEADER:
+        case NORMAL:
         case LOGIN:
             ret = recv_login(req);
             break;
         case OPTIONS:
-		case PLAY:
             ret = recv_options(req);
+			break;
+		case READY:
+			ret = recv_ready(req);
+			break;
+		case PLAY:
             break;
 		case CONTROL:
+#if 0
 			if(read_msg_order(req->head_buf) == 0x02)
 				ret = recv_options(req);
 			else	
 				ret = control_msg(req);
+#endif
         case DONE:
 
         case DEAD:

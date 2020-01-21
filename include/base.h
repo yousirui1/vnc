@@ -102,9 +102,9 @@
 
 /* req->status */
 #define NORMAL					0
-#define READ_HEADER             1
-#define LOGIN                   2
-#define OPTIONS                 3
+#define LOGIN                   1
+#define OPTIONS                 2
+#define READY					3
 #define PLAY					4
 #define CONTROL					5
 #define DONE                    6

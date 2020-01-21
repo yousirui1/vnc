@@ -12,6 +12,7 @@ extern int client_port, control_port, h264_port, window_flag, window_size, serve
 extern int max_connections;
 extern char* server_ip;
 extern int default_quality, default_fps;
+extern int default_size;
 extern int run_flag;
 extern int play_flag;
 extern int control_flag;

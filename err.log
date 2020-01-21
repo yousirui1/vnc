@@ -1,82 +1,102 @@
-In file included from ./src/log.c:1:0:
-./include/base.h:51:0: warning: "ERROR" redefined
+In file included from ./src/server.c:1:0:
+./include/base.h:56:0: warning: "ERROR" redefined
  #define ERROR  1
  
 In file included from c:\program files\git\mingw32\include\windows.h:46:0,
-                 from ./include/base.h:16,
-                 from ./src/log.c:1:
+                 from ./include/base.h:18,
+                 from ./src/server.c:1:
 c:\program files\git\mingw32\include\wingdi.h:348:0: note: this is the location of the previous definition
  #define ERROR       0
  
-In file included from ./src/log.c:1:0:
-./include/base.h:176:0: warning: "max" redefined
+In file included from ./src/server.c:1:0:
+./include/base.h:187:0: warning: "max" redefined
  #define max(a,b)    (((a) > (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
-                 from ./include/base.h:16,
-                 from ./src/log.c:1:
+                 from ./include/base.h:18,
+                 from ./src/server.c:1:
 c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
  #define max(a,b) ((a)>(b)?(a):(b))
  
-In file included from ./src/log.c:1:0:
-./include/base.h:177:0: warning: "min" redefined
+In file included from ./src/server.c:1:0:
+./include/base.h:188:0: warning: "min" redefined
  #define min(a,b)    (((a) < (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
-                 from ./include/base.h:16,
-                 from ./src/log.c:1:
+                 from ./include/base.h:18,
+                 from ./src/server.c:1:
 c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
  #define min(a,b) ((a)<(b)?(a):(b))
  
-./src/log.c: In function 'init_logs':
-./src/log.c:10:16: error: 'MAX_FILENAMELEN' undeclared (first use in this function)
-     char c_dir[MAX_FILENAMELEN];
-                ^~~~~~~~~~~~~~~
-./src/log.c:10:16: note: each undeclared identifier is reported only once for each function it appears in
-./src/log.c:11:17: error: storage size of 'file_state' isn't known
-     struct stat file_state;
-                 ^~~~~~~~~~
-./src/log.c:18:11: warning: implicit declaration of function 'stat' [-Wimplicit-function-declaration]
-     ret = stat(LOG_DIR, &file_state);
-           ^~~~
-./src/log.c:18:16: error: 'LOG_DIR' undeclared (first use in this function)
-     ret = stat(LOG_DIR, &file_state);
-                ^~~~~~~
-In file included from ./src/log.c:1:0:
-./include/base.h:51:16: warning: 'return' with a value, in function returning void
- #define ERROR  1
-                ^
-./src/log.c:30:24: note: in expansion of macro 'ERROR'
-                 return ERROR;
-                        ^~~~~
-./src/log.c:7:6: note: declared here
- void init_logs()
-      ^~~~~~~~~
-./src/log.c:54:20: error: 'LOG_ERR_FILE' undeclared (first use in this function)
-     fp_err = fopen(LOG_ERR_FILE, "ab");
-                    ^~~~~~~~~~~~
-./src/log.c:11:17: warning: unused variable 'file_state' [-Wunused-variable]
-     struct stat file_state;
-                 ^~~~~~~~~~
-./src/log.c:10:10: warning: unused variable 'c_dir' [-Wunused-variable]
-     char c_dir[MAX_FILENAMELEN];
-          ^~~~~
-./src/log.c: In function 'close_logs':
-./src/log.c:66:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
-     if(fp_log)
-     ^~
-./src/log.c:69:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
-  fp_err = NULL;
-  ^~~~~~
-./src/log.c: In function 'log_msg':
-./src/log.c:87:29: warning: implicit declaration of function 'get_commonlog_time' [-Wimplicit-function-declaration]
-     fprintf(fp_log, "%s:%s",get_commonlog_time(), buf);
-                             ^~~~~~~~~~~~~~~~~~
-./src/log.c:87:23: warning: format '%s' expects argument of type 'char *', but argument 3 has type 'int' [-Wformat=]
-     fprintf(fp_log, "%s:%s",get_commonlog_time(), buf);
-                       ^
-./src/log.c: In function 'err_msg':
-./src/log.c:104:23: warning: format '%s' expects argument of type 'char *', but argument 3 has type 'int' [-Wformat=]
-     fprintf(fp_err, "%s:%s",get_commonlog_time(), buf);
-                       ^
-make: *** [log.o] Error 1
+./src/server.c: In function 'do_exit':
+./src/server.c:17:2: warning: implicit declaration of function 'destroy_socket' [-Wimplicit-function-declaration]
+  destroy_socket();
+  ^~~~~~~~~~~~~~
+./src/server.c:18:2: warning: implicit declaration of function 'destroy_display' [-Wimplicit-function-declaration]
+  destroy_display();
+  ^~~~~~~~~~~~~~~
+./src/server.c: In function 'send_pipe':
+./src/server.c:26:5: warning: implicit declaration of function 'set_request_head' [-Wimplicit-function-declaration]
+     set_request_head(buf, 0x0, cmd, size);
+     ^~~~~~~~~~~~~~~~
+./src/server.c: In function 'send_ready':
+./src/server.c:62:18: warning: pointer targets in passing argument 1 of 'send_pipe' differ in signedness [-Wpointer-sign]
+  ret = send_pipe(buf, SER_PLAY_MSG, sizeof(int));
+                  ^~~
+./src/server.c:23:12: note: expected 'char *' but argument is of type 'unsigned char *'
+ static int send_pipe(char *buf, short cmd, int size)
+            ^~~~~~~~~
+./src/server.c: In function 'recv_ready':
+./src/server.c:75:7: warning: variable 'ret' set but not used [-Wunused-but-set-variable]
+   int ret, code;
+       ^~~
+./src/server.c: In function 'send_options':
+./src/server.c:93:1: warning: no return statement in function returning non-void [-Wreturn-type]
+ }
+ ^
+In file included from ./src/server.c:1:0:
+./src/server.c: In function 'recv_options':
+./include/base.h:44:34: warning: too many arguments for format [-Wformat-extra-args]
+ #define DEBUG(format,...) printf("File: "__FILE__", Line: %05d: "format"\r\n", __LINE__, ##__VA_ARGS__);\
+                                  ^
+./src/server.c:102:9: note: in expansion of macro 'DEBUG'
+         DEBUG("fmt->width %d, fmt->height %d fmt->code %d fmt->data_port %d fmt->bps %d fmt->fps",
+         ^~~~~
+./src/server.c:110:4: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
+    usleep(2000);
+    ^~~~~~
+In file included from ./include/base.h:7:0,
+                 from ./src/server.c:1:
+c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
+ int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
+                             ^~~~~~
+./src/server.c: In function 'send_login':
+./src/server.c:216:5: warning: implicit declaration of function 'get_version' [-Wimplicit-function-declaration]
+     get_version(&server_major, &server_minor);
+     ^~~~~~~~~~~
+./src/server.c:217:13: warning: pointer targets in passing argument 1 of 'sprintf' differ in signedness [-Wpointer-sign]
+     sprintf(req->data_buf, VERSIONFORMAT, server_major, server_minor);
+             ^~~
+In file included from ./include/base.h:4:0,
+                 from ./src/server.c:1:
+c:\program files\git\mingw32\include\stdio.h:455:38: note: expected 'char *' but argument is of type 'unsigned char *'
+ _CRTIMP __cdecl __MINGW_NOTHROW  int sprintf (char *, const char *, ...);
+                                      ^~~~~~~
+./src/server.c: In function 'init_server':
+./src/server.c:311:5: warning: implicit declaration of function 'bind_socket' [-Wimplicit-function-declaration]
+  if(bind_socket(server_s, client_port) == -1)
+     ^~~~~~~~~~~
+./src/server.c:317:8: warning: implicit declaration of function 'create_display' [-Wimplicit-function-declaration]
+  ret = create_display()
+        ^~~~~~~~~~~~~~
+./src/server.c:318:2: error: expected ';' before 'if'
+  if(ret != SUCCESS)
+  ^~
+./src/server.c:355:2: warning: implicit declaration of function 'close_fd' [-Wimplicit-function-declaration]
+  close_fd(server_s);
+  ^~~~~~~~
+At top level:
+./src/server.c:88:12: warning: 'send_options' defined but not used [-Wunused-function]
+ static int send_options()
+            ^~~~~~~~~~~~
+make: *** [server.o] Error 1

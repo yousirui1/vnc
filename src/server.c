@@ -2,8 +2,95 @@
 #include "msg.h"
 
 int display_size = 0;
-static int server_s = -1;
 static pthread_t pthread_tcp, pthread_udp , pthread_display;
+
+static void do_exit()
+{
+    void *tret = NULL;
+    pthread_join(pthread_tcp, &tret);  //等待线程同步
+    DEBUG("pthread_exit %d tcp", (int)tret);
+    pthread_join(pthread_udp, &tret);  //等待线程同步
+    DEBUG("pthread_exit %d udp", (int)tret);
+
+    pthread_join(pthread_display, &tret);  //等待线程同步
+    DEBUG("pthread_exit %d display", (int)tret);
+	destroy_socket();
+	destroy_display();
+	DEBUG("exit_server");
+}
+
+
+static int send_pipe(char *buf, short cmd, int size)
+{
+    int ret = -1;
+    set_request_head(buf, 0x0, cmd, size);
+    ret = send_msg(pipe_ser[0], buf, size + HEAD_LEN);
+    return ret;
+}
+
+#if 0
+static int send_dead()
+{
+
+
+}
+
+
+static int send_done()
+{
+
+
+}
+#endif
+
+
+
+static int send_ready(rfb_request *req)
+{
+	int ret;
+	unsigned char *buf = NULL;
+	*(int *)&req->data_buf[0] = PLAY;
+	set_request_head(req->head_buf, 0, READY_MSG_RET, sizeof(int));
+	ret = send_request(req);
+	buf = (unsigned char *)malloc(sizeof(int) + HEAD_LEN + 1);
+	if(!buf)
+		return ERROR;
+
+	set_request_head(buf, 0, SER_PLAY_MSG, sizeof(int));
+	*(int *)&buf[HEAD_LEN] = 0;
+	
+	ret = send_pipe(buf, SER_PLAY_MSG, sizeof(int));
+		
+	if(SUCCESS != ret)
+		return ERROR;
+	
+	req->status = PLAY;
+	return SUCCESS;
+}
+
+static int recv_ready(rfb_request *req)
+{
+	if(read_msg_order(req->head_buf) == READY_MSG)
+	{
+		int ret, code;
+		code = *(int *)&req->data_buf[0];
+		if(code == 200)
+		{
+			ret = send_ready(req);	
+			return SUCCESS;	
+		}
+	}
+	return ERROR;	
+}
+
+
+
+static int send_options()
+{
+
+
+
+}
 
 
 static int recv_options(rfb_request *req)
@@ -52,6 +139,7 @@ static int recv_options(rfb_request *req)
         	req->status = DONE;
 			status = PLAY;
 		}
+		req->status = READY;
 		set_request_head(req->head_buf, 0, OPTIONS_MSG_RET, sizeof(rfb_format));	
         return send_request(req);
 	}
@@ -169,18 +257,19 @@ static int recv_login(rfb_request *req)
 
 int process_server_msg(rfb_request *req)
 {
-	DEBUG("process_server_msg");
     int ret = 0;
     switch(req->status)
     {
 		case NORMAL:
-        case READ_HEADER:
         case LOGIN:
             ret = recv_login(req);
             break;
         case OPTIONS:					//被动请求开始显示
             ret = recv_options(req);
             break;
+		case READY:
+			ret = recv_ready(req);
+			break;
         case PLAY:						//主动要求显示
 			ret = send_play(req);
 			break;
@@ -195,6 +284,7 @@ int process_server_msg(rfb_request *req)
         default:
             break;
     }
+	DEBUG("process_server_msg ret %d", ret);
     return ret;
 }
 
@@ -202,53 +292,68 @@ int process_server_msg(rfb_request *req)
 void init_server()
 {
 	int ret = -1;
+	int server_s = -1;
+	
+	if(window_size < 0 || window_size > 5)
+	{
+		window_size = default_size;
+	}
+
 	display_size = window_size * window_size;
 
 	server_s = create_tcp();
-
 	if(server_s == -1)
 	{
-		DIE("create socket err");
+		DEBUG("pthread create display ret: %d error:%s", ret, strerror(ret));
+        goto run_out;
 	}	
+
 	if(bind_socket(server_s, client_port) == -1)
     {
-        DIE("bind port %d err", client_port);
+        DEBUG("bind port %d err", client_port);
+        goto run_out;
     }
+
+	ret = create_display();
+	if(ret != SUCCESS)
+	{
+	    DEBUG("pthread create display ret: %d error:%s", ret, strerror(ret));
+        goto run_out;
+	}
+	
+	ret = init_display();
+	if(ret != SUCCESS)
+	{
+        DEBUG("pthread create display ret: %d error:%s", ret, strerror(ret));
+        goto run_out;
+	}
+
 	ret = pthread_create(&pthread_display, NULL, thread_display, NULL);
     if(0 != ret)
     {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+        DEBUG("pthread create display ret: %d error:%s", ret, strerror(ret));
+        goto run_out;
     }
 
     ret = pthread_create(&pthread_tcp, NULL, thread_server_tcp, &server_s);
     if(0 != ret)
     {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+        DEBUG("pthread create server tcp ret: %d error:%s", ret, strerror(ret));
+        goto run_out;
+
     }
 
     ret = pthread_create(&pthread_udp, NULL, thread_server_udp, NULL);
     if(0 != ret)
     {
-        DIE("ThreadTcp err %d,  %s",ret,strerror(ret));
+        DEBUG("pthread create server udp ret: %d error:%s", ret, strerror(ret));
+        goto run_out;
     }
 
+	do_exit();
+run_out:
+	close_fd(server_s);
+	return;
 }
-
-
-void exit_server()
-{
-    void *tret = NULL;
-    pthread_join(pthread_tcp, &tret);  //等待线程同步
-    DEBUG("pthread_exit %d tcp", (int)tret);
-    pthread_join(pthread_udp, &tret);  //等待线程同步
-    DEBUG("pthread_exit %d udp", (int)tret);
-
-    pthread_join(pthread_display, &tret);  //等待线程同步
-    DEBUG("pthread_exit %d display", (int)tret);
-	destroy_socket();
-	destroy_display();
-	DEBUG("exit_server");
-}
-
 
 

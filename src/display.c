@@ -610,7 +610,7 @@ void destroy_display()
 }
 
 
-void init_display()
+int init_display()
 {
 	int i, j ,ret, id;
 	
@@ -625,25 +625,20 @@ void init_display()
     displays = (rfb_display *)malloc(sizeof(rfb_display) * window_size * window_size);
     pthread_decodes = (pthread_t *)malloc(sizeof(pthread_t) * window_size * window_size);
 	
-	if(!vids_queue || !vids_buf || !displays || !pthread_decodes)
-	{
-		DIE("param malloc err");
-	}
-    memset(displays, 0, sizeof(rfb_display) * window_size * window_size);
-
 	/* 局部画板 */
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, vids_width, vids_height);
-    if(!texture)
-    {
-        DIE("create texture err");
-    }
 
 	/* 全局画板 */
 	full_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
-    if(!full_texture)
-    {
-        DIE("create full texture err");
-    }
+
+
+	if(!vids_queue || !vids_buf || !displays || !pthread_decodes || !texture ||!full_texture)
+	{
+		DEBUG("display_size: %d malloc vids_queue vids_buf texture full_texture and displays one error :%s",
+                display_size, strerror(errno));
+        goto run_out;
+	}
+    memset(displays, 0, sizeof(rfb_display) * window_size * window_size);
 
 	for(i = 0; i < window_size; i++)
     {
@@ -658,9 +653,14 @@ void init_display()
 	        displays[id].mtx = PTHREAD_MUTEX_INITIALIZER;
             displays[id].cond = PTHREAD_COND_INITIALIZER;
 
-
-
             vids_buf[id] = (unsigned char *)malloc(MAX_VIDSBUFSIZE * sizeof(unsigned char));
+			if(!vids_buf[id])
+			{
+                DEBUG("vids_buf malloc sizeof: %d error: %s", MAX_VIDSBUFSIZE * sizeof(unsigned char),
+                        strerror(errno));
+                goto run_out;
+
+			}
             memset(vids_buf[id], 0, MAX_VIDSBUFSIZE);
             /* 创建窗口的对应队列 */
             init_queue(&(vids_queue[id]), vids_buf[id], MAX_VIDSBUFSIZE);
@@ -669,12 +669,27 @@ void init_display()
             ret = pthread_create(&(pthread_decodes[id]), NULL, thread_decode, &(displays[id]));
             if(0 != ret)
             {
-                DIE("ThreadDisp err %d,  %s",ret , strerror(ret));
+                DEBUG("ThreadDisp err %d,  %s",ret , strerror(ret));
+				goto run_out;
             }
         }
     }
 	clear_texture();
 	DEBUG("init display end");
+	return SUCCESS;
+run_out:
+	if(vids_queue)
+        free(vids_queue);
+    if(vids_buf)
+        free(vids_buf);
+    if(displays)
+        free(displays);
+    if(texture)
+        SDL_DestroyTexture(texture);
+    if(full_texture)
+        SDL_DestroyTexture(full_texture);
+
+    return ERROR;
 }
 
 int create_display()
@@ -779,10 +794,7 @@ int create_display()
 			goto run_out;
         }
     }
-    init_display();
-    sdl_loop();
-   	DEBUG("display exit");
-
+	return SUCCESS;
 run_out:
 	do_exit();	
 	return ERROR;
@@ -807,6 +819,6 @@ void *thread_display(void *param)
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
-    create_display();
+    sdl_loop();
     return (void *)0;
 }

@@ -103,14 +103,13 @@ static int process_cli(char *msg, int len)
         case CLI_UDP_MSG:                   //创建udp 线程
         {
             ret = pthread_create(&pthread_cli_udp, NULL, thread_client_udp, &cli_display.fmt);
-			ret = pthread_create(&pthread_cli_encode, NULL, thread_encode, &cli_display.fmt);
 	        send_pipe(msg, CLI_READY_MSG, 0, CLIENT_MSG);
             break;
         }
         case CLI_PLAY_MSG:                  //创建 编码线程
         {
             DEBUG("CLI_PLAY_MSG");
-            //ret = pthread_create(&pthread_cli_encode, NULL, thread_encode, (void *)&cli->fmt);
+			ret = pthread_create(&pthread_cli_encode, NULL, thread_encode, &cli_display.fmt);
             send_pipe(msg, CLI_PLAY_MSG, 0, CLIENT_MSG);
             break;
         }

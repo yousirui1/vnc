@@ -923,6 +923,7 @@ void server_tcp_loop(int listenfd)
                     }
                     if(current->has_read_head == 1)
                     {
+						DEBUG("current->data_pos %d, current->data_size %d", current->data_pos, current->data_size);	
                         if((ret = recv(current->fd, current->data_buf + current->data_pos, current->data_size - current ->data_pos,0)) <= 0)
                         {
                             if(ret < 0)
@@ -941,6 +942,7 @@ void server_tcp_loop(int listenfd)
                         {
                             if(process_server_msg(current))
                             {
+								DEBUG("process_server_msg error !!!!!!!!!!!!");
                                 DEBUG("close fd %d", sockfd);
                                 close_fd(current->fd);
                                 FD_CLR(current->fd, &allset);
@@ -950,7 +952,8 @@ void server_tcp_loop(int listenfd)
                             memset(current->head_buf, 0, HEAD_LEN);
                             current->data_size = 0;
                             current->data_pos = 0;
-                            free(current->data_buf);
+							if(current->data_buf)
+                            	free(current->data_buf);
                             current->data_buf = NULL;
                             current->has_read_head = 0;
                         }
