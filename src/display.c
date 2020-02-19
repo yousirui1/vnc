@@ -7,6 +7,8 @@
     #include <X11/Xutil.h>      /* BitmapOpenFailed, etc.    */
     #include <X11/cursorfont.h> /* pre-defined crusor shapes */
     #include <linux/input.h>
+
+    Display *dpy = NULL;
 #endif
 
 #include "base.h"
@@ -20,9 +22,10 @@ int vids_height = 0;
 static int default_width  = 1600;
 static int default_height = 900;
 static int audio_disable = 1;
-//static int video_disable = 0;
+static int video_disable = 0;
 static int display_disable = 0;
 static int borderless = 0;
+
 //static int exit_on_keydown;
 //static int exit_on_mousedown;
 
@@ -37,14 +40,11 @@ static SDL_Rect rect;
 static SDL_Texture *ttf_texture = NULL;
 static TTF_Font *font = NULL;
 
-static int loss_flag = 0;
-static int loss_count = 10;
 static int area_id = -1;
 
 rfb_display *displays = NULL;
 rfb_display *control_display = NULL;
-//pthread_t *pthread_decodes = NULL;
-pthread_mutex_t renderer_mutex;
+pthread_mutex_t renderer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* 获取一个可写的Frame写入 */
 static Frame *frame_queue_peek_writable(FrameQueue *f)
@@ -180,16 +180,418 @@ static int frame_queue_nb_remaining(FrameQueue *f)
 
 
 
-static void send_control(char *buf, int data_len, int cmd)
+static void send_control(char *data, int data_len, int cmd)
 {
 	if(!control_display || status != CONTROL)
 		return;
-	set_request_head(control_display->req, cmd, data_len);
-    control_display->req->data_buf = buf;
-
-    send_request(control_display->req);
-    control_display->req->data_buf = NULL;
+	char *buf = (char *)malloc(data_len + HEAD_LEN + 1);
+	if(!buf)
+		return;
+		
+	char *tmp = &buf[HEAD_LEN];
+	set_request_head(buf, 0, cmd, data_len);	
+	memcpy(tmp, data, data_len);
+	sendto(control_display->req->control_udp.fd, buf,  data_len + HEAD_LEN, 0,
+                    (struct  sockaddr *)&(control_display->req->control_udp.send_addr),
+                    sizeof (control_display->req->control_udp.send_addr));
+			
+	//set_request_head(control_display->req->head_buf, 0, cmd, data_len);
+    //control_display->req->data_buf = buf;
+	//control_display->req->data_size = data_len;
+    //send_request(control_display->req);
+    //control_display->req->data_buf = NULL;
+	free(buf);
 }
+#ifdef _WIN32
+static void simulate_mouse(rfb_pointevent *point)
+{
+    DWORD flags = MOUSEEVENTF_ABSOLUTE;
+    DWORD wheel_movement = 0;
+    flags |= MOUSEEVENTF_MOVE;
+
+    if(point->mask & MOUSE_LEFT_DOWN)
+    {
+        flags |= MOUSEEVENTF_LEFTDOWN;
+    }
+    if(point->mask & MOUSE_LEFT_UP)
+    {
+        flags |= MOUSEEVENTF_LEFTUP;
+    }
+    if(point->mask & MOUSE_RIGHT_DOWN)
+    {
+        flags |= MOUSEEVENTF_RIGHTDOWN;
+    }
+    if(point->mask & MOUSE_RIGHT_UP)
+    {
+        flags |= MOUSEEVENTF_RIGHTUP;
+    }
+
+    if(point->wheel)
+    {
+        flags |= MOUSEEVENTF_WHEEL;
+        if(point->wheel > 0)
+            wheel_movement = (DWORD)+120;
+        else
+            wheel_movement = (DWORD)-120;
+    }
+
+    /* 计算相对位置 */
+    unsigned long x = (point->x * 65535) / (vids_width )  * (screen_width / screen_width);
+    unsigned long y = (point->y * 65535) / (vids_height ) * (screen_height /screen_height);
+    //DEBUG("x %ld y %ld ", x, y);
+
+    mouse_event(flags, (DWORD)x, (DWORD)y, wheel_movement, 0);
+	
+}
+
+static void simulate_keyboard(rfb_keyevent *key)
+{
+	/* a-z */
+	if(key->key >= 97 && key->key <= 122)
+	{
+		key->key -= 32;
+	}
+
+	/* F1-F12 */
+	else if(key->key >= 1073741882 && key->key <=1073741893 )
+	{
+		key->key -= 1073741770;
+	}
+	/* 0- 9*/
+	else if(key->key >= 1073741913 && key->key <= 1073741921)
+	{
+		key->key -= 1073741864;
+	}
+
+	else
+	{
+		switch(key->key)
+		{
+			case 39:   // "'"
+				key->key = 0xDE;
+				break;
+			case 44:	//","
+				key->key = 0xBC;
+				break;
+			case 45:   //"-"
+				key->key = 0xBD;
+				break;
+			case 46:	//"."
+				key->key = 0xBE;
+				break;
+			case 47:   //"/"
+				key->key = 0xBF;
+				break;
+			case 59:	//":"
+				key->key = 0xBA;
+				break;
+			case 61:	// "+"
+				key->key = 0xBB;
+				break;
+			case 91:  // "["
+				key->key = 0xDB;
+				break;
+			case 92:  // "|"
+				key->key = 0xDC;
+				break;
+			case 93:  // "]"
+				key->key = 0xDD;
+				break;
+			case 96:	//"~"
+				key->key = 0xC0;
+				break;
+			case 1073741881: // "caps lock"
+				key->key = 0x14;
+				break;
+			case 1073742048: // "ctrl"
+				key->key = 0x11;
+				break;
+			case 1073742052: // "ctrl"
+				key->key = 0x11;
+				break;
+			case 1073742049: // "shift"
+				key->key = 0x10;
+				break;
+			case 1073742053: // "shift"
+				key->key = 0x10;
+				break;
+			case 1073742050: // "alt"
+				key->key = 0x12;
+				break;
+			case 1073742054: // "alt"
+				key->key = 0x12;
+				break;
+			case 1073742051: // "win"
+				key->key = 0x5B;
+				break;
+			case 1073742055: // "win"
+				key->key = 0x5B;
+				break;
+			case 1073741906: // "up"
+				key->key = 0x26;
+				break;
+			case 1073741905: // "down"
+				key->key = 0x28;
+				break;
+			case 1073741903: // "right"
+				key->key = 0x27;
+				break;
+			case 1073741904: // "left"
+				key->key = 0x25;
+				break;
+			case 1073741897: // "insert"
+				key->key = 0x2D;
+				break;
+			case 127: 		// "delete"
+				key->key = 0x2E;
+				break;
+			case 1073741898: // "home"
+				key->key = 0x24;
+				break;
+			case 1073741901: // "end"
+				key->key = 0x23;
+				break;
+			case 1073741899: // "pgup"
+				key->key = 0x21;
+				break;
+			case 1073741902: // "pgdn"
+				key->key = 0x22;
+				break;
+			case 1073741895: // "pause break"
+				key->key = 0x13;
+				break;
+			case 1073741894: // "scroll lock"
+				key->key = 0x91;
+				break;
+#if 0
+			case 1073741896: // "ptr scsys rq"
+				key->key = 0x25;
+				break;
+#endif
+			case 1073741907: //"Num Lock"
+				key->key = VK_NUMLOCK;
+				break;
+			case 1073741912: // "Enter"
+				key->key = 13;
+				break;
+			case 1073741908: //"/"
+				key->key = VK_DIVIDE;
+				break;
+			case 1073741909: // "*"
+				key->key = VK_MULTIPLY;
+				break;
+			case 1073741910: // "-"
+				key->key = VK_SUBTRACT;
+				break;				
+			case 1073741911: // "+"
+				key->key = VK_ADD;
+				break;
+			case 1073741923: // "."
+				key->key = VK_DECIMAL;
+				break;
+			case 1073741922: //"0"
+				key->key = 48;
+				break;
+			default:
+				break;
+		}
+	}	
+
+	if(key->down)
+    {
+        keybd_event(key->key, 0, 0,0);
+    }
+    else
+        keybd_event(key->key, 0,KEYEVENTF_KEYUP,0);
+}
+#else
+
+static void simulate_mouse(rfb_pointevent *point)
+{
+
+	unsigned long x = point->x / (float)vids_width * screen_width;
+    unsigned long y = point->y / (float)vids_height * screen_height;
+
+	if(!dpy)
+		return;
+
+    XTestFakeMotionEvent(dpy, 0, x, y, 0L);
+    int button = 0;
+    int down = 0;
+
+    if(point->mask & MOUSE_LEFT_DOWN)
+    {   
+        button = 1;
+        down = 1;
+    }   
+    if(point->mask & MOUSE_LEFT_UP)
+    {   
+        button = 1;
+        down = 0;
+    }   
+    if(point->mask & MOUSE_RIGHT_DOWN)
+    {   
+        button = 3;
+        down = 1;
+    }   
+    if(point->mask & MOUSE_RIGHT_UP)
+    {   
+        button = 3;
+        down = 0;
+    }   
+    if(point->mask)
+        XTestFakeButtonEvent(dpy, button, down, 0L);
+
+    XFlush(dpy);
+}
+
+static void simulate_keyboard(rfb_keyevent *key)
+{
+	if(!dpy)
+		return;
+
+	/* a-z */
+	if(key->key >= 97 && key->key <= 122)
+	{
+		key->key -= 32;
+	}
+
+	/* F1-F12 */
+	else if(key->key >= 1073741882 && key->key <=1073741893 )
+	{
+		key->key -= 1073676412;
+	}
+	/* 1- 9*/
+	else if(key->key >= 1073741913 && key->key <= 1073741922)
+	{
+		key->key -= 1073741864;
+	}
+
+	else
+	{
+		switch(key->key)
+		{
+			case SDLK_ESCAPE:
+				key->key = XK_Escape;
+				break;
+			case SDLK_BACKSPACE:
+				key->key = XK_BackSpace;
+				break;
+			case 39:   // "'"
+				key->key = 0x22;
+				break;
+			case 44:	//","
+				key->key = 0x2C;
+				break;
+			case 45:   //"-"
+				key->key = 0x2d;
+				break;
+			case 46:	//"."
+				key->key = 0x2E;
+				break;
+			case 47:   //"/"
+				key->key = 0x2F;
+				break;
+			case 59:	//":"
+				key->key = 0x3A;
+				break;
+			case 61:	// "+"
+				key->key = 0x2B;
+				break;
+			case 91:  // "["
+				key->key = 0x7B;
+				break;
+			case 92:  // "|"
+				key->key = 0x7C;
+				break;
+			case 93:  // "]"
+				key->key = 0x7D;
+				break;
+			case 96:	//"~"
+				key->key = 0x7E;
+				break;
+			case 13:		//"enter"
+				key->key = XK_KP_Enter;
+				break;
+			case 9:		//"tab"
+				key->key = XK_KP_Tab;
+				break;
+			case 1073741881: // "caps lock"
+				key->key = XK_Caps_Lock;
+				break;
+			case 1073742048: // "ctrl"
+				key->key = XK_Control_L;
+				break;
+			case 1073741925: // "ctrl"
+				key->key = XK_Control_R;
+				break;
+			case 1073742049: // "shift"
+				key->key = XK_Shift_L;
+				break;
+			case 1073742053: // "shift"
+				key->key = XK_Shift_R;
+				break;
+			case 1073742050: // "alt"
+				key->key = XK_Alt_L;
+				break;
+			case 1073742054: // "alt"
+				key->key = XK_Alt_R;
+				break;
+			case 1073742051: // "win"
+				key->key = XK_Meta_L;
+				break;
+			case 1073742055: // "win"
+				key->key = XK_Meta_R;
+				break;
+			case 1073741906: // "up"
+				key->key = XK_Up;
+				break;
+			case 1073741905: // "down"
+				key->key = XK_Down;
+				break;
+			case 1073741903: // "right"
+				key->key = XK_Right;
+				break;
+			case 1073741904: // "left"
+				key->key = XK_Left;
+				break;
+			case 1073741897: // "insert"
+				key->key = XK_Insert;
+				break;
+			case 127: 		// "delete"
+				key->key = XK_Delete;
+				break;
+			case 1073741898: // "home"
+				key->key = XK_Home;
+				break;
+			case 1073741901: // "end"
+				key->key = XK_End;
+				break;
+			case 1073741899: // "pgup"
+				key->key = XK_Page_Up;
+				break;
+			case 1073741902: // "pgdn"
+				key->key = XK_Page_Down;
+				break;
+			case 1073741895: // "pause break"
+				key->key = XK_Pause;
+				break;
+			case 1073741894: // "scroll lock"
+				key->key = XK_Scroll_Lock;
+				break;
+			case 1073741896: // "ptr scsys rq"
+				key->key = XK_Sys_Req;
+				break;
+			//key->key = XK_BackSpace
+			default:
+				break;
+		}
+	}	
+
+	XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, key->key), key->down, 0L);
+    XFlush(dpy);    
+}
+#endif
 
 int get_screen_size(int *temp_w, int *temp_h)
 {
@@ -200,7 +602,7 @@ int get_screen_size(int *temp_w, int *temp_h)
     return SUCCESS;
 #else
     int id;
-    Display *dpy = NULL;
+    //Display *dpy = NULL;
     Window root;
 
     if((dpy = XOpenDisplay(0)) == NULL)
@@ -222,8 +624,8 @@ int get_screen_size(int *temp_w, int *temp_h)
     *temp_h = DisplayHeight(dpy, id);
 
 
-    if(dpy)
-        XCloseDisplay(dpy);
+    //if(dpy)
+        //XCloseDisplay(dpy);
 
     if(!(*temp_w) || !(*temp_h))
         return ERROR;
@@ -236,10 +638,35 @@ int get_screen_size(int *temp_w, int *temp_h)
 
 static void do_exit()
 {
+	char stop = 'S';
+	DEBUG("do_exit display");
+	send_msg(pipe_event[1], &stop, 1);	
 
+    if(renderer)
+        SDL_DestroyRenderer(renderer);
 
+    if(texture)
+        SDL_DestroyTexture(texture);
+
+    if(full_texture)
+        SDL_DestroyTexture(full_texture);
+
+    if(window)
+        SDL_DestroyWindow(window);
+
+    if(displays)
+        free(displays);
+
+    control_display = NULL;
+    displays = NULL;
+    window = NULL;
+    renderer = NULL;
+    full_texture = NULL;
+    texture = NULL;
+
+    SDL_Quit();
+    DEBUG("destroy_display end");
 }
-
 
 
 static int get_area(int x, int y)
@@ -270,6 +697,45 @@ void clear_texture()
     pthread_mutex_unlock(&renderer_mutex);
 }
 
+int realloc_texture(int init, int align16)
+{
+    void *pixels = NULL;
+    int pitch = 0;
+
+    pthread_mutex_lock(&renderer_mutex);
+    if(texture)
+        SDL_DestroyTexture(texture);
+    /* 16字节对齐 硬件解码必须对齐 */
+    if(align16)
+    {
+        screen_width = FFALIGN(screen_width, 16);
+        screen_height = FFALIGN(screen_height, 16);
+
+        texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
+    }
+    else
+    {
+        texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
+    }
+
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = screen_width;
+    rect.h = screen_height;
+
+    if(init)
+    {
+        if(SDL_LockTexture(texture, NULL, &pixels, &pitch) < 0)
+            return -1;
+        memset(pixels, 0, pitch * screen_height);
+        SDL_UnlockTexture(texture);
+    }
+
+    pthread_mutex_unlock(&renderer_mutex);
+    return;
+}
+
+
 
 void update_frame(AVFrame *frame_yuv)
 {
@@ -293,17 +759,6 @@ void update_texture(AVFrame *frame_yuv, SDL_Rect *rect)
 {
     if(!texture || !renderer || !full_texture || !frame_yuv)
         return;
-    if(loss_flag)						//丢弃切换后花屏的几帧
-    {
-        if(loss_count-- > 0)
-            return;
-        else
-        {
-            loss_count = 10;
-            loss_flag = 0;
-        }
-    }
-
     pthread_mutex_lock(&renderer_mutex);
     if(!rect)								//全屏更新
     {
@@ -327,6 +782,16 @@ void update_texture(AVFrame *frame_yuv, SDL_Rect *rect)
     pthread_mutex_unlock(&renderer_mutex);
 }
 
+void sdl_text_show()
+{
+
+
+}
+
+void sdl_text_clear()
+{
+
+}
 
 static void refresh_loop_wait_event(SDL_Event *event)
 {
@@ -339,133 +804,36 @@ static void refresh_loop_wait_event(SDL_Event *event)
         SDL_PumpEvents();
     }
 }
-void start_display(rfb_display *cli)
-{
-	status = PLAY;
-	cli->req->status = PLAY;
-	DEBUG("cli->req->status %d", cli->req->status);
-	cli->req->data_buf = malloc(sizeof(rfb_format) + 1);	
-	cli->fmt.play_flag = cli->play_flag = 1;
-	memset(cli->req->data_buf, 0, sizeof(rfb_format));
-	rfb_format *fmt = (rfb_format *)&(cli->req->data_buf[0]);	
-	memcpy(fmt, &(cli->fmt), sizeof(rfb_format));
-	DEBUG("cli->req->status %d", cli->req->status);
-	process_server_msg(cli->req);
-}
-
-void stop_display()
-{
-	int i;
-	for(i = 0; i < display_size; i++)
-	{
-		if(displays[i].play_flag == 1)
-		{
-			if(displays[i].req)
-				process_server_msg(displays[i].req);
-			displays[i].play_flag = 0;
-		}
-	}
-	usleep(200000);   //等待200ms 客户端结束 
-	status = DONE;	//在检测到udp 有数据就断开连接保证下一页数据不被混杂
-	usleep(200000);   //等待200ms 客户端断开
-	clear_texture();
-}
-
-void revert_display()
-{
-	int i;
-	for(i = 0; i < display_size; i++)
-	{
-		if(displays[i].play_flag == 0)
-		{
-			if(displays[i].req)
-			{
-				start_display(&displays[i]);
-				DEBUG(" process_server_msg %d", i);
-			}
-			displays[i].play_flag = 1;
-		}
-	}
-}
-
-void start_control(int id)
-{
-	if(!displays[id].req )
-		return;	
-	DEBUG("start_control");
-	status = CONTROL;
-	control_display = &displays[id];
-	control_display->fmt.play_flag = control_display->play_flag = 2;    //控制状态
-	displays[id].req->status = CONTROL;
-	process_server_msg(displays[id].req);
-    clear_texture();
-}
-
-void stop_control()
-{
-	if(!control_display || !control_display->req)
-	{
-		status = PLAY;
-		return;	
-	}
-
-	control_display->fmt.play_flag = control_display->play_flag = 0;    //控制状态
-	control_display->req->status = DONE;
-	process_server_msg(control_display->req);
-    clear_texture();
-	usleep(200000);
-}
-
 
 void switch_mode(int id)
 {
-    if(displays[id].play_flag == 1)
-    {
-        DEBUG("switch control");
-		stop_display();	
-		start_control(id);
-        loss_flag = 1;
-    }
-    else if(status == CONTROL)
-    {
-        DEBUG("switch display");
-		stop_control();
-		revert_display();		
-    }
-}
-
-void close_display()
-{
-	int i;
-	for(i = 0; i < display_size; i++)
+	DEBUG("switch_mode %d", id);
+	if(status == PLAY)
 	{
-		if(!displays)
-			return;	
-
-		if(displays[i].play_flag == 1)
-		{
-			if(displays[i].req)
-			{
-				process_server_msg(displays[i].req);
-				displays[i].req->status = DEAD;
-			}
-			displays[i].play_flag = 0;
-			displays[i].req = NULL;
-		}
+		DEBUG(" switch CONTROL status");
+		status = CONTROL;
+		stop_display();
+		start_control(id);
 	}
-	DEBUG("close_display OK");
-	clear_texture();
+	else if(status == CONTROL)
+	{
+		DEBUG(" switch PLAY status");
+		status = PLAY;
+		stop_control();
+		start_display();
+	}
+	DEBUG("++++++++++++pthread_count%d ++++++++++++++++++++", pthread_count);
 }
 
-void control_msg(rfb_request *req)
+void control_msg(char *buf)
 {
-	switch(read_msg_order(req->head_buf))
+	switch(read_msg_order(buf))
 	{
 		case MOUSE:
-			//simulate_mouse((rfb_pointevent *)&(req->data_buf[0]));
+			simulate_mouse((rfb_pointevent *)&(buf[HEAD_LEN]));
 			break;
 		case KEYBOARD:
-			//simulate_keyboard((rfb_keyevent *)&(req->data_buf[0]));
+			simulate_keyboard((rfb_keyevent *)&(buf[HEAD_LEN]));
 			break;
 		case COPY_TEXT:
 			break;
@@ -481,6 +849,7 @@ void sdl_loop()
 	rfb_keyevent key = {0};
 	short old_x = 0;
 	short old_y = 0;	
+	time_t last_time = current_time;
 		
 	while(run_flag)
 	{
@@ -505,13 +874,11 @@ void sdl_loop()
 					area_id = -1;
 					last_time = current_time;
 				}
-	
 				if(area_id == get_area(event.motion.x, event.motion.y))
 				{
 					switch_mode(area_id);
 				}
 				area_id = get_area(event.motion.x, event.motion.y);
-				DEBUG("area_id %d", area_id);
 			}
 			if(SDL_BUTTON_LEFT == event.button.button)
 			{
@@ -521,7 +888,6 @@ void sdl_loop()
 			{
 				point.mask |= (1<<3);
 			}
-			
 		}
 		if(event.type == SDL_MOUSEBUTTONUP)
 		{
@@ -549,6 +915,12 @@ void sdl_loop()
             key.mod = event.key.keysym.mod; //*(SDL_GetKeyName(event.key.keysym.sym));
             key.down = 1;
             send_control((char *)&key, sizeof(rfb_keyevent), KEYBOARD);
+			//if(event.key.keysym.sym == SDLK_UP)
+			if(event.key.keysym.sym == SDLK_ESCAPE)
+            {
+                DEBUG("end control");
+                switch_mode(0);
+            }	
 		}	
 		if(SDL_KEYUP == event.type)
 		{
@@ -559,74 +931,29 @@ void sdl_loop()
 		}
 		if(SDL_QUIT == event.type)
 		{
-			run_flag = 0;
+			//run_flag = 0;
 #ifdef _WIN32
 			stop_server();		//通过callback 返回给dll
 #endif
+			do_exit();
+			break;
 		}
 	}	
 	DEBUG("event_loop end");
 }
 
 
-/* 等待线程结束后销毁公共变量 */
-void destroy_display()
-{
-	int i = 0;
-	void *tret = NULL;
-
-#if 0
-	for(i = 0; i < window_size * window_size ; i++ )
-	{
-		pthread_join(pthread_decodes[i], &tret);
-	}
-#endif
-
-    if(renderer)
-        SDL_DestroyRenderer(renderer);
-
-    if(texture)
-        SDL_DestroyTexture(texture);
-
-    if(full_texture)
-        SDL_DestroyTexture(full_texture);
-
-    if(window)
-        SDL_DestroyWindow(window);
-
-    if(displays)
-        free(displays);
-
-    //if(pthread_decodes)
-        //free(pthread_decodes);
-
-    control_display = NULL;
-    displays = NULL;
-    //pthread_decodes = NULL;
-    window = NULL;
-    renderer = NULL;
-    full_texture = NULL;
-    texture = NULL;
-
-    SDL_Quit();
-    DEBUG("destroy_display end");
-}
-
-
 int init_display()
 {
 	int i, j ,ret, id;
-	
-	pthread_mutex_init(&renderer_mutex, NULL);	
-	
+
 	vids_width = screen_width / window_size;
     vids_height = screen_height / window_size;
 
-	vids_queue = (QUEUE *)malloc(sizeof(QUEUE) * display_size);
-    vids_buf = (unsigned char **)malloc(display_size * sizeof(unsigned char *));
+	vids_queue = (QUEUE *)malloc(sizeof(QUEUE) * (display_size + 1));
+    vids_buf = (unsigned char **)malloc(display_size  * sizeof(unsigned char *));
 
-    displays = (rfb_display *)malloc(sizeof(rfb_display) * window_size * window_size);
-    //pthread_decodes = (pthread_t *)malloc(sizeof(pthread_t) * window_size * window_size);
+    displays = (rfb_display *)malloc(sizeof(rfb_display) * (display_size + 1));
 	
 	/* 局部画板 */
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, vids_width, vids_height);
@@ -634,42 +961,51 @@ int init_display()
 	/* 全局画板 */
 	full_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
 
-
-	if(!vids_queue || !vids_buf || !displays || !texture ||!full_texture)
+	if(!vids_queue||!vids_buf||!displays||!texture||!full_texture)
 	{
 		DEBUG("display_size: %d malloc vids_queue vids_buf texture full_texture and displays one error :%s",
                 display_size, strerror(errno));
         goto run_out;
 	}
-    memset(displays, 0, sizeof(rfb_display) * window_size * window_size);
+    memset(displays, 0, sizeof(rfb_display) * (display_size + 1));
 
-	for(i = 0; i < window_size; i++)
-    {
-        for(j = 0; j < window_size; j++)
-        {
-            id = i + j * window_size;
-            displays[id].id = id;
-            displays[id].rect.x = i * vids_width;
-            displays[id].rect.y = j * vids_height;
-            displays[id].rect.w = vids_width;
-            displays[id].rect.h = vids_height;
-	        displays[id].mtx = PTHREAD_MUTEX_INITIALIZER;
-            displays[id].cond = PTHREAD_COND_INITIALIZER;
+	int x = 0, y = 0;
+	for(i = 0; i <= display_size ; i++)
+	{
+        displays[i].id = i;
+		x = i / window_size;
+		y = i % window_size;
+				
+		DEBUG("x = %d y = %d ", x, y);
+        displays[i].rect.x = x * vids_width;
+        displays[i].rect.y = y * vids_height;
+        displays[i].rect.w = vids_width;
+        displays[i].rect.h = vids_height;
 
-            vids_buf[id] = (unsigned char *)malloc(MAX_VIDSBUFSIZE * sizeof(unsigned char));
-			if(!vids_buf[id])
-			{
-                DEBUG("vids_buf malloc sizeof: %d error: %s", MAX_VIDSBUFSIZE * sizeof(unsigned char),
-                        strerror(errno));
-                goto run_out;
+		pthread_mutex_init(&displays[i].mtx,NULL);
+        pthread_cond_init(&displays[i].cond, NULL);
 
-			}
-            memset(vids_buf[id], 0, MAX_VIDSBUFSIZE);
-            /* 创建窗口的对应队列 */
-            init_queue(&(vids_queue[id]), vids_buf[id], MAX_VIDSBUFSIZE);
-         }
-    }
+        vids_buf[i] = (unsigned char *)malloc(MAX_VIDSBUFSIZE * sizeof(unsigned char));
+		if(!vids_buf[i])
+		{
+            DEBUG("vids_buf malloc sizeof: %d error: %s", MAX_VIDSBUFSIZE * sizeof(unsigned char),
+                    strerror(errno));
+            goto run_out;
+
+		}
+        memset(vids_buf[i], 0, MAX_VIDSBUFSIZE);
+        /* 创建窗口的对应队列 */
+        init_queue(&(vids_queue[i]), vids_buf[i], MAX_VIDSBUFSIZE);
+	}
+
+	control_display = &displays[display_size];
+	control_display->rect.x = screen_width;;
+    control_display->rect.y = screen_height;
+    control_display->rect.w = 0;
+    control_display->rect.h = 0;
+
 	clear_texture();
+	status = PLAY;
 	DEBUG("init display end");
 	return SUCCESS;
 run_out:
@@ -683,7 +1019,6 @@ run_out:
         SDL_DestroyTexture(texture);
     if(full_texture)
         SDL_DestroyTexture(full_texture);
-
     return ERROR;
 }
 
@@ -743,7 +1078,12 @@ int create_display()
         else
             flags |= SDL_WINDOW_RESIZABLE;  //可以缩放暂时不支持
 
-        window = SDL_CreateWindow(program_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
+#ifdef _WIN32
+	
+
+#endif
+		if(!window)
+        	window = SDL_CreateWindow(program_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
 									default_width, default_height, flags);
 
         SDL_GetDisplayBounds(0, &full_rect);
@@ -763,6 +1103,11 @@ int create_display()
         	SDL_SetWindowPosition(window, full_rect.w / 6, full_rect.h /6);
             screen_width = full_rect.w / 3 *2;
             screen_height = full_rect.h / 3 * 2;
+
+			full_rect.w = screen_width;
+			full_rect.h = screen_height;
+			full_rect.x = 0;
+			full_rect.y = 0;
         	SDL_SetWindowSize(window, screen_width, screen_height);
         }
 
@@ -813,7 +1158,6 @@ void *thread_display(void *param)
     }
     sched.sched_priority = SCHED_PRIORITY_THRIFT;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
-
     sdl_loop();
     return (void *)0;
 }

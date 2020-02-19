@@ -1,172 +1,98 @@
-In file included from ./src/ffmpeg.c:4:0:
+In file included from ./src/server.c:1:0:
 ./include/base.h:56:0: warning: "ERROR" redefined
  #define ERROR  1
  
 In file included from c:\program files\git\mingw32\include\windows.h:46:0,
                  from ./include/base.h:18,
-                 from ./src/ffmpeg.c:4:
+                 from ./src/server.c:1:
 c:\program files\git\mingw32\include\wingdi.h:348:0: note: this is the location of the previous definition
  #define ERROR       0
  
-In file included from ./src/ffmpeg.c:4:0:
-./include/base.h:187:0: warning: "max" redefined
+In file included from ./src/server.c:1:0:
+./include/base.h:189:0: warning: "max" redefined
  #define max(a,b)    (((a) > (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:18,
-                 from ./src/ffmpeg.c:4:
+                 from ./src/server.c:1:
 c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
  #define max(a,b) ((a)>(b)?(a):(b))
  
-In file included from ./src/ffmpeg.c:4:0:
-./include/base.h:188:0: warning: "min" redefined
+In file included from ./src/server.c:1:0:
+./include/base.h:190:0: warning: "min" redefined
  #define min(a,b)    (((a) < (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:18,
-                 from ./src/ffmpeg.c:4:
+                 from ./src/server.c:1:
 c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
  #define min(a,b) ((a)<(b)?(a):(b))
  
-./src/ffmpeg.c: In function 'clean_encode':
-./src/ffmpeg.c:29:9: warning: 'av_free_packet' is deprecated [-Wdeprecated-declarations]
-         av_free_packet(out->packet);
-         ^~~~~~~~~~~~~~
-In file included from ./include/ffmpeg.h:4:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavcodec/avcodec.h:4400:6: note: declared here
- void av_free_packet(AVPacket *pkt);
-      ^~~~~~~~~~~~~~
-./src/ffmpeg.c: In function 'ffmpeg_encode':
-./src/ffmpeg.c:60:5: warning: 'av_register_all' is deprecated [-Wdeprecated-declarations]
-     av_register_all();
-     ^~~~~~~~~~~~~~~
-In file included from ./include/ffmpeg.h:5:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavformat/avformat.h:2025:6: note: declared here
- void av_register_all(void);
-      ^~~~~~~~~~~~~~~
-./src/ffmpeg.c:62:5: warning: implicit declaration of function 'avdevice_register_all' [-Wimplicit-function-declaration]
-     avdevice_register_all();
-     ^~~~~~~~~~~~~~~~~~~~~
-./src/ffmpeg.c:102:9: warning: 'codec' is deprecated [-Wdeprecated-declarations]
-         if(format_ctx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO)
-         ^~
-In file included from ./include/ffmpeg.h:5:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavformat/avformat.h:877:21: note: declared here
-     AVCodecContext *codec;
-                     ^~~~~
-./src/ffmpeg.c:113:5: warning: 'codec' is deprecated [-Wdeprecated-declarations]
-     codec_ctx=format_ctx->streams[videoindex]->codec;
-     ^~~~~~~~~
-In file included from ./include/ffmpeg.h:5:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavformat/avformat.h:877:21: note: declared here
-     AVCodecContext *codec;
-                     ^~~~~
-./src/ffmpeg.c:140:5: warning: 'avpicture_get_size' is deprecated [-Wdeprecated-declarations]
-     out_buffer = (uint8_t *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV420P, 1920, 1080));
-     ^~~~~~~~~~
-In file included from ./include/ffmpeg.h:4:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavcodec/avcodec.h:5434:5: note: declared here
- int avpicture_get_size(enum AVPixelFormat pix_fmt, int width, int height);
-     ^~~~~~~~~~~~~~~~~~
-./src/ffmpeg.c:141:5: warning: 'avpicture_fill' is deprecated [-Wdeprecated-declarations]
-     avpicture_fill((AVPicture *)frame_yuv, out_buffer, AV_PIX_FMT_YUV420P, 1920, 1080);
+./src/server.c: In function 'do_exit':
+./src/server.c:18:5: warning: implicit declaration of function 'destroy_socket' [-Wimplicit-function-declaration]
+     destroy_socket();
      ^~~~~~~~~~~~~~
-In file included from ./include/ffmpeg.h:4:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavcodec/avcodec.h:5419:5: note: declared here
- int avpicture_fill(AVPicture *picture, const uint8_t *ptr,
-     ^~~~~~~~~~~~~~
-./src/ffmpeg.c:202:13: warning: 'avcodec_decode_video2' is deprecated [-Wdeprecated-declarations]
-             ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, packet);
+./src/server.c: In function 'send_pipe':
+./src/server.c:26:5: warning: implicit declaration of function 'set_request_head' [-Wimplicit-function-declaration]
+     set_request_head(buf, 0x0, cmd, size);
+     ^~~~~~~~~~~~~~~~
+./src/server.c: In function 'recv_done':
+./src/server.c:35:13: warning: unused variable 'ret' [-Wunused-variable]
+         int ret, code;
              ^~~
-In file included from ./include/ffmpeg.h:4:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavcodec/avcodec.h:4755:5: note: declared here
- int avcodec_decode_video2(AVCodecContext *avctx, AVFrame *picture,
-     ^~~~~~~~~~~~~~~~~~~~~
-./src/ffmpeg.c:206:17: warning: 'avcodec_encode_video2' is deprecated [-Wdeprecated-declarations]
-                 ret = avcodec_encode_video2(h264codec_ctx, packet,frame_yuv, &got_picture);
-                 ^~~
-In file included from ./include/ffmpeg.h:4:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavcodec/avcodec.h:5386:5: note: declared here
- int avcodec_encode_video2(AVCodecContext *avctx, AVPacket *avpkt,
-     ^~~~~~~~~~~~~~~~~~~~~
-./src/ffmpeg.c:214:9: warning: 'av_free_packet' is deprecated [-Wdeprecated-declarations]
-         av_free_packet(packet);
-         ^~~~~~~~~~~~~~
-In file included from ./include/ffmpeg.h:4:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavcodec/avcodec.h:4400:6: note: declared here
- void av_free_packet(AVPacket *pkt);
-      ^~~~~~~~~~~~~~
-./src/ffmpeg.c:232:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
-     if(format_ctx)
-     ^~
-./src/ffmpeg.c:234:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
-  if(packet)
-  ^~
-./src/ffmpeg.c:235:3: warning: 'av_free_packet' is deprecated [-Wdeprecated-declarations]
-   av_free_packet(packet);
-   ^~~~~~~~~~~~~~
-In file included from ./include/ffmpeg.h:4:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavcodec/avcodec.h:4400:6: note: declared here
- void av_free_packet(AVPacket *pkt);
-      ^~~~~~~~~~~~~~
-./src/ffmpeg.c: In function 'clean_decode':
-./src/ffmpeg.c:267:9: warning: 'av_free_packet' is deprecated [-Wdeprecated-declarations]
-         av_free_packet(input->packet);
-         ^~~~~~~~~~~~~~
-In file included from ./include/ffmpeg.h:4:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavcodec/avcodec.h:4400:6: note: declared here
- void av_free_packet(AVPacket *pkt);
-      ^~~~~~~~~~~~~~
-./src/ffmpeg.c: In function 'ffmpeg_decode':
-./src/ffmpeg.c:298:9: warning: suggest parentheses around assignment used as truth value [-Wparentheses]
-         if(codec = avcodec_find_decoder_by_name(decoder_name[i]))
-         ^~
-./src/ffmpeg.c:310:52: warning: passing argument 3 of 'avcodec_open2' makes pointer from integer without a cast [-Wint-conversion]
-                 if(avcodec_open2(codec_ctx, codec, NULL < 0))
-                                                    ^~~~
-In file included from ./include/ffmpeg.h:4:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavcodec/avcodec.h:4245:5: note: expected 'AVDictionary ** {aka struct AVDictionary **}' but argument is of type 'int'
- int avcodec_open2(AVCodecContext *avctx, const AVCodec *codec, AVDictionary **options);
-     ^~~~~~~~~~~~~
-./src/ffmpeg.c:330:15: error: wrong type argument to unary exclamation mark
-  if(!frame || !packet)
-               ^
-./src/ffmpeg.c:349:3: warning: 'avcodec_decode_video2' is deprecated [-Wdeprecated-declarations]
-   ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, &packet);
-   ^~~
-In file included from ./include/ffmpeg.h:4:0,
-                 from ./src/ffmpeg.c:3:
-./ffmpeg/x86/include/libavcodec/avcodec.h:4755:5: note: declared here
- int avcodec_decode_video2(AVCodecContext *avctx, AVFrame *picture,
-     ^~~~~~~~~~~~~~~~~~~~~
-./src/ffmpeg.c:371:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
-     if(codec_ctx)
-     ^~
-./src/ffmpeg.c:374:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
-  img_convert_ctx = NULL;
-  ^~~~~~~~~~~~~~~
-./src/ffmpeg.c:383:9: warning: 'return' with a value, in function returning void
-  return (void *)0;
-         ^
-./src/ffmpeg.c:271:6: note: declared here
- void ffmpeg_decode(rfb_display *vid)
-      ^~~~~~~~~~~~~
-./src/ffmpeg.c:285:18: warning: variable 'input' set but not used [-Wunused-but-set-variable]
-     input_stream input;
-                  ^~~~~
-./src/ffmpeg.c:274:9: warning: variable 'ret' set but not used [-Wunused-but-set-variable]
-     int ret, got_picture;
-         ^~~
-make: *** [ffmpeg.o] Error 1
+./src/server.c: In function 'recv_ready':
+./src/server.c:73:13: warning: unused variable 'ret' [-Wunused-variable]
+         int ret, code;
+             ^~~
+./src/server.c: In function 'send_login':
+./src/server.c:197:5: warning: implicit declaration of function 'get_version' [-Wimplicit-function-declaration]
+     get_version(&server_major, &server_minor);
+     ^~~~~~~~~~~
+./src/server.c:198:13: warning: pointer targets in passing argument 1 of 'sprintf' differ in signedness [-Wpointer-sign]
+     sprintf(req->data_buf, VERSIONFORMAT, server_major, server_minor);
+             ^~~
+In file included from ./include/base.h:4:0,
+                 from ./src/server.c:1:
+c:\program files\git\mingw32\include\stdio.h:455:38: note: expected 'char *' but argument is of type 'unsigned char *'
+ _CRTIMP __cdecl __MINGW_NOTHROW  int sprintf (char *, const char *, ...);
+                                      ^~~~~~~
+./src/server.c: In function 'start_control':
+./src/server.c:285:38: warning: implicit declaration of function 'creat_udp' [-Wimplicit-function-declaration]
+  control_display->req->control_udp = creat_udp(control_display->req->ip, control_port);
+                                      ^~~~~~~~~
+./src/server.c:285:36: error: incompatible types when assigning to type 'struct sock_udp' from type 'int'
+  control_display->req->control_udp = creat_udp(control_display->req->ip, control_port);
+                                    ^
+./src/server.c: In function 'init_server':
+./src/server.c:355:8: warning: implicit declaration of function 'bind_socket' [-Wimplicit-function-declaration]
+     if(bind_socket(server_s, client_port) == -1)
+        ^~~~~~~~~~~
+./src/server.c:361:11: warning: implicit declaration of function 'create_display' [-Wimplicit-function-declaration]
+     ret = create_display();
+           ^~~~~~~~~~~~~~
+./src/server.c:368:11: warning: implicit declaration of function 'init_display' [-Wimplicit-function-declaration]
+     ret = init_display();
+           ^~~~~~~~~~~~
+./src/server.c:389:5: warning: implicit declaration of function 'sdl_loop' [-Wimplicit-function-declaration]
+     sdl_loop();
+     ^~~~~~~~
+./src/server.c:392:5: warning: implicit declaration of function 'close_fd' [-Wimplicit-function-declaration]
+     close_fd(server_s);
+     ^~~~~~~~
+./src/server.c: In function 'start_display':
+./src/server.c:251:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+./src/server.c: In function 'stop_display':
+./src/server.c:273:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+./src/server.c: In function 'start_control':
+./src/server.c:295:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+./src/server.c: In function 'stop_control':
+./src/server.c:309:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+make: *** [server.o] Error 1

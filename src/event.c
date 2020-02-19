@@ -3,7 +3,6 @@
 
 static pthread_t pthread_cli_udp, pthread_cli_encode;
 
-
 static void do_exit()
 {
     void *tret = NULL;
@@ -15,7 +14,11 @@ static void do_exit()
     }
 	else 	//server pthread
 	{
-		
+		int i;
+		for(i = 0; i < display_size; i++)
+		{
+			pthread_join(displays[i].pthread_decode, (void **)tret);
+		}
 	}
 }
 
@@ -38,13 +41,12 @@ static int send_pipe(char *buf, short cmd, int size, int msg_type)
 static int process_ser(char *msg, int len)
 {
     int ret;
-	//char *tmp = &msg[0];
     int index = *(int *)&msg[HEAD_LEN];
+	void *tret = NULL;
 	DEBUG("display index %d --------------------- ", index);
 
 	if(index < 0 || index > display_size)
 		return;
-
     switch(read_msg_order(msg))
     {
         case SER_PLAY_MSG:          //创建解码线程
@@ -54,11 +56,13 @@ static int process_ser(char *msg, int len)
         }
         case SER_DONE_MSG:          //断开连接 销毁解码线程
         {
-            //pthread_cancel(displays[index].pthread_decode);
+            pthread_cancel(displays[index].pthread_decode);
+		
+			pthread_join(displays[index].pthread_decode, (void **)tret);
+			DEBUG("pthread_join Decodec aaaaaaaaaaaaaaaaaaaaaaaaaa");
             break;
         }
     }
-
 }
 
 
@@ -101,6 +105,29 @@ static int process_cli(char *msg, int len)
     return ret;
 }
 
+#if 0
+static int process_display(char *msg, int len)
+{
+    char *tmp = &msg[HEAD_LEN];
+    int ret;
+    //struct client *cli = &m_client;
+    switch(read_msg_order(msg))
+    {
+     	case CLI_DONE_MSG:					//
+
+			break;
+
+        case CLI_DEAD_MSG:                  //销毁udp和编码 线程
+
+            break;
+        default:
+            break;
+    }
+    return ret;
+}
+#endif
+
+
 /* 线程的创建和检测释放 */
 void event_loop()
 {
@@ -128,7 +155,6 @@ void event_loop()
         tv.tv_usec = 0;
 
         ret = select(maxfd + 1, &reset, NULL, NULL, &tv);
-		DEBUG("event loop");
         if(ret == -1)
         {
             if(errno == EINTR)
@@ -159,6 +185,18 @@ void event_loop()
             if(--nready <= 0)
                 continue;
         }
+#if 0
+	 	if(FD_ISSET(pipe_display[1], &reset))
+        {
+            ret = recv(pipe_display[1], (void *)buf, sizeof(buf), 0);
+            if(ret >= HEAD_LEN)
+            {
+                process_display(buf, ret);
+            }
+            if(--nready <= 0)
+                continue;
+        }
+#endif
 
         if(FD_ISSET(pipe_event[0], &reset))
         {

@@ -4,10 +4,12 @@
 #include "base.h"
 #include "queue.h"
 
+int pthread_count = 0;
+
+
 void clean_encode(void *arg)
 {
     output_stream *out = (output_stream *)arg;
-
     if(!out)
         return;
 
@@ -56,7 +58,6 @@ void ffmpeg_encode(rfb_format *fmt)
     out.img_convert_ctx = img_convert_ctx;
     out.out_buffer = out_buffer;
 
-
     av_register_all();
     avformat_network_init();
     avdevice_register_all();
@@ -68,10 +69,7 @@ void ffmpeg_encode(rfb_format *fmt)
 #ifdef _WIN32
     /* 截屏 */
     av_dict_set(&options,"framerate","12",0);
-	//if()														 //远程控制时不截取鼠标信息
-	{
-    	//av_dict_set(&options,"draw_mouse","0",0);               //鼠标
-	}
+    av_dict_set(&options,"draw_mouse","0",0);               //远程控制时不截取鼠标信息
     AVInputFormat *ifmt=av_find_input_format("gdigrab");
     if(avformat_open_input(&format_ctx,"desktop",ifmt, &options)!=0)
     {
@@ -142,11 +140,15 @@ void ffmpeg_encode(rfb_format *fmt)
     out_buffer = (uint8_t *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV420P, 1920, 1080));
     avpicture_fill((AVPicture *)frame_yuv, out_buffer, AV_PIX_FMT_YUV420P, 1920, 1080);
     packet=(AVPacket *)av_malloc(sizeof(AVPacket));
+#if 0
 #ifdef _WIN32
     img_convert_ctx = sws_getContext(codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt, fmt->width, fmt->height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 #else
-    img_convert_ctx = sws_getContext(codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt + 3, fmt->width, fmt->height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+    img_convert_ctx = sws_getContext(codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt, fmt->width, fmt->height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 #endif
+#endif
+
+    img_convert_ctx = sws_getContext(codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt, fmt->width, fmt->height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
     /* 查找h264编码器 */
     h264codec = avcodec_find_encoder(AV_CODEC_ID_H264);
@@ -214,9 +216,10 @@ void ffmpeg_encode(rfb_format *fmt)
             }
         }
         av_free_packet(packet);
+		pthread_testcancel();
     }
-
 	pthread_cleanup_pop(0);
+	pthread_exit(0);
 
 run_out:
     if(img_convert_ctx)
@@ -252,6 +255,8 @@ void clean_decode(void *arg)
 {
     input_stream *input = (input_stream *)arg;
 
+	pthread_count --;	
+
     if(!input)
         return;
 
@@ -267,6 +272,11 @@ void clean_decode(void *arg)
         avcodec_close(input->codec_ctx);
     if(input->packet)
         av_free_packet(input->packet);
+
+	DEBUG("111111111111111111111111");
+	DEBUG("clean_decode param memory !!!!!!!!!!!!");
+	//DEBUG("clean_decode param memory !!!!!!!!!!!!");
+	//pthread_count --;	
 }
 
 
@@ -284,6 +294,8 @@ void ffmpeg_decode(rfb_display *vid)
 
 	QUEUE_INDEX *index = NULL;
 
+	pthread_count++;
+
     input_stream input;
     input.codec = codec;
     input.codec_ctx = codec_ctx;
@@ -296,7 +308,6 @@ void ffmpeg_decode(rfb_display *vid)
 
     for(i = 0; decoder_name[i] != NULL; i++)
     {
-        DEBUG("decoder_name[i] %s", decoder_name[i]);
         if(codec = avcodec_find_decoder_by_name(decoder_name[i]))
         {
             codec_ctx = avcodec_alloc_context3(codec);
@@ -311,7 +322,6 @@ void ffmpeg_decode(rfb_display *vid)
 
                 if(avcodec_open2(codec_ctx, codec, NULL < 0))
                     continue;
-                //hw_flag = i;
                 break;
             }
         }
@@ -334,6 +344,7 @@ void ffmpeg_decode(rfb_display *vid)
         DEBUG("frame or frame_yuv pkt packet malloc error :%s", strerror(errno));
         goto run_out;
     }
+	
 	pthread_cleanup_push(clean_decode, NULL);
 	/* packet 不能用指针 否则会异常 */
 	for(;;)
@@ -351,13 +362,13 @@ void ffmpeg_decode(rfb_display *vid)
 		ret = avcodec_decode_video2(codec_ctx, frame, &got_picture, &packet);
         if (got_picture)
         {
-			//if(vid->play_flag == 2)
-       			//update_texture(frame, NULL);
-			//else
-       		update_texture(frame, &(vid->rect));
+			if(vid->play_flag == 2)
+       			update_texture(frame, NULL);
+			else
+       			update_texture(frame, &(vid->rect));
         }
-		//av_free_packet(packet);
 		av_packet_unref(&packet);
+		pthread_testcancel();
     }
 	pthread_cleanup_pop(0);
 run_out:
@@ -381,7 +392,6 @@ run_out:
 	index = NULL;
 	
 	clear_texture();
-
 	return (void *)0;
 }
 
@@ -393,6 +403,7 @@ void *thread_encode(void *param)
     
     rfb_format *fmt = (rfb_format *)param;
 
+	pthread_detach(pthread_self());
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {   
@@ -407,9 +418,11 @@ void *thread_encode(void *param)
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);     //线程可以被取消掉
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//立即退出
-    
+    //pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//立即退出
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);//立即退出  PTHREAD_CANCEL_DEFERRED  
+	
     ffmpeg_encode(fmt);
+	pthread_exit(0);
 	return (void *)0;
 }
 void *thread_decode(void *param)
@@ -420,23 +433,26 @@ void *thread_decode(void *param)
 
     rfb_display *vid = (rfb_display *)param;
 
+	pthread_detach(pthread_self());
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {
-        DEBUG("ThreadMain attr init error ");
+        DEBUG("Thread FFmpeg Decode attr init error ");
     }
     ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
     if(ret)
     {
-        DEBUG("ThreadMain set SCHED_FIFO error");
+        DEBUG("Thread FFmpeg Decode set SCHED_FIFO error");
     }
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
-	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);     //线程可以被取消掉
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//立即退出
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);     //线程可以被取消掉
+    //pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//立即退出
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);//立即退出  PTHREAD_CANCEL_DEFERRED 
 
     ffmpeg_decode(vid);
+	pthread_exit(0);
 	return (void *)0;
 }
 

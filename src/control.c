@@ -7,7 +7,7 @@
 #endif
 
 #ifdef _WIN32
-static void simulate_mouse(rfb_pointevent *point)
+void simulate_mouse(rfb_pointevent *point)
 {
     DWORD flags = MOUSEEVENTF_ABSOLUTE;
     DWORD wheel_movement = 0;
@@ -49,7 +49,7 @@ static void simulate_mouse(rfb_pointevent *point)
 }
 
 
-static void simulate_keyboard(rfb_keyevent *key)
+void simulate_keyboard(rfb_keyevent *key)
 {
 
 	/* a-z */
@@ -212,7 +212,7 @@ static void simulate_keyboard(rfb_keyevent *key)
 }
 #else
 
-static void simulate_mouse(rfb_pointevent *point)
+void simulate_mouse(rfb_pointevent *point)
 {
 
 	unsigned long x = point->x / (float)vids_width * screen_width;
@@ -248,7 +248,7 @@ static void simulate_mouse(rfb_pointevent *point)
     XFlush(dpy);
 }
 
-static void simulate_keyboard(rfb_keyevent *key)
+void simulate_keyboard(rfb_keyevent *key)
 {
 	DEBUG("key->key %d", key->key);
 	/* a-z */

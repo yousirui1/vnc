@@ -14,7 +14,14 @@ enum control_msg_type{
 	COPY_FILE	
 };
 
-
+struct sock_udp
+{
+	unsigned int fd;
+	unsigned int port;
+	
+    struct sockaddr_in recv_addr;
+    struct sockaddr_in send_addr;
+};
 
 struct rfb_request
 {
@@ -23,6 +30,8 @@ struct rfb_request
     time_t time_last;           /* time of last succ. op. */
     struct rfb_request *next;       /* next */
     struct rfb_request *prev;       /* previous */
+
+	struct sock_udp control_udp;
 
     unsigned char head_buf[HEAD_LEN];
     /* has read msg head or not ,0 :not 1: yes */
@@ -35,6 +44,7 @@ struct rfb_request
     int data_size;
     char ip[16];
     int display_id;
+
 };
 
 typedef struct rfb_request rfb_request;
@@ -67,6 +77,7 @@ struct rfb_format
     unsigned int height;
     unsigned int code;
     unsigned int data_port;
+	unsigned int control_port;
     unsigned char play_flag;   			// 0 stop 1 play  2 control
 	unsigned char fps;
 	unsigned int bps;
@@ -77,14 +88,16 @@ typedef struct rfb_format rfb_format;
 typedef struct _rfb_display
 {
     int id;                 //diplay[id]
-    int fd;                 //udp h264 data fd
+    //int fd;                 //udp h264 data fd
     int port;
 
     SDL_Rect rect;
 
-    struct sockaddr_in recv_addr;
-    struct sockaddr_in send_addr;
+    //struct sockaddr_in recv_addr;
+    //struct sockaddr_in send_addr;
             
+	struct sock_udp h264_udp;
+
 	pthread_mutex_t mtx;
     pthread_cond_t cond;
 	pthread_t pthread_decode;

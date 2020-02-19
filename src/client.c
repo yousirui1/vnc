@@ -4,208 +4,218 @@
 rfb_request *client_req = NULL;
 rfb_display cli_display = {0};
 
+
 static pthread_t pthread_tcp, pthread_display;
 
 static int send_pipe(char *buf, short cmd, int size)
-{
+{   
     int ret;
     set_request_head(buf, 0, cmd, size);
     ret = send_msg(pipe_cli[0], buf, size + HEAD_LEN);
     return ret;
 }
 
-/* stop send play */
-static int recv_play(rfb_request *req)
-{
-#if 0
-	if(read_msg_order(req->head_buf) == READY_MSG_RET)
-	{
-		int mode = *(int *)&req->data_buf[0];
-		switch(mode)
-		{
-				
 
-		}	
-	}
-#endif
+static int send_done(rfb_request *req)
+{
+    int ret; 
+
+	if(req->data_buf)
+		free(req->data_buf);
+	
+	req->data_buf = malloc(sizeof(int) + 1);
+	if(!req->data_buf)
+		return ERROR;	
+	
+	req->data_size = sizeof(int);	
+
+    
+    *(int *)&req->data_buf[0] = 200;
+    set_request_head(req->head_buf, 0, DONE_MSG_RET, sizeof(int));
+    ret = send_request(req);
+    
+	DEBUG("done ok !!");
+    if(SUCCESS != ret)
+        return ERROR;
+        
+    req->status = OPTIONS;
+    return SUCCESS;
 }
 
-/* start send play */
-static int send_play(rfb_request *req)
+static int recv_done(rfb_request *req)
 {
-#if 0
-	int ret;
-	if(req->data_size < sizeof(int))
-	{
-		req->data_buf = realloc(req->data_buf, sizeof(int) + 1);
-	}
-	//req->data_buf[0] = 	200;
+
+  	if(read_msg_order(req->head_buf) == DONE_MSG)
+    {   
+        int ret;
+        ret = send_pipe(req->head_buf, CLI_DONE_MSG, 0);
+		req->status = OPTIONS;
+		//ret= send_done(req);
+		return ret;
+    }
+	return ERROR;
+}
+
+
+
+static int send_ready(rfb_request *req)
+{   
+    int ret; 
+	if(req->data_buf)
+		free(req->data_buf);
 	
-	//set_request_head(cli->head_buf, 0, READY_MSG, 0);
-	//ret = send_request(cli);
+	req->data_buf = malloc(sizeof(int) + 1);
+	if(!req->data_buf)
+		return ERROR;	
 	
-	if(SUCCESS != ret)
-		return ERROR;
-		
-	req->status = READY;
-#endif
-	return SUCCESS;
+	req->data_size = sizeof(int);	
+
+    
+    *(int *)&req->data_buf[0] = 200;
+    set_request_head(req->head_buf, 0, READY_MSG, sizeof(int));
+    ret = send_request(req);
+	DEBUG("ready ok !!");
+    
+    if(SUCCESS != ret)
+        return ERROR;
+        
+    req->status = DONE;
+    return SUCCESS;
 }
 
 static int recv_ready(rfb_request *req)
 {
-	if(read_msg_order(req->head_buf) == READY_MSG_RET)
-	{
+	DEBUG("recv_ready !!!!!!!!!!!");
+    if(read_msg_order(req->head_buf) == READY_MSG_RET)
+    {   
 		int ret;
-		int mode = *(int *)&req->data_buf[0];
-        switch(mode)
-        {
-            case PLAY:                  //远程监控
-                ret = send_pipe(req->head_buf, CLI_PLAY_MSG, 0);
-                break;
-            case CONTROL:               //远程控制
-                break;
-                ret = send_pipe(req->head_buf, CLI_CONTROL_MSG, 0);
-            case DONE:                  //销毁线程, 等待命令
-                ret = send_pipe(req->head_buf, CLI_DONE_MSG, 0);
-                break;
-            case DEAD:                  //断开连接
-                ret = send_pipe(req->head_buf, CLI_DEAD_MSG, 0);
-                break;
-        }
-		return ret;
-	}
-	return ERROR;
+        ret = send_pipe(req->head_buf, CLI_PLAY_MSG, 0);
+        req->status = DONE;
+        ret = send_ready(req);
+        return ret;
+    }
+    return ERROR;
 }
 
-static int send_ready(rfb_request *req)
+
+static int send_options(rfb_request *req)
 {
-	int ret;
-	if(req->data_size < sizeof(int))
-	{
-		req->data_buf = realloc(req->data_buf, sizeof(int) + 1);
-	}
-	*(int *)&req->data_buf[0] = 200;
-	
-	set_request_head(req->head_buf, 0, READY_MSG, sizeof(int));
-	req->data_size = sizeof(int);
-	ret = send_request(req);
-	
-	if(SUCCESS != ret)
-		return ERROR;
-		
-	req->status = READY;
-	return SUCCESS;
+    int ret;
+    if(req->data_buf)
+        free(req->data_buf);
+
+    req->data_buf = malloc(sizeof(int) + 1);
+
+    if(!req->data_buf)
+        return ERROR;
+
+    *(int *)&req->data_buf[0] = 200;
+
+    set_request_head(req->head_buf, 0, OPTIONS_MSG_RET, sizeof(int));
+    req->data_size = sizeof(int);
+    ret = send_request(req);
+
+    if(SUCCESS != ret)
+        return ERROR;
+
+    req->status = READY;
+
+	DEBUG("options ok !!");
+    if(req->data_buf)
+        free(req->data_buf);
+
+    req->data_buf = NULL;
+
+    return SUCCESS;
 }
 
 static int recv_options(rfb_request *req)
 {
     if(read_msg_order(req->head_buf) == OPTIONS_MSG_RET)
     {
-		int ret;
+        int ret;
         rfb_format *fmt = (rfb_format *)&req->data_buf[0];
          DEBUG("fmt->width %d fmt->height %d fmt->code %d,"
           " fmt->data_port %d fmt->play_flag %d  fmt->bps %d fmt->fps%d",
              fmt->width, fmt->height,fmt->code, fmt->data_port,fmt->play_flag, fmt->bps, fmt->fps);
 
-		cli_display.play_flag = fmt->play_flag;
-		memcpy(&(cli_display.fmt), fmt, sizeof(rfb_format));
-		ret = send_pipe(req->head_buf, CLI_UDP_MSG, 0);
-		ret = send_ready(req);
-		return ret;
+        cli_display.play_flag = fmt->play_flag;
+		if(fmt->play_flag == 2)
+			req->control_udp = create_udp(server_ip, fmt->control_port);
+
+        memcpy(&(cli_display.fmt), fmt, sizeof(rfb_format));
+        //memcpy(&(cli_display.fmt), fmt, sizeof(rfb_format));
+		cli_display.req = req;
+        ret = send_pipe(req->head_buf, CLI_UDP_MSG, 0);
+        //ret = send_ready(req);
+		vids_width = fmt->width;
+		vids_height = fmt->height;
+
+        ret = send_options(req);
+        return ret;
     }
-	return ERROR;
+    return ERROR;
 }
 
-static int send_options(rfb_request *req)
-{
-	int ret;
-	if(req->data_size < sizeof(rfb_format))
-	{
-		DEBUG("send_options realloc");
-		req->data_buf = realloc(req->data_buf, sizeof(rfb_format) + 1);
-	}	
-    req->data_size = sizeof(rfb_format);
-    rfb_format *fmt = (rfb_format *)&req->data_buf[0];
-    fmt->width = screen_width;
-    fmt->height = screen_height;
-    fmt->code = 0;
-    fmt->data_port = 0;
-    fmt->play_flag = 0;
-    fmt->bps = 2000000;
-    fmt->fps = default_fps;
-
-    set_request_head(req->head_buf, 0, OPTIONS_MSG, sizeof(rfb_format));
-    req->status = OPTIONS;
-	ret = send_request(req);
-	free(req->data_buf);	
-	
-	if(SUCCESS != ret)
-        return ERROR;
-
-    req->status = OPTIONS;
-    return SUCCESS;
-}
 
 static int recv_login(rfb_request *req)
 {
+    int ret = SUCCESS;
     if(read_msg_order(req->head_buf) == LOGIN_MSG_RET)
     {
-		int ret;
         int server_major = 0, server_minor = 0;
-		int client_major = 0, client_minor = 0;
+        int client_major = 0, client_minor = 0;
         sscanf(req->data_buf, VERSIONFORMAT, &server_major, &server_minor);
         DEBUG(VERSIONFORMAT, server_major, server_minor);
-		get_version(&client_major, &client_minor);
-		if(server_major == client_major || server_minor == client_minor)
-        {
-        	send_options(req);
-            if(ret == SUCCESS)
-            {
-                DEBUG("login ok !!");
-                return SUCCESS;
-            }
-        }
-        else
+        get_version(&client_major, &client_minor);
+        if(server_major != client_major || server_minor != client_minor)
         {
             DEBUG("version not equel server: "VERSIONFORMAT" client: "VERSIONFORMAT"", server_major,
                     server_minor, client_major, client_minor);
+            ret = ERROR;
         }
-        free(req->data_buf);
+        if(req->data_buf)
+            free(req->data_buf);
+        req->data_buf = NULL;
+        req->status = OPTIONS;
     }
-	return ERROR;
+    else
+        ret = ERROR;
+    return ret;
 }
+
 
 static int send_login(rfb_request *req)
 {
-    int ret;
+	int ret;
 	int client_major = 0, client_minor = 0;
 
 	get_version(&client_major, &client_minor);
-	DEBUG("client version :"VERSIONFORMAT, client_major, client_minor);
-	
-    req->data_size = sz_verformat;
+    DEBUG("client version :"VERSIONFORMAT, client_major, client_minor);
+    
+    req->data_size = sz_verformat; 
     req->data_buf = (unsigned char *)malloc(req->data_size + 1);
     sprintf(req->data_buf, VERSIONFORMAT, client_major, client_minor);
 
-	set_request_head(req->head_buf, 0,  LOGIN_MSG, SZ_VERFORMAT);
+    set_request_head(req->head_buf, 0,  LOGIN_MSG, SZ_VERFORMAT);
     ret = send_request(req);
-    free(client_req->data_buf);
-
+    if(req->data_buf)
+        free(req->data_buf);
+    req->data_buf = NULL;
+	
 	if(SUCCESS != ret)
-		return ERROR;	
-
+        return ERROR;
+    
     req->status = LOGIN;
     return SUCCESS;
 }
 
-
 int process_client_pipe(char *msg, int len)
-{
+{   
     int ret;
     DEBUG("pipe msg type %02X CLI_READY_MSG %02X", read_msg_order(msg), CLI_READY_MSG);
     switch(read_msg_order(msg))
-    {
+    {   
         case CLI_READY_MSG:
             //send_ready(&m_client);
             break;
@@ -216,91 +226,87 @@ int process_client_pipe(char *msg, int len)
 }
 
 int process_client_msg(rfb_request *req)
-{
+{   
     int ret = 0;
-	DEBUG("process_client_msg   !!!");
+    DEBUG("process_client_msg %02X !!! -----------------", req->status);
     switch(req->status)
-    {
+    {   
         case NORMAL:
         case LOGIN:
             ret = recv_login(req);
             break;
         case OPTIONS:
             ret = recv_options(req);
-			break;
-		case READY:
-			ret = recv_ready(req);
-			break;
-		case PLAY:
             break;
-		case CONTROL:
-#if 0
-			if(read_msg_order(req->head_buf) == 0x02)
-				ret = recv_options(req);
-			else	
-				ret = control_msg(req);
-#endif
+        case READY:
+            ret = recv_ready(req);
+            break;
         case DONE:
-
+            ret = recv_done(req);
+            break;
         case DEAD:
+            //ret = recv_dead(req); 
+            break;
         default:
             break;
     }
     return ret;
 }
 
-
 static void do_exit()
 {
-    void *tret = NULL;
-    pthread_join(pthread_tcp, (void**)tret);  //等待线程同步
-	DEBUG("pthread_exit client tcp");
+	void *tret = NULL;
+	pthread_join(pthread_tcp, (void**)tret);  //等待线程同步
+    DEBUG("pthread_exit client tcp");
 }
+
 
 void init_client()
 {
-    int ret = -1;
-	int server_s;
-
-	get_screen_size(&screen_width, &screen_height);
-
-    server_s = create_tcp();
-    if(server_s == -1)
-    {
-        DEBUG("create tcp err");
-		return;
-    }
-
-    ret = connect_server(server_s, server_ip, server_port);
-	if(0 != ret)
-	{
-		DEBUG("connect server ip: %s port %d error", server_ip, server_port);
-		goto run_out;
-	}
+	int ret = ERROR;
+	int server_s = -1;
 	
-	client_req = new_request();
-	if(!client_req)
+	get_screen_size(&screen_width, &screen_height);
+	
+	server_s = create_tcp();
+	if(server_s == -1)
 	{
-		//DEBUG("malloc cli->head_buf sizeof: %d error :%s", HEAD_LEN, strerror(errno));
-		goto run_out;
-	}
-	client_req->fd = server_s;
-
-	ret = pthread_create(&pthread_tcp, NULL, thread_client_tcp, &server_s);
+	   	DEBUG("create tcp err");
+        return;
+	}	
+    ret = connect_server(server_s, server_ip, server_port);
     if(0 != ret)
     {
-		DEBUG("pthread create client tcp ret: %d error: %s",ret, strerror(ret));
-		goto run_out;
+        DEBUG("connect server ip: %s port %d error", server_ip, server_port);
+        goto run_out;
     }
+
+    client_req = new_request();
+    if(!client_req)
+    {
+        DEBUG("malloc cli->head_buf sizeof: %d error :%s", HEAD_LEN, strerror(errno));
+        goto run_out;
+    }
+	
+	client_req->fd = server_s;
+
+    ret = pthread_create(&pthread_tcp, NULL, thread_client_tcp, &server_s);
+    if(0 != ret)
+    {
+        DEBUG("pthread create client tcp ret: %d error: %s",ret, strerror(ret));
+        goto run_out;
+    }
+
 	ret = send_login(client_req);
-	if(0 != ret)
-	{
-		DEBUG("send_login error");
-		goto run_out;
-	}
-	do_exit();
+    if(0 != ret)
+    {
+        DEBUG("send_login error");
+        goto run_out;
+    }
+    do_exit();
 
 run_out:
 	close_fd(server_s);
-	return;
+	return;	
 }
+

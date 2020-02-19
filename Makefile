@@ -35,8 +35,7 @@ qtobj = qt_window
 libobj = libRemoteMonitor.dll.a
 
 mainobj = main.o inirw.o queue.o  display.o socket.o server.o client.o log.o ffmpeg.o  external.o event.o version.o \
-		  tools.o
-
+		  tools.o 
 cppobj = 
 
 
@@ -51,7 +50,8 @@ CFLAGS =  -I. -I./qt_pro -I./include/ -I$(SDL_DIR)/include -I$(FFMPEG_DIR)/inclu
 		 #-lqt_window 
 
 ifeq ($(TARGET_ARCH), arm)
-CFLAGS += -I./vpu/include -L./vpu/lib -lvpu -lvpu_avcdec -lion_vpu -lrk_codec -lvpu_avcenc  -lGLESv2  -lUMP \
+CFLAGS += -lX11 -lpthread  -lXtst  -lXext -lXinerama -lXrandr -lXfixes -lXdamage
+			#-I./vpu/include -L./vpu/lib -lvpu -lvpu_avcdec -lion_vpu -lrk_codec -lvpu_avcenc  -lGLESv2  -lUMP \
 			-lpthread #-lvpu -lvpu_avcdec -lvpu_avcenc 
 else ifeq ($(TARGET_ARCH), x86)
 CFLAGS += -I./MediaSDK-master/api/include -lmingw32 -lm -lws2_32 -lpthreadGC2 -lgdi32 

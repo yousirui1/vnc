@@ -63,6 +63,7 @@ char *get_commonlog_time(void)
     *p-- = '\0';
     *p-- = ' ';
     *p-- = ']';
+#ifndef _WIN32
     a = abs(time_offset / 60);
     *p-- = '0' + a % 10; 
     a /= 10; 
@@ -71,6 +72,7 @@ char *get_commonlog_time(void)
     *p-- = '0' + a % 10;
     *p-- = '0' + a / 10;
     *p-- = (time_offset >= 0) ? '+' : '-';
+#endif
     *p-- = ' ';
 
     a = t->tm_sec;

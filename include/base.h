@@ -158,6 +158,8 @@
 #define READY_MSG_RET           0x06
 #define PLAY_MSG                0x07
 #define PLAY_MSG_RET            0x08
+#define DONE_MSG				0x09
+#define DONE_MSG_RET			0x0A
 
 
 /* pipe type */

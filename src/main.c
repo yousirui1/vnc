@@ -3,22 +3,24 @@
 /* config.ini */
 int server_flag = 0;
 int client_port = -1, control_port = -1, h264_port = -1,  window_flag = 0, window_size = 0;
-int default_fps = 0;
+int default_fps = 12;
 int default_size = 3;
-int max_connections = -1; 
+int default_bps = 20000000;
+int max_connections = 0; 
 int server_port = -1;
 char *server_ip = NULL;
-int run_flag = 0;
 int status = NORMAL;
 
-time_t last_time;
+int run_flag = 0;
+
 time_t current_time;
-const char program_name[] = "remote monitor";
+const char program_name[] = "remote_monitor";
 
 /* pipe */
 int pipe_ser[2] = {0};
 int pipe_cli[2] = {0};
 int pipe_event[2] = {0};
+//int pipe_display[2] = {0};
 
 /* pthread */
 static pthread_t pthread_event;
@@ -47,35 +49,43 @@ int init_config()
         window_size = read_profile_int(SERVER_SECTION, SERVER_WINDOW_SIZE_KEY, DEFAULT_WINDOW_SIZE_VALUE, CONFIG_FILE);
         DEBUG("\nprograme server: \n client_port %d, control_port %d, h264_port %d, window_flag %d, window_size %d,",
                  client_port, control_port, h264_port, window_flag, window_size);
+
+		if(max_connections < 1)
+		{
+#ifndef _WIN32
+        	struct rlimit rl;
+        	/* has not been set explicity */
+        	ret = getrlimit(RLIMIT_NOFILE, &rl);
+        	if(ret < 0)
+        	{
+            	DEBUG("getrlimit %s", strerror(errno));
+            	return ERROR;
+        	}
+        	max_connections = rl.rlim_cur;
+#else
+        	max_connections = 1024;
+#endif
+		}
+#if 0	
+		clients = (struct client **)malloc(sizeof(struct client *) * max_connections);
+		if(!clients)
+		{
+			DEBUG("clients malloc error %s", strerror(errno));
+			return ERROR;	
+		}
+		memset(clients, 0, sizeof(struct client *) * max_connections);
+#endif
     }
     else                //客户端程序
     {   
-
         ret = read_profile_string(CLIENT_SECTION, CLIENT_IP_KEY, buf, sizeof(buf), DEFAULT_IP_VALUE, CONFIG_FILE);
 		server_ip = strdup(buf);	
         server_port = read_profile_int(CLIENT_SECTION, CLIENT_PORT_KEY, DEFAULT_PORT_VALUE, CONFIG_FILE);
-        default_fps = read_profile_int(CLIENT_SECTION, CLIENT_FPS_KEY, DEFAULT_FPS_VALUE, CONFIG_FILE);
+        //default_fps = read_profile_int(CLIENT_SECTION, CLIENT_FPS_KEY, DEFAULT_FPS_VALUE, CONFIG_FILE);
         DEBUG("\nprograme client: \n server_ip %s, server_port %d, window_flag %d, default_fps %d",
                 server_ip, server_port, window_flag, default_fps);
     }
 
-	if(max_connections < 1)
-	{
-#ifndef _WIN32
-        struct rlimit rl;
-        /* has not been set explicity */
-        ret = getrlimit(RLIMIT_NOFILE, &rl);
-        if(ret < 0)
-        {
-            DEBUG("getrlimit %s", strerror(errno));
-            return ERROR;
-        }
-        max_connections = rl.rlim_cur;
-#else
-        max_connections = 1024;
-#endif
-	}
-	
 	return SUCCESS;	
 }
 
@@ -137,6 +147,17 @@ int init_pipe()
     pipe_cli[0] = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
     close_fd(listenfd);
 
+#if 0
+	listenfd = create_tcp();
+    ret = bind_socket(listenfd, 22004);
+
+    pipe_display[1] = create_tcp();
+    ret = connect_server(pipe_display[1], "127.0.0.1", 22004);
+
+    pipe_display[0] = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
+    close_fd(listenfd);
+#endif
+
     DEBUG("pipe_event[0] %d pipe_event[1] %d", pipe_event[0], pipe_event[1]);
     DEBUG("pipe_ser[0] %d pipe_ser[1] %d", pipe_ser[0], pipe_ser[1]);
     DEBUG("pipe_cli[0] %d pipe_cli[1] %d", pipe_cli[0], pipe_cli[1]);
@@ -160,24 +181,6 @@ int init_pipe()
 
     fcntl(pipe_cli[0], F_SETFL, O_NONBLOCK);
     fcntl(pipe_cli[1], F_SETFL, O_NONBLOCK);
-
-    /* create pipe to give main thread infomation */
-    if(socketpair(AF_UNIX, SOCK_SEQPACKET, 0, pipe_usb) < 0)
-    {
-        DIE("create usb pipe err %s", strerror(errno));
-    }
-
-    fcntl(pipe_usb[0], F_SETFL, O_NONBLOCK);
-    fcntl(pipe_usb[1], F_SETFL, O_NONBLOCK);
-
-    /* create pipe to give main thread infomation */
-    if(socketpair(AF_UNIX, SOCK_SEQPACKET, 0, pipe_thrift) < 0)
-    {
-        DIE("create thrift  pipe err %s", strerror(errno));
-    }
-
-    fcntl(pipe_thrift[0], F_SETFL, O_NONBLOCK);
-    fcntl(pipe_thrift[1], F_SETFL, O_NONBLOCK);
 
     /* create pipe to give main thread infomation */
     if(socketpair(AF_UNIX, SOCK_SEQPACKET, 0, pipe_event) < 0)
@@ -205,7 +208,6 @@ void close_pipe()
 void sig_quit_listen(int e)
 {
     char s = 'S';
-
     //write( pipeid[1], &s,  sizeof(s));
     DEBUG("recv stop msg");
     return;

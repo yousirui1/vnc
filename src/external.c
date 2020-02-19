@@ -14,7 +14,7 @@
 
 static stop_callback call_back;
 
-
+#if 0
 CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
 {
 	server_flag = 1;
@@ -63,7 +63,7 @@ CAPTUREANDCAST_API int StopMonitorServer()
 CAPTUREANDCAST_API int DisconnectAllClient()
 {
 	DEBUG("DisconnectAllClient");
-	close_display();	
+	//close_display();	
 	return 0;		
 }
 
@@ -133,7 +133,7 @@ CAPTUREANDCAST_API int GetPageCount()
 {
 	return 1;
 }
-
+#endif
 
 void stop_server()
 {

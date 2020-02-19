@@ -49,6 +49,7 @@ int send_request(rfb_request *req);
 unsigned char read_msg_syn(unsigned char* buf);
 unsigned short read_msg_order(unsigned char * buf);
 int read_msg_size(unsigned char * buf);
+struct sock_udp create_udp(char *ip, int port);
 extern int total_connections;
 
 
@@ -56,6 +57,7 @@ extern int total_connections;
 /* ffmpeg.c */
 void *thread_encode(void *param);
 void *thread_decode(void *param);
+extern int pthread_count;
 
 /* inirw.h */
 int read_profile_string( const char *section, const char *key,char *value, int size,const char *default_value, const char *file);
