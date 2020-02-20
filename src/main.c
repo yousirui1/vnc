@@ -147,17 +147,6 @@ int init_pipe()
     pipe_cli[0] = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
     close_fd(listenfd);
 
-#if 0
-	listenfd = create_tcp();
-    ret = bind_socket(listenfd, 22004);
-
-    pipe_display[1] = create_tcp();
-    ret = connect_server(pipe_display[1], "127.0.0.1", 22004);
-
-    pipe_display[0] = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
-    close_fd(listenfd);
-#endif
-
     DEBUG("pipe_event[0] %d pipe_event[1] %d", pipe_event[0], pipe_event[1]);
     DEBUG("pipe_ser[0] %d pipe_ser[1] %d", pipe_ser[0], pipe_ser[1]);
     DEBUG("pipe_cli[0] %d pipe_cli[1] %d", pipe_cli[0], pipe_cli[1]);

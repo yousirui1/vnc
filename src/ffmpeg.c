@@ -273,9 +273,7 @@ void clean_decode(void *arg)
     if(input->packet)
         av_free_packet(input->packet);
 
-	DEBUG("111111111111111111111111");
 	DEBUG("clean_decode param memory !!!!!!!!!!!!");
-	//DEBUG("clean_decode param memory !!!!!!!!!!!!");
 	//pthread_count --;	
 }
 
@@ -347,6 +345,7 @@ void ffmpeg_decode(rfb_display *vid)
 	
 	pthread_cleanup_push(clean_decode, NULL);
 	/* packet 不能用指针 否则会异常 */
+	//SDL_Rect 
 	for(;;)
     {
 		if(empty_queue(&vids_queue[vid->id]))
@@ -366,9 +365,11 @@ void ffmpeg_decode(rfb_display *vid)
        			update_texture(frame, NULL);
 			else
        			update_texture(frame, &(vid->rect));
+
         }
+		sdl_text_show(vid->req->ip, &(vid->rect));
 		av_packet_unref(&packet);
-		pthread_testcancel();
+		//pthread_testcancel();
     }
 	pthread_cleanup_pop(0);
 run_out:
@@ -418,8 +419,8 @@ void *thread_encode(void *param)
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);     //线程可以被取消掉
-    //pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//立即退出
-    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);//立即退出  PTHREAD_CANCEL_DEFERRED  
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//立即退出
+    //pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);//立即退出  PTHREAD_CANCEL_DEFERRED  
 	
     ffmpeg_encode(fmt);
 	pthread_exit(0);
@@ -448,8 +449,8 @@ void *thread_decode(void *param)
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);     //线程可以被取消掉
-    //pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//立即退出
-    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);//立即退出  PTHREAD_CANCEL_DEFERRED 
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//立即退出
+    //pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);//立即退出  PTHREAD_CANCEL_DEFERRED 
 
     ffmpeg_decode(vid);
 	pthread_exit(0);

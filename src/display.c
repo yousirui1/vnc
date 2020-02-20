@@ -194,12 +194,6 @@ static void send_control(char *data, int data_len, int cmd)
 	sendto(control_display->req->control_udp.fd, buf,  data_len + HEAD_LEN, 0,
                     (struct  sockaddr *)&(control_display->req->control_udp.send_addr),
                     sizeof (control_display->req->control_udp.send_addr));
-			
-	//set_request_head(control_display->req->head_buf, 0, cmd, data_len);
-    //control_display->req->data_buf = buf;
-	//control_display->req->data_size = data_len;
-    //send_request(control_display->req);
-    //control_display->req->data_buf = NULL;
 	free(buf);
 }
 #ifdef _WIN32
@@ -593,6 +587,26 @@ static void simulate_keyboard(rfb_keyevent *key)
 }
 #endif
 
+int init_X11()
+{
+#ifndef _WIN32
+    if((dpy = XOpenDisplay(0)) == NULL)
+    {
+        DEBUG("XOpenDisplay error");
+        return ERROR;
+    }
+#endif
+}
+
+void close_X11()
+{
+#ifndef _WIN32
+    if(dpy)
+      XCloseDisplay(dpy);
+#endif
+}
+
+
 int get_screen_size(int *temp_w, int *temp_h)
 {
 #ifdef _WIN32
@@ -602,14 +616,10 @@ int get_screen_size(int *temp_w, int *temp_h)
     return SUCCESS;
 #else
     int id;
-    //Display *dpy = NULL;
     Window root;
 
-    if((dpy = XOpenDisplay(0)) == NULL)
-    {
-        DEBUG("XOpenDisplay error");
-        return ERROR;
-    }
+	if(!dpy)
+		return ERROR;
 
     id = DefaultScreen(dpy);
     if(!(root = XRootWindow(dpy, id)))
@@ -622,10 +632,6 @@ int get_screen_size(int *temp_w, int *temp_h)
 
     *temp_w = DisplayWidth(dpy, id);
     *temp_h = DisplayHeight(dpy, id);
-
-
-    //if(dpy)
-        //XCloseDisplay(dpy);
 
     if(!(*temp_w) || !(*temp_h))
         return ERROR;
@@ -656,6 +662,12 @@ static void do_exit()
 
     if(displays)
         free(displays);
+
+#ifndef _WIN32
+    if(dpy)
+        XCloseDisplay(dpy);
+	dpy = NULL;
+#endif
 
     control_display = NULL;
     displays = NULL;
@@ -778,14 +790,31 @@ void update_texture(AVFrame *frame_yuv, SDL_Rect *rect)
 
         SDL_RenderCopy(renderer, texture, NULL, rect);
     }
+	
+	
     SDL_RenderPresent(renderer);
     pthread_mutex_unlock(&renderer_mutex);
 }
 
-void sdl_text_show()
+void sdl_text_show(char *buf, SDL_Rect *rect)
 {
+	SDL_Color color = {255, 255, 255};
+    /*
+     * Solid  渲染的最快，但效果最差，文字不平滑，是单色文字，不带边框。
+  　 * Shaded 比Solid渲染的慢，但显示效果好于Solid，带阴影。
+　　 * Blend 渲染最慢，但显示效果最好。
+     */
+    SDL_Surface *surface = TTF_RenderUTF8_Solid(font, buf, color);
+	ttf_texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_Rect ttf_rect;
+	ttf_rect.x = rect->x + (vids_width / 2) - (surface->w / 2);
+	ttf_rect.y = rect->y + vids_height - (surface->h * 1.2);
+	ttf_rect.w = surface->w;
+	ttf_rect.h = surface->h;
 
-
+	SDL_BlitSurface(surface, NULL, window, &ttf_rect);
+	SDL_RenderCopy(renderer, ttf_texture, NULL, &ttf_rect);
+    SDL_RenderPresent(renderer);
 }
 
 void sdl_text_clear()
@@ -822,7 +851,7 @@ void switch_mode(int id)
 		stop_control();
 		start_display();
 	}
-	DEBUG("++++++++++++pthread_count%d ++++++++++++++++++++", pthread_count);
+	//DEBUG("++++++++++++pthread_count%d ++++++++++++++++++++", pthread_count);
 }
 
 void control_msg(char *buf)
@@ -879,6 +908,7 @@ void sdl_loop()
 					switch_mode(area_id);
 				}
 				area_id = get_area(event.motion.x, event.motion.y);
+				DEBUG("area_id %d", area_id);
 			}
 			if(SDL_BUTTON_LEFT == event.button.button)
 			{
@@ -973,15 +1003,15 @@ int init_display()
 	for(i = 0; i <= display_size ; i++)
 	{
         displays[i].id = i;
-		x = i / window_size;
-		y = i % window_size;
+		x = i % window_size;
+		y = i / window_size;
 				
 		DEBUG("x = %d y = %d ", x, y);
         displays[i].rect.x = x * vids_width;
         displays[i].rect.y = y * vids_height;
         displays[i].rect.w = vids_width;
         displays[i].rect.h = vids_height;
-
+	
 		pthread_mutex_init(&displays[i].mtx,NULL);
         pthread_cond_init(&displays[i].cond, NULL);
 
@@ -1057,14 +1087,13 @@ int create_display()
         DEBUG("SDL_ttf open ttf dir: %s error", "../font/msyh.ttf");
         goto run_out;
     }
-
     SDL_Color color = {255, 255, 255};
     /*
      * Solid  渲染的最快，但效果最差，文字不平滑，是单色文字，不带边框。
   　 * Shaded 比Solid渲染的慢，但显示效果好于Solid，带阴影。
 　　 * Blend 渲染最慢，但显示效果最好。
      */
-    SDL_Surface *surface = TTF_RenderUTF8_Solid(font, "你好!!", color);
+    SDL_Surface *surface = TTF_RenderUTF8_Solid(font, "", color);
 
     SDL_EventState(SDL_SYSWMEVENT, SDL_IGNORE);
     SDL_EventState(SDL_USEREVENT, SDL_IGNORE);
@@ -1079,8 +1108,8 @@ int create_display()
             flags |= SDL_WINDOW_RESIZABLE;  //可以缩放暂时不支持
 
 #ifdef _WIN32
-	
-
+        if(hwnd)
+            window = SDL_CreateWindowFrom(hwnd);
 #endif
 		if(!window)
         	window = SDL_CreateWindow(program_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 

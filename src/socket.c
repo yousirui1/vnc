@@ -112,7 +112,7 @@ int send_msg(const int fd, const char *buf, const int len)
 
 struct sock_udp create_udp(char *ip, int port)
 {
-	//DEBUG("udp ip %s, port %d", ip, port);
+	DEBUG("udp ip %s, port %d", ip, port);
 
 	int fd = -1;
     int sock_opt = 0;
@@ -464,7 +464,7 @@ void client_tcp_loop(int sockfd)
 			else if(errno != EBADF)
 				DIE("select %s", strerror(ret));
 		}		
-		DEBUG("client udp loop");
+		//DEBUG("client udp loop");
 		nready = ret;
         /* pipe msg */
         if(FD_ISSET(pipe_cli[0], &reset))
@@ -524,6 +524,7 @@ void client_tcp_loop(int sockfd)
                    	current->data_buf = (unsigned char*)malloc(current->data_size + 1);
                    	if(!current->data_buf)
                     {
+						DEBUG("current->data_buf malloc error : %s ", strerror(errno));
 						goto run_end;
                     }
                     memset(current->data_buf, 0, current->data_size + 1);
@@ -641,8 +642,9 @@ void *thread_client_udp(void *param)
     pthread_attr_t st_attr;
     struct sched_param sched;
 
-    rfb_format *fmt = (rfb_format *)param;
+	int port = *(int *)param;
 
+	DEBUG("port %d", port);
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {
@@ -656,9 +658,7 @@ void *thread_client_udp(void *param)
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
-    //cli_display//create_udp(server_ip, fmt->data_port, &cli_display);
-
-	cli_display.h264_udp = create_udp(server_ip, fmt->data_port);
+	cli_display.h264_udp = create_udp(server_ip, port);
     client_udp_loop();
 	return (void *)0;
 }

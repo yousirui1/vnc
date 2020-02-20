@@ -4,8 +4,14 @@
 rfb_request *client_req = NULL;
 rfb_display cli_display = {0};
 
+static pthread_t pthread_tcp;
 
-static pthread_t pthread_tcp, pthread_display;
+static void do_exit()
+{
+	void *tret = NULL;
+	pthread_join(pthread_tcp, (void**)tret);  //等待线程同步
+    DEBUG("pthread_exit client tcp");
+}
 
 static int send_pipe(char *buf, short cmd, int size)
 {   
@@ -15,10 +21,9 @@ static int send_pipe(char *buf, short cmd, int size)
     return ret;
 }
 
-
 static int send_done(rfb_request *req)
 {
-    int ret; 
+    int ret = ERROR;
 
 	if(req->data_buf)
 		free(req->data_buf);
@@ -29,17 +34,14 @@ static int send_done(rfb_request *req)
 	
 	req->data_size = sizeof(int);	
 
-    
     *(int *)&req->data_buf[0] = 200;
     set_request_head(req->head_buf, 0, DONE_MSG_RET, sizeof(int));
     ret = send_request(req);
     
 	DEBUG("done ok !!");
-    if(SUCCESS != ret)
-        return ERROR;
         
     req->status = OPTIONS;
-    return SUCCESS;
+    return ret;
 }
 
 static int recv_done(rfb_request *req)
@@ -56,8 +58,6 @@ static int recv_done(rfb_request *req)
 	return ERROR;
 }
 
-
-
 static int send_ready(rfb_request *req)
 {   
     int ret; 
@@ -70,31 +70,25 @@ static int send_ready(rfb_request *req)
 	
 	req->data_size = sizeof(int);	
 
-    
     *(int *)&req->data_buf[0] = 200;
     set_request_head(req->head_buf, 0, READY_MSG, sizeof(int));
     ret = send_request(req);
 	DEBUG("ready ok !!");
-    
-    if(SUCCESS != ret)
-        return ERROR;
-        
+
     req->status = DONE;
-    return SUCCESS;
+    return ret;
 }
 
 static int recv_ready(rfb_request *req)
 {
-	DEBUG("recv_ready !!!!!!!!!!!");
+	int ret = ERROR;
     if(read_msg_order(req->head_buf) == READY_MSG_RET)
     {   
-		int ret;
         ret = send_pipe(req->head_buf, CLI_PLAY_MSG, 0);
         req->status = DONE;
-        ret = send_ready(req);
-        return ret;
+        //ret = send_ready(req);
     }
-    return ERROR;
+    return ret;
 }
 
 
@@ -126,41 +120,40 @@ static int send_options(rfb_request *req)
 
     req->data_buf = NULL;
 
-    return SUCCESS;
+    return ret;
 }
 
 static int recv_options(rfb_request *req)
 {
+    int ret = ERROR;
     if(read_msg_order(req->head_buf) == OPTIONS_MSG_RET)
     {
-        int ret;
         rfb_format *fmt = (rfb_format *)&req->data_buf[0];
-         DEBUG("fmt->width %d fmt->height %d fmt->code %d,"
-          " fmt->data_port %d fmt->play_flag %d  fmt->bps %d fmt->fps%d",
-             fmt->width, fmt->height,fmt->code, fmt->data_port,fmt->play_flag, fmt->bps, fmt->fps);
 
         cli_display.play_flag = fmt->play_flag;
 		if(fmt->play_flag == 2)
 			req->control_udp = create_udp(server_ip, fmt->control_port);
 
-        memcpy(&(cli_display.fmt), fmt, sizeof(rfb_format));
-        //memcpy(&(cli_display.fmt), fmt, sizeof(rfb_format));
-		cli_display.req = req;
-        ret = send_pipe(req->head_buf, CLI_UDP_MSG, 0);
-        //ret = send_ready(req);
 		vids_width = fmt->width;
 		vids_height = fmt->height;
 
+        memcpy(&(cli_display.fmt), fmt, sizeof(rfb_format));
+		cli_display.req = req;
+        //ret = send_pipe(req->head_buf, CLI_UDP_MSG, 0);
+
         ret = send_options(req);
-        return ret;
+
+        DEBUG("fmt->width %d fmt->height %d fmt->code %d,"
+          " fmt->data_port %d fmt->play_flag %d  fmt->bps %d fmt->fps%d",
+             fmt->width, fmt->height,fmt->code, fmt->data_port,fmt->play_flag, fmt->bps, fmt->fps);
     }
-    return ERROR;
+    return ret;
 }
 
 
 static int recv_login(rfb_request *req)
 {
-    int ret = SUCCESS;
+    int ret = ERROR;
     if(read_msg_order(req->head_buf) == LOGIN_MSG_RET)
     {
         int server_major = 0, server_minor = 0;
@@ -179,8 +172,6 @@ static int recv_login(rfb_request *req)
         req->data_buf = NULL;
         req->status = OPTIONS;
     }
-    else
-        ret = ERROR;
     return ret;
 }
 
@@ -190,8 +181,8 @@ static int send_login(rfb_request *req)
 	int ret;
 	int client_major = 0, client_minor = 0;
 
-	get_version(&client_major, &client_minor);
     DEBUG("client version :"VERSIONFORMAT, client_major, client_minor);
+	get_version(&client_major, &client_minor);
     
     req->data_size = sz_verformat; 
     req->data_buf = (unsigned char *)malloc(req->data_size + 1);
@@ -202,33 +193,31 @@ static int send_login(rfb_request *req)
     if(req->data_buf)
         free(req->data_buf);
     req->data_buf = NULL;
-	
-	if(SUCCESS != ret)
-        return ERROR;
     
     req->status = LOGIN;
-    return SUCCESS;
+    return ret;
 }
 
 int process_client_pipe(char *msg, int len)
 {   
-    int ret;
-    DEBUG("pipe msg type %02X CLI_READY_MSG %02X", read_msg_order(msg), CLI_READY_MSG);
+    int ret = ERROR;
     switch(read_msg_order(msg))
     {   
-        case CLI_READY_MSG:
-            //send_ready(&m_client);
-            break;
         case CLI_PLAY_MSG:
-            //send_play(&m_client);
+        	ret = send_ready(client_req);
             break;
+		case CLI_DONE_MSG:
+			ret = send_done(client_req);
+			break;
+		defult:
+			break;
     }
+	return ret;
 }
 
 int process_client_msg(rfb_request *req)
 {   
     int ret = 0;
-    DEBUG("process_client_msg %02X !!! -----------------", req->status);
     switch(req->status)
     {   
         case NORMAL:
@@ -245,7 +234,6 @@ int process_client_msg(rfb_request *req)
             ret = recv_done(req);
             break;
         case DEAD:
-            //ret = recv_dead(req); 
             break;
         default:
             break;
@@ -253,19 +241,13 @@ int process_client_msg(rfb_request *req)
     return ret;
 }
 
-static void do_exit()
-{
-	void *tret = NULL;
-	pthread_join(pthread_tcp, (void**)tret);  //等待线程同步
-    DEBUG("pthread_exit client tcp");
-}
-
-
 void init_client()
 {
 	int ret = ERROR;
 	int server_s = -1;
-	
+
+	init_X11();			
+
 	get_screen_size(&screen_width, &screen_height);
 	
 	server_s = create_tcp();

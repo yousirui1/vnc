@@ -5,138 +5,98 @@ static pthread_t pthread_cli_udp, pthread_cli_encode;
 
 static void do_exit()
 {
-    void *tret = NULL;
-    /* client pthread*/
-    if(!server_flag)
-    {
-        pthread_join(pthread_cli_udp, (void **)tret);
-        pthread_join(pthread_cli_encode, (void **)tret);
-    }
-	else 	//server pthread
+	int i;
+	void *tret = NULL;
+	if(!server_flag)
 	{
-		int i;
-		for(i = 0; i < display_size; i++)
+		pthread_cancel(pthread_cli_udp);
+        pthread_cancel(pthread_cli_encode);
+        pthread_join(pthread_cli_udp, &tret);
+        pthread_join(pthread_cli_encode, &tret);
+	}
+	else
+	{
+		for(i = 0; i <= display_size; i++)
 		{
-			pthread_join(displays[i].pthread_decode, (void **)tret);
-		}
+			pthread_cancel(displays[i].pthread_decode);
+			pthread_join(displays[i].pthread_decode, &tret);
+		}	
 	}
 }
 
 static int send_pipe(char *buf, short cmd, int size, int msg_type)
 {
-    int ret = SUCCESS;
-    set_request_head(buf, 0x0, cmd, size);
-    switch(msg_type)
-    {
-        case CLIENT_MSG:
-            ret = send_msg(pipe_cli[1], buf, size + HEAD_LEN);
-            break;
-        case SERVER_MSG:
-            ret = send_msg(pipe_ser[1], buf, size + HEAD_LEN);
-            break;
-    }
-    return ret;
-}
-
-static int process_ser(char *msg, int len)
-{
-    int ret;
-    int index = *(int *)&msg[HEAD_LEN];
-	void *tret = NULL;
-	DEBUG("display index %d --------------------- ", index);
-
-	if(index < 0 || index > display_size)
-		return;
-    switch(read_msg_order(msg))
-    {
-        case SER_PLAY_MSG:          //创建解码线程
-        {
-            ret = pthread_create(&displays[index].pthread_decode, NULL, thread_decode, &displays[index]);
-            break;
-        }
-        case SER_DONE_MSG:          //断开连接 销毁解码线程
-        {
-            pthread_cancel(displays[index].pthread_decode);
-		
-			pthread_join(displays[index].pthread_decode, (void **)tret);
-			DEBUG("pthread_join Decodec aaaaaaaaaaaaaaaaaaaaaaaaaa");
-            break;
-        }
-    }
-}
-
-
-static int process_cli(char *msg, int len)
-{
-    char *tmp = &msg[HEAD_LEN];
-    int ret;
-    //struct client *cli = &m_client;
-    switch(read_msg_order(msg))
-    {
-        case CLI_UDP_MSG:                   //创建udp 线程
-        {
-            ret = pthread_create(&pthread_cli_udp, NULL, thread_client_udp, &cli_display.fmt);
-	        send_pipe(msg, CLI_READY_MSG, 0, CLIENT_MSG);
-            break;
-        }
-        case CLI_PLAY_MSG:                  //创建 编码线程
-        {
-            DEBUG("CLI_PLAY_MSG");
-			ret = pthread_create(&pthread_cli_encode, NULL, thread_encode, &cli_display.fmt);
-            send_pipe(msg, CLI_PLAY_MSG, 0, CLIENT_MSG);
-            break;
-        }
-        case CLI_CONTROL_MSG:
-        {
-            //pthread_cancel(pthread_cli_encode);
-            //ret = pthread_create(&pthread_cli_encode, NULL, thread_encode, (void *)&cli->fmt);
-            //send_pipe(msg, CLI_PLAY_MSG, 0, CLIENT_MSG);
-            break;
-        }
-        case CLI_DONE_MSG:
-        case CLI_DEAD_MSG:                  //销毁udp和编码 线程
-            pthread_cancel(pthread_cli_udp);
-            pthread_cancel(pthread_cli_encode);
-
-            break;
-        default:
-            break;
-    }
-    return ret;
-}
-
-#if 0
-static int process_display(char *msg, int len)
-{
-    char *tmp = &msg[HEAD_LEN];
-    int ret;
-    //struct client *cli = &m_client;
-    switch(read_msg_order(msg))
-    {
-     	case CLI_DONE_MSG:					//
-
+	int ret = ERROR;
+	set_request_head(buf, 0x0, cmd, size);
+	switch(msg_type)
+	{
+		case CLIENT_MSG:
+			ret = send_msg(pipe_cli[1], buf, size + HEAD_LEN);
 			break;
-
-        case CLI_DEAD_MSG:                  //销毁udp和编码 线程
-
-            break;
-        default:
-            break;
-    }
-    return ret;
+		case SERVER_MSG:
+			ret = send_msg(pipe_cli[1], buf, size + HEAD_LEN);
+			break;
+		default:
+			break;
+	}
+	return ret;
 }
-#endif
 
+static int process_ser(char *msg)
+{
+	int ret = ERROR;
+	int index =  *(int *)&msg[HEAD_LEN];
+	void *tret = NULL;
+	
+	if(index < 0 || index > display_size)
+		return ERROR;
+			
+	switch(read_msg_order(msg))
+	{
+		case SER_PLAY_MSG:				//创建解码线程
+			ret = pthread_create(&displays[index].pthread_decode, NULL, thread_decode, &displays[index]);	
+			break;	
+		case SER_DONE_MSG:				//断开连接 销毁解码线程
+			pthread_cancel(displays[index].pthread_decode);
+			pthread_join(displays[index].pthread_decode, (void **)tret);
+			break;	
+		default:
+			break;
+	}
+	return ret;
+}
+
+static int process_cli(char *msg)
+{
+	int ret = ERROR;
+	void *tret = NULL;
+	switch(read_msg_order(msg))
+	{
+		case CLI_PLAY_MSG:
+			ret = pthread_create(&pthread_cli_udp, NULL, thread_client_udp, &cli_display.fmt.data_port);
+			ret = pthread_create(&pthread_cli_encode, NULL, thread_encode, &cli_display.fmt);
+			break;
+		case CLI_DONE_MSG:
+			pthread_cancel(pthread_cli_udp);
+            pthread_cancel(pthread_cli_encode);
+            pthread_join(pthread_cli_udp, &tret);
+            pthread_join(pthread_cli_encode, &tret);
+			break;
+		default:
+			break;
+	}	
+	return ret;
+}
 
 /* 线程的创建和检测释放 */
 void event_loop()
 {
-    int maxfd = 0, ret, nready;
-    struct timeval tv;
-
-    fd_set reset, allset;
-
-    FD_ZERO(&allset);
+	int maxfd = 0, ret, nready;
+	struct timeval tv;
+	
+	fd_set reset, allset;
+	
+	FD_ZERO(&allset);
     FD_SET(pipe_ser[1], &allset);
     FD_SET(pipe_cli[1], &allset);
     FD_SET(pipe_event[0], &allset);
@@ -144,12 +104,12 @@ void event_loop()
     maxfd = maxfd > pipe_ser[1] ? maxfd : pipe_ser[1];
     maxfd = maxfd > pipe_cli[1] ? maxfd : pipe_cli[1];
     maxfd = maxfd > pipe_event[0] ? maxfd : pipe_event[0];
-
-    char buf[DATA_SIZE] = {0};
-    char *tmp = &buf[HEAD_LEN];
-
-    for(;;)
-    {
+	
+	char buf[DATA_SIZE] = {0};
+	char *tmp = &buf[HEAD_LEN];
+	
+	for(;;)
+	{
         reset = allset;
         tv.tv_sec = 1;
         tv.tv_usec = 0;
@@ -164,39 +124,28 @@ void event_loop()
                 DEBUG("select error: %s", strerror(errno));
             }
         }
-        /* pipe msg */
+		/* pipe msg */
         if(FD_ISSET(pipe_ser[1], &reset))
         {
             ret = recv(pipe_ser[1], (void *)buf, sizeof(buf), 0);
             if(ret >= HEAD_LEN)
             {
-                process_ser(buf, ret);
+                process_ser(buf);
             }
             if(--nready <= 0)
                 continue;
         }
-        if(FD_ISSET(pipe_cli[1], &reset))
+		
+		if(FD_ISSET(pipe_cli[1], &reset))
         {
             ret = recv(pipe_cli[1], (void *)buf, sizeof(buf), 0);
             if(ret >= HEAD_LEN)
             {
-                process_cli(buf, ret);
+                process_cli(buf);
             }
             if(--nready <= 0)
                 continue;
         }
-#if 0
-	 	if(FD_ISSET(pipe_display[1], &reset))
-        {
-            ret = recv(pipe_display[1], (void *)buf, sizeof(buf), 0);
-            if(ret >= HEAD_LEN)
-            {
-                process_display(buf, ret);
-            }
-            if(--nready <= 0)
-                continue;
-        }
-#endif
 
         if(FD_ISSET(pipe_event[0], &reset))
         {
@@ -205,10 +154,10 @@ void event_loop()
             {
                 if(buf[0] == 'S')
                 {
-					DEBUG("event thread end");
+                    DEBUG("event thread end");
                     /* 通知其他线程关闭 */
-					send_msg(pipe_cli[1], &buf[0], 1);
-					send_msg(pipe_ser[1], &buf[0], 1);
+                    send_msg(pipe_cli[1], &buf[0], 1);
+                    send_msg(pipe_ser[1], &buf[0], 1);
                     break;
                 }
             }
@@ -219,13 +168,12 @@ void event_loop()
 	do_exit();
 }
 
-
 void *thread_event(void *param)
 {
-    int ret;
-    pthread_attr_t st_attr;
-    struct sched_param sched;
-
+	int ret;
+	pthread_attr_t st_attr;
+	struct sched_param sched;
+	
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {
@@ -242,4 +190,3 @@ void *thread_event(void *param)
     event_loop();
     return (void *)0;
 }
-

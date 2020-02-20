@@ -13,10 +13,12 @@
 */
 
 static stop_callback call_back;
+HWND hwnd = NULL;
 
 #if 0
 CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
 {
+	hwnd = WindowFromDC(dc);
 	server_flag = 1;
 	run_flag = 1;
 

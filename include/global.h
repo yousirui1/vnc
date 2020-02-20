@@ -97,5 +97,11 @@ int process_msg(rfb_request *req);
 void init_client();
 extern rfb_request *client_req;
 
-#endif
+
+/* external.c */
+#ifdef _WIN32
+	extern HWND hwnd;
+#endif	//_WIN32
+
+#endif //__GLOBAL_H__
 
