@@ -15,10 +15,9 @@
 static stop_callback call_back;
 HWND hwnd = NULL;
 
-#if 0
 CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
 {
-	hwnd = WindowFromDC(dc);
+	//hwnd = WindowFromDC(dc);
 	server_flag = 1;
 	run_flag = 1;
 
@@ -51,12 +50,12 @@ CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int contro
 */
 CAPTUREANDCAST_API int StopMonitorServer()
 {
-	run_flag = 0;
-   	do_exit();
+	//run_flag = 0;
+   	//do_exit();
 #ifdef __DEBUG__
-	close_logs();
+	//close_logs();
 #endif
-	DEBUG("StopMonitorServer end");
+	//DEBUG("StopMonitorServer end");
 	return 0;
 }
 
@@ -64,7 +63,7 @@ CAPTUREANDCAST_API int StopMonitorServer()
 
 CAPTUREANDCAST_API int DisconnectAllClient()
 {
-	DEBUG("DisconnectAllClient");
+	//DEBUG("DisconnectAllClient");
 	//close_display();	
 	return 0;		
 }
@@ -88,7 +87,7 @@ CAPTUREANDCAST_API int ExitControl()
 成功返回0, 否则返回对应错误号
 */
 
-CAPTUREANDCAST_API int StartMonitorClient(const char* serverIp, const int serverPort, const char* clientFlag)
+CAPTUREANDCAST_API int StartMonitorClient(const char* serverIp, const int serverPort)
 {
 	server_ip = strdup(serverIp);	
 	server_port = serverPort;
@@ -115,7 +114,7 @@ CAPTUREANDCAST_API int StartMonitorClient(const char* serverIp, const int server
 @param pageSize 图像质量0-100
 成功返回0, 否则返回对应错误号
 */
-CAPTUREANDCAST_API int SetPageAttribute(const int pageIndex, const int pageSize)
+CAPTUREANDCAST_API int SetPageAttribute(const int pageIndex, const int pageSize, struct StudentInfo *info)
 {
 
 
@@ -135,7 +134,6 @@ CAPTUREANDCAST_API int GetPageCount()
 {
 	return 1;
 }
-#endif
 
 void stop_server()
 {

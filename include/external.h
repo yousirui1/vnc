@@ -23,7 +23,7 @@ typedef void(WINAPI *stop_callback)();
 @param call 回调函数设置
 成功返回0, 否则返回对应错误号
 */
-CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call);
+CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call);
 
 
 /*

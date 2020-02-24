@@ -55,8 +55,8 @@
 #define SUCCESS 0
 #define ERROR 	1
 
-#define LOG_DIR  "./log"
-#define LOG_ERR_FILE "./log/err.log"
+#define LOG_DIR  "c://Users//Public//Documents//YZYEduClient"
+#define LOG_ERR_FILE "c://Users//Public//Documents//YZYEduClient//err.log"
 
 #define MAX_FILENAMELEN 256
 /* config */

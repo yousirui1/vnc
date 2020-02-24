@@ -713,8 +713,8 @@ void server_udp_loop(int display_size, int maxfd, fd_set  allset, rfb_display *c
 				}
 				if(clients[i].frame_pos == clients[i].frame_size + 8)
 				{
+					//pthread_cond_signal(&(clients[i].cond)); 										
 	               	en_queue(&vids_queue[i], clients[i].frame_buf + 8,  clients[i].frame_pos - 8, 0x0);
-					pthread_cond_signal(&(clients[i].cond)); 										
 					clients[i].frame_pos = 0;
 					clients[i].frame_size = 0;
 				}

@@ -57,8 +57,9 @@ static int process_ser(char *msg)
 			ret = pthread_create(&displays[index].pthread_decode, NULL, thread_decode, &displays[index]);	
 			break;	
 		case SER_DONE_MSG:				//断开连接 销毁解码线程
+			DEBUG("SER_DONE_MSG !!!!!!!!!!!");
 			pthread_cancel(displays[index].pthread_decode);
-			pthread_join(displays[index].pthread_decode, (void **)tret);
+			pthread_join(displays[index].pthread_decode, &tret);
 			break;	
 		default:
 			break;

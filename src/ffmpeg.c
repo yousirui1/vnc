@@ -9,9 +9,13 @@ int pthread_count = 0;
 
 void clean_encode(void *arg)
 {
+	DEBUG("clean_encode param memory");
     output_stream *out = (output_stream *)arg;
     if(!out)
+	{
+		DEBUG("out param is NULL !!!!!!!!!!!!!!!");
         return;
+	}
 
     if(out->img_convert_ctx)
         sws_freeContext(out->img_convert_ctx);
@@ -29,6 +33,20 @@ void clean_encode(void *arg)
         avformat_close_input(&(out->format_ctx));
     if(out->packet)
         av_free_packet(out->packet);
+    if(out->out_buffer)
+        av_free(out->out_buffer);
+
+	out->img_convert_ctx = NULL;
+	out->out_buffer = NULL;
+	out->frame = NULL;
+	out->frame_yuv = NULL;
+	out->codec_ctx = NULL;
+	out->h264codec_ctx = NULL;
+	out->format_ctx = NULL;
+	out->packet = NULL;
+
+	out = NULL;
+	arg = NULL;
 }
 
 void ffmpeg_encode(rfb_format *fmt)
@@ -46,17 +64,6 @@ void ffmpeg_encode(rfb_format *fmt)
     struct SwsContext *img_convert_ctx = NULL;
 
     output_stream out;
-
-    out.format_ctx = format_ctx;
-    out.codec_ctx = codec_ctx;
-    out.codec = codec;
-    out.h264codec_ctx = h264codec_ctx;
-    out.h264codec = h264codec;
-    out.frame = frame;
-    out.frame_yuv = frame_yuv;
-    out.packet = packet;
-    out.img_convert_ctx = img_convert_ctx;
-    out.out_buffer = out_buffer;
 
     av_register_all();
     avformat_network_init();
@@ -150,6 +157,7 @@ void ffmpeg_encode(rfb_format *fmt)
 
     img_convert_ctx = sws_getContext(codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt, fmt->width, fmt->height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
+	DEBUG("fmt->width %d fmt->height %d", fmt->width, fmt->height);
     /* 查找h264编码器 */
     h264codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     if(!h264codec)
@@ -191,6 +199,17 @@ void ffmpeg_encode(rfb_format *fmt)
 		goto run_out;
     }
 
+	out.format_ctx = format_ctx;
+    out.codec_ctx = codec_ctx;
+    out.codec = codec;
+    out.h264codec_ctx = h264codec_ctx;
+    out.h264codec = h264codec;
+    out.frame = frame;
+    out.frame_yuv = frame_yuv;
+    out.packet = packet;
+    out.img_convert_ctx = img_convert_ctx;
+    out.out_buffer = out_buffer;
+
 	pthread_cleanup_push(clean_encode,(void *)&out);
 	for(;;)
     {
@@ -216,11 +235,9 @@ void ffmpeg_encode(rfb_format *fmt)
             }
         }
         av_free_packet(packet);
-		pthread_testcancel();
+		//pthread_testcancel();
     }
 	pthread_cleanup_pop(0);
-	pthread_exit(0);
-
 run_out:
     if(img_convert_ctx)
         sws_freeContext(img_convert_ctx);
@@ -257,6 +274,7 @@ void clean_decode(void *arg)
 
 	pthread_count --;	
 
+	DEBUG("clean_decode !!!!!!!!!");
     if(!input)
         return;
 
@@ -267,11 +285,17 @@ void clean_decode(void *arg)
     if(input->frame_yuv)
         av_free(input->frame_yuv);
     if(input->frame)
+	{
+		DEBUG("frame free !!!!!!");
         av_free(input->frame);
+	}
     if(input->codec_ctx)
+	{
+		DEBUG("codec_ctx close !!!!!!");
         avcodec_close(input->codec_ctx);
-    if(input->packet)
-        av_free_packet(input->packet);
+	}
+    //if(input->packet)
+        //av_free_packet(input->packet);
 
 	DEBUG("clean_decode param memory !!!!!!!!!!!!");
 	//pthread_count --;	
@@ -295,13 +319,7 @@ void ffmpeg_decode(rfb_display *vid)
 	pthread_count++;
 
     input_stream input;
-    input.codec = codec;
-    input.codec_ctx = codec_ctx;
-    input.frame = frame;
-    input.frame_yuv = frame_yuv;
-    //input.packet = packet;
-   	input.img_convert_ctx = img_convert_ctx;
-	
+   
    	const char *decoder_name [] = {"h264_rkvpu", "h264", "h264_qsv"};
 
     for(i = 0; decoder_name[i] != NULL; i++)
@@ -342,15 +360,21 @@ void ffmpeg_decode(rfb_display *vid)
         DEBUG("frame or frame_yuv pkt packet malloc error :%s", strerror(errno));
         goto run_out;
     }
+ 	input.codec = codec;
+    input.codec_ctx = codec_ctx;
+    input.frame = frame;
+    input.frame_yuv = frame_yuv;
+   	input.img_convert_ctx = img_convert_ctx;
+	input.out_buffer = out_buffer;	
 	
-	pthread_cleanup_push(clean_decode, NULL);
+	pthread_cleanup_push(clean_decode, (void *)&input);
 	/* packet 不能用指针 否则会异常 */
-	//SDL_Rect 
 	for(;;)
     {
 		if(empty_queue(&vids_queue[vid->id]))
 	    {
-			pthread_cond_wait(&(vid->cond), &(vid->mtx));
+			//pthread_cond_wait(&(vid->cond), &(vid->mtx));
+			usleep(200);
 	        continue;
 	    }
 	    index = de_queue(&vids_queue[vid->id]);
@@ -365,13 +389,12 @@ void ffmpeg_decode(rfb_display *vid)
        			update_texture(frame, NULL);
 			else
        			update_texture(frame, &(vid->rect));
-
         }
 		sdl_text_show(vid->req->ip, &(vid->rect));
 		av_packet_unref(&packet);
-		//pthread_testcancel();
+		//pthread_testcancel();		//线程取消点。延迟释放模式使用
     }
-	pthread_cleanup_pop(0);
+	pthread_cleanup_pop(0);		//走到这正常释放不调用清除函数
 run_out:
 
     if(img_convert_ctx)
@@ -404,7 +427,7 @@ void *thread_encode(void *param)
     
     rfb_format *fmt = (rfb_format *)param;
 
-	pthread_detach(pthread_self());
+	//pthread_detach(pthread_self());		//线程和创建线程分离 不能使用join
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {   
@@ -423,7 +446,7 @@ void *thread_encode(void *param)
     //pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);//立即退出  PTHREAD_CANCEL_DEFERRED  
 	
     ffmpeg_encode(fmt);
-	pthread_exit(0);
+
 	return (void *)0;
 }
 void *thread_decode(void *param)
@@ -434,7 +457,7 @@ void *thread_decode(void *param)
 
     rfb_display *vid = (rfb_display *)param;
 
-	pthread_detach(pthread_self());
+	//pthread_detach(pthread_self());
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {
@@ -453,7 +476,6 @@ void *thread_decode(void *param)
     //pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);//立即退出  PTHREAD_CANCEL_DEFERRED 
 
     ffmpeg_decode(vid);
-	pthread_exit(0);
 	return (void *)0;
 }
 

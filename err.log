@@ -1,138 +1,46 @@
-In file included from ./src/display.c:14:0:
+In file included from ./src/external.c:1:0:
 ./include/base.h:56:0: warning: "ERROR" redefined
  #define ERROR  1
  
 In file included from c:\program files\git\mingw32\include\windows.h:46:0,
                  from ./include/base.h:18,
-                 from ./src/display.c:14:
+                 from ./src/external.c:1:
 c:\program files\git\mingw32\include\wingdi.h:348:0: note: this is the location of the previous definition
  #define ERROR       0
  
-In file included from ./src/display.c:14:0:
+In file included from ./src/external.c:1:0:
 ./include/base.h:189:0: warning: "max" redefined
  #define max(a,b)    (((a) > (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:18,
-                 from ./src/display.c:14:
+                 from ./src/external.c:1:
 c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
  #define max(a,b) ((a)>(b)?(a):(b))
  
-In file included from ./src/display.c:14:0:
+In file included from ./src/external.c:1:0:
 ./include/base.h:190:0: warning: "min" redefined
  #define min(a,b)    (((a) < (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:18,
-                 from ./src/display.c:14:
+                 from ./src/external.c:1:
 c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
  #define min(a,b) ((a)<(b)?(a):(b))
  
-./src/display.c: In function 'send_control':
-./src/display.c:192:2: warning: implicit declaration of function 'set_request_head' [-Wimplicit-function-declaration]
-  set_request_head(buf, 0, cmd, data_len);
-  ^~~~~~~~~~~~~~~~
-./src/display.c: In function 'realloc_texture':
-./src/display.c:747:5: warning: 'return' with no value, in function returning non-void
-     return;
-     ^~~~~~
-./src/display.c:712:5: note: declared here
- int realloc_texture(int init, int align16)
-     ^~~~~~~~~~~~~~~
-./src/display.c: In function 'sdl_text_show':
-./src/display.c:806:33: warning: passing argument 3 of 'SDL_UpperBlit' from incompatible pointer type [-Wincompatible-pointer-types]
-  SDL_BlitSurface(surface, NULL, window, rect);
-                                 ^~~~~~
-In file included from ./SDL/x86/include/SDL2/SDL_video.h:34:0,
-                 from ./SDL/x86/include/SDL2/SDL_events.h:33,
-                 from ./SDL/x86/include/SDL2/SDL.h:41,
-                 from ./src/display.c:2:
-./SDL/x86/include/SDL2/SDL_surface.h:489:29: note: expected 'SDL_Surface * {aka struct SDL_Surface *}' but argument is of type 'SDL_Window * {aka struct SDL_Window *}'
- extern DECLSPEC int SDLCALL SDL_UpperBlit
-                             ^~~~~~~~~~~~~
-./src/display.c: In function 'refresh_loop_wait_event':
-./src/display.c:822:3: warning: 'usleep' is deprecated [-Wdeprecated-declarations]
-   usleep(200000);
-   ^~~~~~
-In file included from ./include/base.h:7:0,
-                 from ./src/display.c:14:
-c:\program files\git\mingw32\include\unistd.h:100:29: note: declared here
- int __cdecl __MINGW_NOTHROW usleep( useconds_t )__MINGW_ATTRIB_DEPRECATED;
-                             ^~~~~~
-./src/display.c: In function 'switch_mode':
-./src/display.c:835:3: warning: implicit declaration of function 'stop_display' [-Wimplicit-function-declaration]
-   stop_display();
-   ^~~~~~~~~~~~
-./src/display.c:836:3: warning: implicit declaration of function 'start_control' [-Wimplicit-function-declaration]
-   start_control(id);
-   ^~~~~~~~~~~~~
-./src/display.c:842:3: warning: implicit declaration of function 'stop_control' [-Wimplicit-function-declaration]
-   stop_control();
-   ^~~~~~~~~~~~
-./src/display.c:843:3: warning: implicit declaration of function 'start_display' [-Wimplicit-function-declaration]
-   start_display();
-   ^~~~~~~~~~~~~
-./src/display.c: In function 'control_msg':
-./src/display.c:850:24: warning: pointer targets in passing argument 1 of 'read_msg_order' differ in signedness [-Wpointer-sign]
-  switch(read_msg_order(buf))
-                        ^~~
-In file included from ./include/base.h:40:0,
-                 from ./src/display.c:14:
-./include/global.h:50:16: note: expected 'unsigned char *' but argument is of type 'char *'
- unsigned short read_msg_order(unsigned char * buf);
-                ^~~~~~~~~~~~~~
-./src/display.c: In function 'sdl_loop':
-./src/display.c:957:4: warning: implicit declaration of function 'stop_server' [-Wimplicit-function-declaration]
-    stop_server();  //通过callback 返回给dll
-    ^~~~~~~~~~~
-./src/display.c: In function 'init_display':
-./src/display.c:969:17: warning: unused variable 'id' [-Wunused-variable]
-  int i, j ,ret, id;
-                 ^~
-./src/display.c:969:12: warning: unused variable 'ret' [-Wunused-variable]
-  int i, j ,ret, id;
-            ^~~
-./src/display.c:969:9: warning: unused variable 'j' [-Wunused-variable]
-  int i, j ,ret, id;
-         ^
-./src/display.c: In function 'create_display':
-./src/display.c:1140:58: error: 'surface' undeclared (first use in this function)
-     ttf_texture = SDL_CreateTextureFromSurface(renderer, surface);
-                                                          ^~~~~~~
-./src/display.c:1140:58: note: each undeclared identifier is reported only once for each function it appears in
-./src/display.c: In function 'init_X11':
-./src/display.c:599:1: warning: control reaches end of non-void function [-Wreturn-type]
+In file included from ./src/external.c:2:0:
+./include/external.h:26:49: error: expected declaration specifiers or '...' before '*' token
+ CAPTUREANDCAST_API int StartMonitorServer(WINAPI* dc, const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call);
+                                                 ^
+./src/external.c:18:49: error: expected declaration specifiers or '...' before '*' token
+ CAPTUREANDCAST_API int StartMonitorServer(WINAPI* dc, const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
+                                                 ^
+./src/external.c: In function 'ExitControl':
+./src/external.c:74:2: warning: implicit declaration of function 'switch_mode' [-Wimplicit-function-declaration]
+  switch_mode(0);
+  ^~~~~~~~~~~
+./src/external.c: In function 'SetPageAttribute':
+./src/external.c:121:1: warning: control reaches end of non-void function [-Wreturn-type]
  }
  ^
-At top level:
-./src/display.c:176:12: warning: 'frame_queue_nb_remaining' defined but not used [-Wunused-function]
- static int frame_queue_nb_remaining(FrameQueue *f)
-            ^~~~~~~~~~~~~~~~~~~~~~~~
-./src/display.c:158:13: warning: 'frame_queue_pop' defined but not used [-Wunused-function]
- static void frame_queue_pop(FrameQueue *f)
-             ^~~~~~~~~~~~~~~
-./src/display.c:145:15: warning: 'frame_queue_peek_readable' defined but not used [-Wunused-function]
- static Frame *frame_queue_peek_readable(FrameQueue *f)
-               ^~~~~~~~~~~~~~~~~~~~~~~~~
-./src/display.c:139:15: warning: 'frame_queue_peek_last' defined but not used [-Wunused-function]
- static Frame *frame_queue_peek_last(FrameQueue *f)
-               ^~~~~~~~~~~~~~~~~~~~~
-./src/display.c:133:15: warning: 'frame_queue_peek_next' defined but not used [-Wunused-function]
- static Frame *frame_queue_peek_next(FrameQueue *f)
-               ^~~~~~~~~~~~~~~~~~~~~
-./src/display.c:127:15: warning: 'frame_queue_peek' defined but not used [-Wunused-function]
- static Frame *frame_queue_peek(FrameQueue *f)
-               ^~~~~~~~~~~~~~~~
-./src/display.c:120:13: warning: 'frame_queue_signal' defined but not used [-Wunused-function]
- static void frame_queue_signal(FrameQueue *f)
-             ^~~~~~~~~~~~~~~~~~
-./src/display.c:64:13: warning: 'frame_queue_push' defined but not used [-Wunused-function]
- static void frame_queue_push(FrameQueue *f)
-             ^~~~~~~~~~~~~~~~
-./src/display.c:50:15: warning: 'frame_queue_peek_writable' defined but not used [-Wunused-function]
- static Frame *frame_queue_peek_writable(FrameQueue *f)
-               ^~~~~~~~~~~~~~~~~~~~~~~~~
-./src/display.c:25:12: warning: 'video_disable' defined but not used [-Wunused-variable]
- static int video_disable = 0;
-            ^~~~~~~~~~~~~
-make: *** [display.o] Error 1
+make: *** [external.o] Error 1
