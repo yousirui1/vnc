@@ -58,12 +58,13 @@
 #ifdef _WIN32
 	#define LOG_DIR  "c://Users//Public//Documents//YZYEduClient//Log"
 	#define LOG_ERR_FILE "c://Users//Public//Documents//YZYEduClient//Log//remote_monitor_err.log"
+	#define TTF_DIR ".//font//msyh.ttf"
 #else
 	#define LOG_DIR  "./log"
 	#define LOG_ERR_FILE "./log/remote_monitor_err.log"
+	#define TTF_DIR "./font/msyh.ttf"
 #endif
 
-#define TTF_DIR "c://font//msyh.ttf"
 
 
 #define MAX_FILENAMELEN 256

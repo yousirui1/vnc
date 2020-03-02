@@ -200,10 +200,18 @@ int stop_display()
 {
     int i;
     char buf[128] = {0};
+	DEBUG("stop display all client");
+
+	if(!displays)
+	{
+		DEBUG("display param is NULL!!");
+		return ERROR;
+	}
+
     /* 通知正在监控客户端停止发送 */
     for(i = 0; i < display_size; i++)
     {
-        if(displays[i].play_flag == 1)
+        if(displays && displays[i].play_flag == 1)
         {
             if(displays[i].cli)
             {
@@ -216,6 +224,7 @@ int stop_display()
         }
     }
     clear_texture();
+	return SUCCESS;
 }
 
 int start_control(int id)
@@ -276,7 +285,6 @@ static void do_exit()
 {
 	int i;
 	void *tret = NULL;
-	
 
 	pthread_join(pthread_tcp, &tret);  //等待线程同步
     DEBUG("pthread_exit %d tcp", (int)tret);
@@ -289,8 +297,7 @@ static void do_exit()
 
 	close_fd(server_s);
 	close_pipe();
-	unload_wsa();
-	
+	//unload_wsa();
 	for(i = 0; i < max_connections; i++)
 	{
 		if(clients[i])
@@ -300,14 +307,14 @@ static void do_exit()
 				free(clients[i]->head_buf);
 			if(clients[i]->data_buf)
 				free(clients[i]->data_buf);
-			
 			free(clients[i]);	
 			clients[i] = NULL;
 		}
 	}
 	display_size = 0;
 	server_s = -1;
-	free(clients);
+	if(clients)
+		free(clients);
 	clients = NULL;
 }
 

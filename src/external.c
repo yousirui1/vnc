@@ -25,7 +25,9 @@ CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const in
 	window_flag = winStyleFlag;
 	window_size = pageSize;
 	
-    if(!call || !dc || window_size <= 0 || window_size >5)
+	DEBUG("window_flag %d", window_flag);
+	DEBUG("window_size %d", window_size);
+    if(!dc || window_size <= 0 || window_size >5)
     {
         DEBUG("HDC or callback function is NULL!!");
         return ERROR;
@@ -35,7 +37,7 @@ CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const in
 
     DEBUG("\nprograme server: \n client_port %d, control_port %d, h264_port %d, window_flag %d, window_size %d,",
                  client_port, control_port, h264_port, window_flag, window_size);
-    call_back = call;
+    //call_back = call;
 	
 	run_flag = 1;
 	return init_server();
@@ -52,14 +54,16 @@ CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const in
 */
 CAPTUREANDCAST_API int StopMonitorServer()
 {
-	//DEBUG("StopMonitorServer end");
+	DEBUG("StopMonitorServer end");
 	char s = 'S';
 	send_msg(pipe_event[1], &s, 1);
 	run_flag = 0;
     DEBUG("recv sig stop programe !!");
 	exit_server();
+	DEBUG("exit server ok");
 	call_back = NULL;
 	hwnd = NULL;
+	//DEBUG("close logs ok");
 	close_logs();
 	return SUCCESS;
 }
@@ -70,7 +74,6 @@ CAPTUREANDCAST_API int DisconnectAllClient()
 	return SUCCESS;		
 }
 
-
 CAPTUREANDCAST_API int ExitControl()
 {
 	switch_mode(0);
@@ -78,7 +81,6 @@ CAPTUREANDCAST_API int ExitControl()
 	sleep(1);
 	return SUCCESS;
 }
-
 
 /*
 启动被监控端连接（学生端用）
@@ -114,14 +116,14 @@ CAPTUREANDCAST_API int StartMonitorClient(const char* serverIp, const int server
 CAPTUREANDCAST_API int SetPageAttribute(const int pageIndex, const int pageSize, struct StudentInfo *info, const int length)
 {
 	DEBUG("SetPageAttribute pageIndex: %d pageSize: %d length %d", pageIndex, pageSize, length);
-
-	//close_display();
 	stop_display();
 	int i = 0;
+#if 0
 	for(i = 0; i < length; i++)
 	{
 		DEBUG("i: %d no: %d ip: %s name: %s", i, info[i].No, info[i].Name, info[i].Ip);
 	}
+#endif
     return SUCCESS;
 }
 
@@ -143,8 +145,10 @@ CAPTUREANDCAST_API int GetPageCount()
 
 void stop_server()
 {
+#if 0
 	if(call_back)
 		call_back();
 	call_back = NULL;
+#endif
 }
 #endif	//_WIN32

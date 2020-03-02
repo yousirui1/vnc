@@ -51,27 +51,57 @@ pthread_mutex_t display_cond;// = PTHREAD_COND_INITIALIZER;
 unsigned char **vids_buf;
 QUEUE *vids_queue;
 
+#if 0
+int sfp_refresh_thread(void *opaque)
+{
+    while (thread_exit==0)
+    {
+        SDL_Event event;
+        event.type = SFM_REFRESH_EVENT;
+        SDL_PushEvent(&event);
+    }
+    //Quit
+    SDL_Event event;
+    event.type = SFM_BREAK_EVENT;
+    SDL_PushEvent(&event);
+    return 0;
+}
+#endif
+
 static int do_exit()
 {
 	int i ;
+	DEBUG("1111111111111");
 	if(texture)
 		SDL_DestroyTexture(texture);
 
+	DEBUG("1111111111111");
 	if(full_texture)
 		SDL_DestroyTexture(full_texture);	
 
+	DEBUG("1111111111111");
 	if(ttf_texture)
 		SDL_DestroyTexture(ttf_texture);	
 		
+	DEBUG("1111111111111");
 	if(font)
 		TTF_CloseFont(font);
 	
+	DEBUG("1111111111111");
 	if(renderer)
 		SDL_DestroyRenderer(renderer);
 
-	if(window)
-		SDL_DestroyWindow(window);	
-	
+	DEBUG("1111111111111");
+#if 0
+#ifdef _WIN32
+        if(!hwnd && window)
+			SDL_DestroyWindow(window);	
+#endif
+#endif
+	//if(window)
+		//SDL_DestroyWindow(window);
+	DEBUG("ssssssssssssss111111111111");
+
 	memset(&rect, 0, sizeof(SDL_Rect));
 	memset(&full_rect, 0, sizeof(SDL_Rect));
 
@@ -97,8 +127,17 @@ static int do_exit()
 	/* 等待使用结束 */
 	pthread_mutex_destroy(&renderer_mutex);
 
+	DEBUG("pthread renderer destory");
 	TTF_Quit();
-	SDL_Quit();
+
+#if 0
+    if(SDL_WasInit(SDL_INIT_EVERYTHING) != 0)
+    {
+        DEBUG("SDL_WasInit");
+        SDL_Quit();
+    }
+#endif
+
 	DEBUG("sdl exit ok !!!!!!!!!!!!!");
 }
 
@@ -680,7 +719,7 @@ static void refresh_loop_wait_event(SDL_Event *event)
     SDL_PumpEvents();
     while (!SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) && run_flag)
     {
-        usleep(200000);
+        //usleep(200000);
         SDL_PumpEvents();
     }
 }
@@ -771,13 +810,15 @@ void sdl_loop()
 		if(SDL_QUIT == event.type)
 		{
 			run_flag = 0;
+
 #ifdef _WIN32
-			stop_server();		//通过callback 返回给dll
+			//stop_server();		//通过callback 返回给dll
 #endif
 		}
 	}	
+
 	DEBUG("event_loop end");
-	do_exit();
+	close_window();
 }
 	
 

@@ -724,7 +724,10 @@ void server_tcp_loop(int listenfd)
 			if(ret == 1)
 			{
 				if(buf[0] == 'S')
+				{
+					DEBUG("event thread send stop msg");
 					break;
+				}
 			}
             if(--nready <= 0)
                 continue;
