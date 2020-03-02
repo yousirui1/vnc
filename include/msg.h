@@ -2,10 +2,11 @@
 #define __MSG_H__
 
 #include <SDL2/SDL.h>
+#include "rbtree.h"
 
-#define HEAD_LEN 8
-#define sz_verformat 20
+#define IPADDR_LEN 128
 #define SZ_VERFORMAT 20
+#define HEAD_LNE 8
 
 enum control_msg_type{
 	MOUSE = 0x03,
@@ -23,94 +24,95 @@ struct sock_udp
     struct sockaddr_in send_addr;
 };
 
-struct rfb_request
+typedef struct _req_head
 {
-    int fd;                     /* client's socket fd */
-    int status;                 /* see #defines.h */
-    time_t time_last;           /* time of last succ. op. */
-    struct rfb_request *next;       /* next */
-    struct rfb_request *prev;       /* previous */
-
-	struct sock_udp control_udp;
-
-    unsigned char head_buf[HEAD_LEN];
-    /* has read msg head or not ,0 :not 1: yes */
-    int has_read_head;
-
-    unsigned char *data_buf;
-    /* current data position */
-    int data_pos;
-    /* current data size */
-    int data_size;
-    char ip[16];
-    int display_id;
-
-};
-
-typedef struct rfb_request rfb_request;
-
-
-typedef struct _rfb_head
-{   
     unsigned char syn;
     unsigned char encrypt_flag;
     unsigned short cmd;
     unsigned int data_size;
-}rfb_head;
+}req_head;
 
-#pragma pack(2)
-typedef struct _rfb_packet
+typedef struct _rfb_format
 {
-    char b_keyFrame;
-    char encodec;
-    short width;
-    short height;
-    short total_num;
-    short num;
-    short length;
-}rfb_packet;
-
-
-struct rfb_format
-{
-    unsigned int width;
+	unsigned int width;
     unsigned int height;
     unsigned int code;
     unsigned int data_port;
-	unsigned int control_port;
-    unsigned char play_flag;   			// 0 stop 1 play  2 control
-	unsigned char fps;
-	unsigned int bps;
-};
+    unsigned int control_port;
+    unsigned char play_flag;            // 0 stop 1 play  2 control
+    unsigned char fps;
+    unsigned int bps;
 
-typedef struct rfb_format rfb_format;
+}rfb_format;
+
+struct client
+{
+    short index;
+	short display_id;
+
+    unsigned int status;
+
+    /* red black node */
+    struct rb_node rb_node;
+
+    struct client *next;
+    struct client *prev;
+
+    /* listen fd */
+    int listenfd;
+
+    /* tcp sock fd */
+    int fd;
+    char ip[IPADDR_LEN];
+    int port;
+
+	/* udp sock */
+	struct sock_udp control_udp;
+	
+    unsigned char *head_buf;
+    /** has read msg head or not ,0 :not 1: yes**/
+    int has_read_head ;
+
+    unsigned char *data_buf;
+
+    /** current data position **/
+    int pos;
+    /** curreant data size **/
+    int data_size;
+    /** max alloc size **/
+    int max_size;
+
+    time_t last_time;
+}__attribute__((packed,aligned(8)));
 
 typedef struct _rfb_display
 {
-    int id;                 //diplay[id]
-    //int fd;                 //udp h264 data fd
+    int id;
+    int fd;
     int port;
 
     SDL_Rect rect;
 
-    //struct sockaddr_in recv_addr;
-    //struct sockaddr_in send_addr;
-            
+    struct sockaddr_in recv_addr;
+    struct sockaddr_in send_addr;
+
 	struct sock_udp h264_udp;
 
-	pthread_mutex_t mtx;
-    pthread_cond_t cond;
-	pthread_t pthread_decode;
+    struct client *cli;
+    rfb_format fmt;
 
-    rfb_request *req;
-	rfb_format fmt;
-	
-    char play_flag;
+    pthread_mutex_t mtx;
+    pthread_cond_t cond;
+
+    pthread_t pthread_decode;
 
     unsigned char frame_buf[1024 * 1024];
     int frame_pos;
     int frame_size;
     unsigned short current_count;
+
+	char play_flag;
+
 }rfb_display;
 
 

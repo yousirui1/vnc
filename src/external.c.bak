@@ -2,9 +2,6 @@
 #include "external.h"
 
 #ifdef _WIN32
-HWND hwnd = NULL;
-static stop_callback call_back;
-
 /*
 启动启动监控服务 （教师端调用）
 @param clientPort 
@@ -14,31 +11,35 @@ static stop_callback call_back;
 @param pageSize 图像质量0-100
 成功返回0, 否则返回对应错误号
 */
+
+HWND hwnd = NULL;
+static stop_callback call_back;
+
 CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
 {
 	init_logs();
 	server_flag = 1;
-	status = NORMAL;
 	client_port = clientPort;
 	control_port = controlPort;
 	h264_port = dataPort;
 	window_flag = winStyleFlag;
 	window_size = pageSize;
-	
-    if(!call || !dc || window_size <= 0 || window_size >5)
-    {
-        DEBUG("HDC or callback function is NULL!!");
-        return ERROR;
-    }
 
-    hwnd = WindowFromDC(dc);
+#if 0
+	if(!call || !dc)
+	{
+		DEBUG("HDC or callback function is NULL!!");
+		return ERROR;
+	}
+
+	hwnd = WindowFromDC(dc);
+#endif
 
     DEBUG("\nprograme server: \n client_port %d, control_port %d, h264_port %d, window_flag %d, window_size %d,",
                  client_port, control_port, h264_port, window_flag, window_size);
-    call_back = call;
-	
-	run_flag = 1;
-	return init_server();
+	call_back = call;
+	//init_server();
+	return 0;
 }
 
 /*
@@ -52,14 +53,11 @@ CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const in
 */
 CAPTUREANDCAST_API int StopMonitorServer()
 {
-	//DEBUG("StopMonitorServer end");
-	char s = 'S';
-	send_msg(pipe_event[1], &s, 1);
-	run_flag = 0;
-    DEBUG("recv sig stop programe !!");
-	exit_server();
+	DEBUG("StopMonitorServer end");
 	call_back = NULL;
 	hwnd = NULL;
+	//close_window();
+
 	close_logs();
 	return SUCCESS;
 }
@@ -67,16 +65,14 @@ CAPTUREANDCAST_API int StopMonitorServer()
 CAPTUREANDCAST_API int DisconnectAllClient()
 {
 	DEBUG("DisconnectAllClient");
-	return SUCCESS;		
+	return 0;		
 }
 
 
 CAPTUREANDCAST_API int ExitControl()
 {
-	switch_mode(0);
 	DEBUG("ExitControl");
-	sleep(1);
-	return SUCCESS;
+	return 0;
 }
 
 
@@ -94,12 +90,12 @@ CAPTUREANDCAST_API int StartMonitorClient(const char* serverIp, const int server
 {
 	init_logs();
 
-	server_ip = strdup(serverIp);	
-	server_port = serverPort;
+	//server_ip = strdup(serverIp);	
+	//server_port = serverPort;
 
-	DEBUG("\nprograme client: \n server_ip %s, server_port %d, window_flag %d, default_fps %d",
+    DEBUG("\nprograme client: \n server_ip %s, server_port %d, window_flag %d, default_fps %d",
                server_ip, server_port, window_flag, default_fps);
-	return init_client();
+	return SUCCESS;
 }
 
 /*
@@ -114,15 +110,7 @@ CAPTUREANDCAST_API int StartMonitorClient(const char* serverIp, const int server
 CAPTUREANDCAST_API int SetPageAttribute(const int pageIndex, const int pageSize, struct StudentInfo *info, const int length)
 {
 	DEBUG("SetPageAttribute pageIndex: %d pageSize: %d length %d", pageIndex, pageSize, length);
-
-	//close_display();
-	stop_display();
-	int i = 0;
-	for(i = 0; i < length; i++)
-	{
-		DEBUG("i: %d no: %d ip: %s name: %s", i, info[i].No, info[i].Name, info[i].Ip);
-	}
-    return SUCCESS;
+	return SUCCESS;
 }
 
 /*
@@ -147,4 +135,6 @@ void stop_server()
 		call_back();
 	call_back = NULL;
 }
-#endif	//_WIN32
+
+
+#endif

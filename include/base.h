@@ -55,8 +55,16 @@
 #define SUCCESS 0
 #define ERROR 	1
 
-#define LOG_DIR  "c://Users//Public//Documents//YZYEduClient"
-#define LOG_ERR_FILE "c://Users//Public//Documents//YZYEduClient//err.log"
+#ifdef _WIN32
+	#define LOG_DIR  "c://Users//Public//Documents//YZYEduClient//Log"
+	#define LOG_ERR_FILE "c://Users//Public//Documents//YZYEduClient//Log//remote_monitor_err.log"
+#else
+	#define LOG_DIR  "./log"
+	#define LOG_ERR_FILE "./log/remote_monitor_err.log"
+#endif
+
+#define TTF_DIR "c://font//msyh.ttf"
+
 
 #define MAX_FILENAMELEN 256
 /* config */
@@ -89,7 +97,7 @@
 #define DEFAULT_QUALITY_VALUE 60
 #define DEFAULT_FPS_VALUE 25
 
-#define DEFAULT_IP_VALUE "192.169.27.164"
+#define DEFAULT_IP_VALUE "192.169.27.243"
 #define DEFAULT_PORT_VALUE 22000
 
 /* sock */
@@ -113,10 +121,11 @@
 
 
 /* pthread level */
-#define SCHED_PRIORITY_TCP 1
-#define SCHED_PRIORITY_UDP 2
-#define SCHED_PRIORITY_DISPLAY 3
-#define SCHED_PRIORITY_THRIFT 4
+#define SCHED_PRIORITY_TCP 		5
+#define SCHED_PRIORITY_UDP 		4
+#define SCHED_PRIORITY_SDL 		3
+#define SCHED_PRIORITY_EVENT 	2
+#define SCHED_PRIORITY_CODE 	1
 
 
 /* packet */
@@ -178,9 +187,9 @@
 #define CLI_DONE_MSG            0x05
 #define CLI_DEAD_MSG            0x06
 
-#define SER_READY_MSG           0x01
-#define SER_PLAY_MSG            0x02
-#define SER_DONE_MSG            0x03
+#define SER_READY_MSG           0x07
+#define SER_PLAY_MSG            0x08
+#define SER_DONE_MSG            0x09
 
 
 

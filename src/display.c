@@ -12,7 +12,7 @@
 #endif
 
 #include "base.h"
-#include "frame.h"
+//#include "frame.h"
 
 int screen_width  = 0;
 int screen_height = 0;
@@ -44,141 +44,63 @@ static int area_id = -1;
 
 rfb_display *displays = NULL;
 rfb_display *control_display = NULL;
-pthread_mutex_t renderer_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t renderer_mutex;// = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t display_mutex;// = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t display_cond;// = PTHREAD_COND_INITIALIZER;
 
-/* 获取一个可写的Frame写入 */
-static Frame *frame_queue_peek_writable(FrameQueue *f)
+unsigned char **vids_buf;
+QUEUE *vids_queue;
+
+static int do_exit()
 {
-    SDL_LockMutex(f->mutex);
-    while(f->size >= f->max_size)               //没有可写入的
-    {
-        SDL_CondWait(f->cond, f->mutex);        //信号阻塞等待
-    }
+	int i ;
+	if(texture)
+		SDL_DestroyTexture(texture);
 
-    SDL_UnlockMutex(f->mutex);
+	if(full_texture)
+		SDL_DestroyTexture(full_texture);	
 
-    return &f->queue[f->windex];
+	if(ttf_texture)
+		SDL_DestroyTexture(ttf_texture);	
+		
+	if(font)
+		TTF_CloseFont(font);
+	
+	if(renderer)
+		SDL_DestroyRenderer(renderer);
+
+	if(window)
+		SDL_DestroyWindow(window);	
+	
+	memset(&rect, 0, sizeof(SDL_Rect));
+	memset(&full_rect, 0, sizeof(SDL_Rect));
+
+#ifndef _WIN32
+	if(dpy)
+		XCloseDisplay(dpy);
+	dpy = NULL;
+#endif
+	
+	area_id = -1;
+	screen_width = 0;
+	screen_height = 0;
+	vids_width = 0;
+	vids_height = 0;
+	
+	texture = NULL;
+	ttf_texture = NULL;
+	full_texture = NULL;
+	font = NULL;
+	renderer = NULL;
+	window = NULL;
+
+	/* 等待使用结束 */
+	pthread_mutex_destroy(&renderer_mutex);
+
+	TTF_Quit();
+	SDL_Quit();
+	DEBUG("sdl exit ok !!!!!!!!!!!!!");
 }
-
-
-static void frame_queue_push(FrameQueue *f)
-{
-    if(++f->windex == f->max_size)
-        f->windex = 0;
-    SDL_LockMutex(f->mutex);
-    f->size++;
-    SDL_CondSignal(f->cond);
-    SDL_UnlockMutex(f->mutex);
-}
-
-static void frame_queue_unref_item(Frame *vp)
-{
-    /* 重置AVFrame */
-    av_frame_unref(vp->frame);
-    avsubtitle_free(&vp->sub);
-}
-
-int frame_queue_init(FrameQueue *f, int max_size)
-{
-    int i = 0;;
-    memset(f, 0, sizeof(FrameQueue));
-    if (!(f->mutex = SDL_CreateMutex()))
-    {
-        DEBUG("SDL_CreateMutex(): %s", SDL_GetError());
-        return -1;
-    }
-
-    if(!(f->cond = SDL_CreateCond()))
-    {
-        DEBUG("SDL_CreateMutex(): %s", SDL_GetError());
-        return -1;
-    }
-    f->max_size = FFMIN(max_size, FRAME_QUEUE_SIZE);
-    for(i = 0; i < f->max_size; i++)
-    {
-        if (!(f->queue[i].frame = av_frame_alloc()))
-        {
-            return -1;
-        }
-    }
-    return 0;
-}
-
-void frame_queue_destroy(FrameQueue *f)
-{
-    int i = 0;
-    for(i = 0; i < f->max_size; i++)
-    {
-        Frame *vp = &f->queue[i];
-        frame_queue_unref_item(vp);
-        av_frame_free(&vp->frame);
-    }
-    SDL_DestroyMutex(f->mutex);
-    SDL_DestroyCond(f->cond);
-}
-
-static void frame_queue_signal(FrameQueue *f)
-{
-
-
-}
-
-/* 出当前的。因为f->rindex + f->rindex_shown可能会超过max_size,所以用了取余 */
-static Frame *frame_queue_peek(FrameQueue *f)
-{
-    return &f->queue[(f->rindex + f->rindex_shown) % f->max_size];
-}
-
-/* 用于在显示之前。判断队列中，是否还存在下一个，队列阻塞会导致*/
-static Frame *frame_queue_peek_next(FrameQueue *f)
-{
-    return &f->queue[(f->rindex + f->rindex_shown + 1) % f->max_size];
-}
-
-/* 不阻塞读取数据 */
-static Frame *frame_queue_peek_last(FrameQueue *f)
-{
-    return &f->queue[f->rindex];
-}
-
-/* 获取一个可读的Frame读入 */
-static Frame *frame_queue_peek_readable(FrameQueue *f)
-{
-    SDL_LockMutex(f->mutex);
-    while(f->size - f->rindex_shown <= 0)       //没有可读入的
-    {
-        SDL_CondWait(f->cond, f->mutex);        //信号阻塞等待
-    }
-
-    SDL_UnlockMutex(f->mutex);
-
-    return &f->queue[(f->rindex + f->rindex_shown) % f->max_size];
-}
-
-static void frame_queue_pop(FrameQueue *f)
-{
-    if(!f->rindex_shown)
-    {
-        f->rindex_shown = 1;
-        return;
-    }
-    frame_queue_unref_item(&f->queue[f->rindex]);
-    if(++f->rindex == f->max_size)
-        f->rindex = 0;
-    SDL_LockMutex(f->mutex);
-    f->size--;
-    SDL_CondSignal(f->cond);
-    SDL_UnlockMutex(f->mutex);
-
-}
-
-/* 返回还未显示的数量 */
-static int frame_queue_nb_remaining(FrameQueue *f)
-{
-    return f->size - f->rindex_shown;
-}
-
-
 
 static void send_control(char *data, int data_len, int cmd)
 {
@@ -191,9 +113,9 @@ static void send_control(char *data, int data_len, int cmd)
 	char *tmp = &buf[HEAD_LEN];
 	set_request_head(buf, 0, cmd, data_len);	
 	memcpy(tmp, data, data_len);
-	sendto(control_display->req->control_udp.fd, buf,  data_len + HEAD_LEN, 0,
-                    (struct  sockaddr *)&(control_display->req->control_udp.send_addr),
-                    sizeof (control_display->req->control_udp.send_addr));
+	sendto(control_display->cli->control_udp.fd, buf,  data_len + HEAD_LEN, 0,
+                    (struct  sockaddr *)&(control_display->cli->control_udp.send_addr),
+                    sizeof (control_display->cli->control_udp.send_addr));
 	free(buf);
 }
 #ifdef _WIN32
@@ -245,7 +167,6 @@ static void simulate_keyboard(rfb_keyevent *key)
 	{
 		key->key -= 32;
 	}
-
 	/* F1-F12 */
 	else if(key->key >= 1073741882 && key->key <=1073741893 )
 	{
@@ -256,7 +177,6 @@ static void simulate_keyboard(rfb_keyevent *key)
 	{
 		key->key -= 1073741864;
 	}
-
 	else
 	{
 		switch(key->key)
@@ -581,11 +501,13 @@ static void simulate_keyboard(rfb_keyevent *key)
 				break;
 		}
 	}	
-
 	XTestFakeKeyEvent(dpy, XKeysymToKeycode(dpy, key->key), key->down, 0L);
     XFlush(dpy);    
 }
 #endif
+
+
+
 
 int init_X11()
 {
@@ -596,13 +518,15 @@ int init_X11()
         return ERROR;
     }
 #endif
+	return SUCCESS;
 }
 
 void close_X11()
 {
 #ifndef _WIN32
-    if(dpy)
-      XCloseDisplay(dpy);
+	if(dpy)
+    	XCloseDisplay(dpy);
+	dpy = NULL;
 #endif
 }
 
@@ -618,8 +542,8 @@ int get_screen_size(int *temp_w, int *temp_h)
     int id;
     Window root;
 
-	if(!dpy)
-		return ERROR;
+    if(!dpy)
+        return ERROR;
 
     id = DefaultScreen(dpy);
     if(!(root = XRootWindow(dpy, id)))
@@ -641,64 +565,67 @@ int get_screen_size(int *temp_w, int *temp_h)
 }
 
 
-
-static void do_exit()
-{
-	char stop = 'S';
-	DEBUG("do_exit display");
-	send_msg(pipe_event[1], &stop, 1);	
-
-    if(renderer)
-        SDL_DestroyRenderer(renderer);
-
-    if(texture)
-        SDL_DestroyTexture(texture);
-
-    if(full_texture)
-        SDL_DestroyTexture(full_texture);
-
-    if(window)
-        SDL_DestroyWindow(window);
-
-    if(displays)
-        free(displays);
-
-#ifndef _WIN32
-    if(dpy)
-        XCloseDisplay(dpy);
-	dpy = NULL;
-#endif
-
-    control_display = NULL;
-    displays = NULL;
-    window = NULL;
-    renderer = NULL;
-    full_texture = NULL;
-    texture = NULL;
-
-    SDL_Quit();
-    DEBUG("destroy_display end");
-}
-
-
 static int get_area(int x, int y)
 {
-	return ((x/vids_width) + (y/vids_height) * window_size);
+    return ((x/vids_width) + (y/vids_height) * window_size);
 }
 
-void hide_window()
+
+void sdl_text_show(char *buf, SDL_Rect *rect)
 {
-	if(!window)
-        return
-    SDL_HideWindow(window);
+    SDL_Color color = {255, 255, 255};
+    /*
+     * Solid  渲染的最快，但效果最差，文字不平滑，是单色文字，不带边框。
+  　 * Shaded 比Solid渲染的慢，但显示效果好于Solid，带阴影。
+　　 * Blend 渲染最慢，但显示效果最好。
+     */
+    SDL_Surface *surface = TTF_RenderUTF8_Solid(font, buf, color);
+	if(ttf_texture)
+		SDL_DestroyTexture(ttf_texture);
+    ttf_texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_Rect ttf_rect;
+    ttf_rect.x = rect->x + (vids_width / 2) - (surface->w / 2);
+    ttf_rect.y = rect->y + vids_height - (surface->h * 1.2);
+    ttf_rect.w = surface->w;
+    ttf_rect.h = surface->h;
+
+    SDL_BlitSurface(surface, NULL, window, &ttf_rect);
+    SDL_RenderCopy(renderer, ttf_texture, NULL, &ttf_rect);
+    SDL_RenderPresent(renderer);
+
+	SDL_FreeSurface(surface);
 }
 
-void show_window()
+void sdl_text_clear()
 {
-	if(!window)
-		return;
 
-	SDL_ShowWindow(window);		
+}
+
+void update_texture(AVFrame *frame_yuv, SDL_Rect *rect)
+{
+    if(!texture || !renderer || !full_texture || !frame_yuv)
+        return;
+    pthread_mutex_lock(&renderer_mutex);
+    if(!rect)                               //全屏更新
+    {
+        SDL_UpdateYUVTexture(full_texture, NULL,
+        frame_yuv->data[0], frame_yuv->linesize[0],
+        frame_yuv->data[1], frame_yuv->linesize[1],
+        frame_yuv->data[2], frame_yuv->linesize[2]);
+
+        SDL_RenderCopy(renderer, full_texture, NULL, &full_rect);
+    }
+    else                                    //局部更新
+    {
+        SDL_UpdateYUVTexture(texture, NULL,
+            frame_yuv->data[0], frame_yuv->linesize[0],
+            frame_yuv->data[1], frame_yuv->linesize[1],
+            frame_yuv->data[2], frame_yuv->linesize[2]);
+
+        SDL_RenderCopy(renderer, texture, NULL, rect);
+    }
+    SDL_RenderPresent(renderer);
+    pthread_mutex_unlock(&renderer_mutex);
 }
 
 void clear_texture()
@@ -709,118 +636,43 @@ void clear_texture()
     pthread_mutex_unlock(&renderer_mutex);
 }
 
-int realloc_texture(int init, int align16)
+
+void switch_mode(int id)
 {
-    void *pixels = NULL;
-    int pitch = 0;
-
-    pthread_mutex_lock(&renderer_mutex);
-    if(texture)
-        SDL_DestroyTexture(texture);
-    /* 16字节对齐 硬件解码必须对齐 */
-    if(align16)
+    if(status == PLAY)
     {
-        screen_width = FFALIGN(screen_width, 16);
-        screen_height = FFALIGN(screen_height, 16);
-
-        texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
+        DEBUG(" switch CONTROL status");
+        status = CONTROL;
+        stop_display();
+        start_control(id);
     }
-    else
+    else if(status == CONTROL)
     {
-        texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
+        DEBUG(" switch PLAY status");
+        status = PLAY;
+        stop_control();
+        start_display();
     }
-
-    rect.x = 0;
-    rect.y = 0;
-    rect.w = screen_width;
-    rect.h = screen_height;
-
-    if(init)
-    {
-        if(SDL_LockTexture(texture, NULL, &pixels, &pitch) < 0)
-            return -1;
-        memset(pixels, 0, pitch * screen_height);
-        SDL_UnlockTexture(texture);
-    }
-
-    pthread_mutex_unlock(&renderer_mutex);
-    return;
 }
 
-
-
-void update_frame(AVFrame *frame_yuv)
+void control_msg(char *buf)
 {
-	Frame *vp = NULL;
-
-   //vp = frame_queue_peek_writable(&frame_queue);
-   vp->width = frame_yuv->width;
-   vp->height = frame_yuv->height;
-   vp->format = frame_yuv->format;
-
-   //av_frame_clone
-   //av_frame_copy(vp->frame, frame_yuv);
-   //vp->frame = av_frame_clone(frame_yuv);
-   av_frame_move_ref(vp->frame, frame_yuv);
-   //frame_queue_push(&frame_queue);
-   vp = NULL;
-}
-
-
-void update_texture(AVFrame *frame_yuv, SDL_Rect *rect)
-{
-    if(!texture || !renderer || !full_texture || !frame_yuv)
-        return;
-    pthread_mutex_lock(&renderer_mutex);
-    if(!rect)								//全屏更新
+    switch(read_msg_order(buf))
     {
-        SDL_UpdateYUVTexture(full_texture, NULL,
-        frame_yuv->data[0], frame_yuv->linesize[0],
-        frame_yuv->data[1], frame_yuv->linesize[1],
-        frame_yuv->data[2], frame_yuv->linesize[2]);
-
-        SDL_RenderCopy(renderer, full_texture, NULL, &full_rect);
+        case MOUSE:
+            simulate_mouse((rfb_pointevent *)&(buf[HEAD_LEN]));
+            break;
+        case KEYBOARD:
+            simulate_keyboard((rfb_keyevent *)&(buf[HEAD_LEN]));
+            break;
+        case COPY_TEXT:
+            break;
+        case COPY_FILE:
+            break;
     }
-    else									//局部更新
-    {
-        SDL_UpdateYUVTexture(texture, NULL,
-            frame_yuv->data[0], frame_yuv->linesize[0],
-            frame_yuv->data[1], frame_yuv->linesize[1],
-            frame_yuv->data[2], frame_yuv->linesize[2]);
-
-        SDL_RenderCopy(renderer, texture, NULL, rect);
-    }
-	
-	
-    SDL_RenderPresent(renderer);
-    pthread_mutex_unlock(&renderer_mutex);
 }
 
-void sdl_text_show(char *buf, SDL_Rect *rect)
-{
-	SDL_Color color = {255, 255, 255};
-    /*
-     * Solid  渲染的最快，但效果最差，文字不平滑，是单色文字，不带边框。
-  　 * Shaded 比Solid渲染的慢，但显示效果好于Solid，带阴影。
-　　 * Blend 渲染最慢，但显示效果最好。
-     */
-    SDL_Surface *surface = TTF_RenderUTF8_Solid(font, buf, color);
-	ttf_texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_Rect ttf_rect;
-	ttf_rect.x = rect->x + (vids_width / 2) - (surface->w / 2);
-	ttf_rect.y = rect->y + vids_height - (surface->h * 1.2);
-	ttf_rect.w = surface->w;
-	ttf_rect.h = surface->h;
-
-	SDL_BlitSurface(surface, NULL, window, &ttf_rect);
-	SDL_RenderCopy(renderer, ttf_texture, NULL, &ttf_rect);
-    SDL_RenderPresent(renderer);
-}
-
-void sdl_text_clear()
-{
-
-}
+int run_flag = 0;
 
 static void refresh_loop_wait_event(SDL_Event *event)
 {
@@ -828,47 +680,9 @@ static void refresh_loop_wait_event(SDL_Event *event)
     SDL_PumpEvents();
     while (!SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) && run_flag)
     {
-		usleep(200000);
-		//DEBUG("refresh_loop_wait_event");
+        usleep(200000);
         SDL_PumpEvents();
     }
-}
-
-void switch_mode(int id)
-{
-	DEBUG("switch_mode %d", id);
-	if(status == PLAY)
-	{
-		DEBUG(" switch CONTROL status");
-		status = CONTROL;
-		stop_display();
-		start_control(id);
-	}
-	else if(status == CONTROL)
-	{
-		DEBUG(" switch PLAY status");
-		status = PLAY;
-		stop_control();
-		start_display();
-	}
-	//DEBUG("++++++++++++pthread_count%d ++++++++++++++++++++", pthread_count);
-}
-
-void control_msg(char *buf)
-{
-	switch(read_msg_order(buf))
-	{
-		case MOUSE:
-			simulate_mouse((rfb_pointevent *)&(buf[HEAD_LEN]));
-			break;
-		case KEYBOARD:
-			simulate_keyboard((rfb_keyevent *)&(buf[HEAD_LEN]));
-			break;
-		case COPY_TEXT:
-			break;
-		case COPY_FILE:
-			break;
-	}
 }
 
 void sdl_loop()
@@ -878,8 +692,8 @@ void sdl_loop()
 	rfb_keyevent key = {0};
 	short old_x = 0;
 	short old_y = 0;	
-	time_t last_time = current_time;
 		
+	time_t last_time = current_time;
 	while(run_flag)
 	{
 		refresh_loop_wait_event(&event);
@@ -903,6 +717,7 @@ void sdl_loop()
 					area_id = -1;
 					last_time = current_time;
 				}
+	
 				if(area_id == get_area(event.motion.x, event.motion.y))
 				{
 					switch_mode(area_id);
@@ -945,12 +760,6 @@ void sdl_loop()
             key.mod = event.key.keysym.mod; //*(SDL_GetKeyName(event.key.keysym.sym));
             key.down = 1;
             send_control((char *)&key, sizeof(rfb_keyevent), KEYBOARD);
-			//if(event.key.keysym.sym == SDLK_UP)
-			if(event.key.keysym.sym == SDLK_ESCAPE)
-            {
-                DEBUG("end control");
-                switch_mode(0);
-            }	
 		}	
 		if(SDL_KEYUP == event.type)
 		{
@@ -961,86 +770,100 @@ void sdl_loop()
 		}
 		if(SDL_QUIT == event.type)
 		{
-			//run_flag = 0;
+			run_flag = 0;
 #ifdef _WIN32
 			stop_server();		//通过callback 返回给dll
 #endif
-			do_exit();
-			break;
 		}
 	}	
 	DEBUG("event_loop end");
+	do_exit();
 }
-
+	
 
 int init_display()
 {
-	int i, j ,ret, id;
-
-	vids_width = screen_width / window_size;
+	int i, ret, x = 0, y = 0;
+    vids_width = screen_width / window_size;
     vids_height = screen_height / window_size;
-
-	vids_queue = (QUEUE *)malloc(sizeof(QUEUE) * (display_size + 1));
+	display_size = window_size * window_size;
+    vids_queue = (QUEUE *)malloc(sizeof(QUEUE) * (display_size + 1));
     vids_buf = (unsigned char **)malloc(display_size  * sizeof(unsigned char *));
 
     displays = (rfb_display *)malloc(sizeof(rfb_display) * (display_size + 1));
-	
-	/* 局部画板 */
-	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, vids_width, vids_height);
 
-	/* 全局画板 */
-	full_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
+    /* 局部画板 */
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, vids_width, vids_height);
 
-	if(!vids_queue||!vids_buf||!displays||!texture||!full_texture)
-	{
-		DEBUG("display_size: %d malloc vids_queue vids_buf texture full_texture and displays one error :%s",
+    /* 全局画板 */
+    full_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height);
+
+    if(!vids_queue||!vids_buf||!displays||!texture||!full_texture)
+    {
+        DEBUG("display_size: %d malloc vids_queue vids_buf texture full_texture and displays one error :%s",
                 display_size, strerror(errno));
         goto run_out;
-	}
-    memset(displays, 0, sizeof(rfb_display) * (display_size + 1));
+    }
+	memset(displays, 0, sizeof(rfb_display) * (display_size + 1));
+	DEBUG("init display malloc OK!");
 
-	int x = 0, y = 0;
-	for(i = 0; i <= display_size ; i++)
+	pthread_mutex_init(&renderer_mutex, NULL);
+
+	for(i = 0; i <= display_size; i++)
 	{
         displays[i].id = i;
-		x = i % window_size;
-		y = i / window_size;
-				
-		DEBUG("x = %d y = %d ", x, y);
+        x = i % window_size;
+        y = i / window_size;
+
+        DEBUG("x = %d y = %d ", x, y);
         displays[i].rect.x = x * vids_width;
         displays[i].rect.y = y * vids_height;
         displays[i].rect.w = vids_width;
         displays[i].rect.h = vids_height;
-	
-		pthread_mutex_init(&displays[i].mtx,NULL);
+
+        pthread_mutex_init(&displays[i].mtx,NULL);
         pthread_cond_init(&displays[i].cond, NULL);
 
         vids_buf[i] = (unsigned char *)malloc(MAX_VIDSBUFSIZE * sizeof(unsigned char));
-		if(!vids_buf[i])
-		{
+        if(!vids_buf[i])
+        {
             DEBUG("vids_buf malloc sizeof: %d error: %s", MAX_VIDSBUFSIZE * sizeof(unsigned char),
                     strerror(errno));
             goto run_out;
 
-		}
+        }
         memset(vids_buf[i], 0, MAX_VIDSBUFSIZE);
         /* 创建窗口的对应队列 */
         init_queue(&(vids_queue[i]), vids_buf[i], MAX_VIDSBUFSIZE);
-	}
+	}	
 
-	control_display = &displays[display_size];
-	control_display->rect.x = screen_width;;
+    control_display = &displays[display_size];
+    control_display->rect.x = screen_width;;
     control_display->rect.y = screen_height;
     control_display->rect.w = 0;
     control_display->rect.h = 0;
 
-	clear_texture();
-	status = PLAY;
-	DEBUG("init display end");
-	return SUCCESS;
+
+	DEBUG("init display param init OK!");
+	pthread_mutex_lock(&display_mutex);
+	pthread_cond_signal(&display_cond);
+	pthread_mutex_unlock(&display_mutex);
+
+	DEBUG("init display signal OK!");
+    clear_texture();
+    status = PLAY;
+    DEBUG("init display end");
+
+    return SUCCESS;
 run_out:
-	if(vids_queue)
+    if(vids_queue)
         free(vids_queue);
+	for(i = 0; i<= display_size; i++)
+	{
+		if(vids_buf[i])
+			free(vids_buf[i]);
+		vids_buf[i] = NULL;
+	}
     if(vids_buf)
         free(vids_buf);
     if(displays)
@@ -1049,10 +872,40 @@ run_out:
         SDL_DestroyTexture(texture);
     if(full_texture)
         SDL_DestroyTexture(full_texture);
+	vids_queue = NULL;	
+	vids_buf = NULL;
+	displays = NULL;
+	texture = NULL;
+	full_texture = NULL;
+	control_display = NULL;
+
+	//pthread_en();  发送sig
     return ERROR;
 }
 
-int create_display()
+void hide_window()
+{
+    if(!window)
+        return
+    SDL_HideWindow(window);
+}
+
+void show_window()
+{
+    if(!window)
+        return;
+
+    SDL_ShowWindow(window);
+}
+
+void close_window()
+{
+	char stop = 'S';
+	send_msg(pipe_event[1], &stop, 1);
+	do_exit();
+}
+
+int create_window()
 {
     int flags;
     flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
@@ -1074,33 +927,23 @@ int create_display()
         DEBUG("Could not initialize SDL - %s", SDL_GetError());
         goto run_out;
     }
-
     if(TTF_Init() == -1)
     {
         DEBUG("SDL_ttf Init error: %s", SDL_GetError());
         goto run_out;
     }
-
-    font = TTF_OpenFont("../font/msyh.ttf", 16);
+    font = TTF_OpenFont(TTF_DIR, 16);
     if(!font)
     {
-        DEBUG("SDL_ttf open ttf dir: %s error", "../font/msyh.ttf");
+        DEBUG("SDL_ttf open ttf dir: %s error", TTF_DIR);
         goto run_out;
     }
-    SDL_Color color = {255, 255, 255};
-    /*
-     * Solid  渲染的最快，但效果最差，文字不平滑，是单色文字，不带边框。
-  　 * Shaded 比Solid渲染的慢，但显示效果好于Solid，带阴影。
-　　 * Blend 渲染最慢，但显示效果最好。
-     */
-    SDL_Surface *surface = TTF_RenderUTF8_Solid(font, "", color);
 
     SDL_EventState(SDL_SYSWMEVENT, SDL_IGNORE);
     SDL_EventState(SDL_USEREVENT, SDL_IGNORE);
 
     if(!display_disable)
     {
-        DEBUG("create window ");
         int flags = SDL_WINDOW_SHOWN;  //SDL_WINDOW_SHOWN SDL_WINDOW_HIDDEN
         if(borderless)                  //无边框
             flags |= SDL_WINDOW_BORDERLESS;
@@ -1144,7 +987,7 @@ int create_display()
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
         if(window)
         {
-     		//renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+     		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
             if(!renderer)
             {
                 DEBUG("Failed to initialize a hardware accelerated renderer: %s", SDL_GetError());
@@ -1154,7 +997,6 @@ int create_display()
             {
                 if (!SDL_GetRendererInfo(renderer, &renderer_info))
                     DEBUG("Initialized %s renderer.", renderer_info.name);
-				ttf_texture = SDL_CreateTextureFromSurface(renderer, surface);
             }
         }
         if(!window || !renderer || !renderer_info.num_texture_formats)
@@ -1163,13 +1005,15 @@ int create_display()
 			goto run_out;
         }
     }
+	DEBUG("create SDL window ok !");
 	return SUCCESS;
 run_out:
 	do_exit();	
 	return ERROR;
 }
 
-void *thread_display(void *param)
+/* 服务端关闭从这个线程开始 */
+void *thread_sdl(void *param)
 {
     int ret;
     pthread_attr_t st_attr;
@@ -1178,15 +1022,32 @@ void *thread_display(void *param)
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {
-        DEBUG("ThreadMain attr init error ");
+        DEBUG("Thread SDL attr init error ");
     }
     ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
     if(ret)
     {
-        DEBUG("ThreadMain set SCHED_FIFO error");
+        DEBUG("Thread SDL set SCHED_FIFO error");
     }
-    sched.sched_priority = SCHED_PRIORITY_THRIFT;
+    sched.sched_priority = SCHED_PRIORITY_SDL;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
+	
+	ret = create_window();
+	if(SUCCESS != ret)
+	{
+		DEBUG("create SDL window error");
+		goto run_out;
+	}
+	ret = init_display();
+	if(SUCCESS != ret)
+	{
+		DEBUG("init display error");
+		goto run_out;
+	}
     sdl_loop();
-    return (void *)0;
+    return (void *)ret;
+
+run_out:
+	close_window();
+    return (void *)ret;
 }

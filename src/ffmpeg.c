@@ -17,24 +17,31 @@ void clean_encode(void *arg)
         return;
 	}
 
+	DEBUG("clean_encode param memory");
     if(out->img_convert_ctx)
         sws_freeContext(out->img_convert_ctx);
+	DEBUG("clean_encode param memory");
     if(out->out_buffer)
         av_free(out->out_buffer);
+	DEBUG("clean_encode param memory");
     if(out->frame_yuv)
         av_free(out->frame_yuv);
+	DEBUG("clean_encode param memory");
     if(out->frame)
         av_free(out->frame);
-    if(out->codec_ctx)
-        avcodec_close(out->codec_ctx);
+	DEBUG("clean_encode param memory");
     if(out->h264codec_ctx)
-        avcodec_close(out->h264codec_ctx);
+       	avcodec_close(out->h264codec_ctx);
+	DEBUG("clean_encode param memory");
+    if(out->codec_ctx)
+		avcodec_close(out->codec_ctx);
+	DEBUG("clean_encode param memory");
     if(out->format_ctx)
         avformat_close_input(&(out->format_ctx));
+	DEBUG("clean_encode param memory");
     if(out->packet)
         av_free_packet(out->packet);
-    if(out->out_buffer)
-        av_free(out->out_buffer);
+	DEBUG("clean_encode param memory");
 
 	out->img_convert_ctx = NULL;
 	out->out_buffer = NULL;
@@ -47,6 +54,8 @@ void clean_encode(void *arg)
 
 	out = NULL;
 	arg = NULL;
+	DEBUG("clean encode thread end");
+	return;
 }
 
 void ffmpeg_encode(rfb_format *fmt)
@@ -121,7 +130,7 @@ void ffmpeg_encode(rfb_format *fmt)
     codec=avcodec_find_decoder(codec_ctx->codec_id);
 
 	codec_ctx->thread_count = 4;
-	codec_ctx->thread_type = 2;
+	codec_ctx->thread_type = 1;
 
     if(codec==NULL)
     {
@@ -182,7 +191,7 @@ void ffmpeg_encode(rfb_format *fmt)
     h264codec_ctx->qmax = 51;
     h264codec_ctx->max_b_frames = 0;
 	h264codec_ctx->thread_count = 4;
-    h264codec_ctx->thread_type = 2;
+    h264codec_ctx->thread_type = 1;
 
     if (h264codec_ctx->flags & AVFMT_GLOBALHEADER)
         h264codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -231,7 +240,7 @@ void ffmpeg_encode(rfb_format *fmt)
                 {
                      DEBUG("Failed to encode!");
                 }
-                h264_send_data((char *)packet->data, packet->size, frame->key_frame);
+                h264_send_data((char *)packet->data, packet->size, cli_display.h264_udp);
             }
         }
         av_free_packet(packet);
@@ -373,7 +382,7 @@ void ffmpeg_decode(rfb_display *vid)
     {
 		if(empty_queue(&vids_queue[vid->id]))
 	    {
-			//pthread_cond_wait(&(vid->cond), &(vid->mtx));
+			//pthread_cond_wait(&(vid->cond), &(vid->mtx));		//线程销毁会被阻塞
 			usleep(200);
 	        continue;
 	    }
@@ -390,7 +399,7 @@ void ffmpeg_decode(rfb_display *vid)
 			else
        			update_texture(frame, &(vid->rect));
         }
-		sdl_text_show(vid->req->ip, &(vid->rect));
+		sdl_text_show(vid->cli->ip, &(vid->rect));
 		av_packet_unref(&packet);
 		//pthread_testcancel();		//线程取消点。延迟释放模式使用
     }

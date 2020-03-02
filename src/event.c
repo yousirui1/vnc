@@ -1,114 +1,151 @@
 #include "base.h"
-#include "msg.h"
 
 static pthread_t pthread_cli_udp, pthread_cli_encode;
 
 static void do_exit()
 {
-	int i;
+	int i = 0;
 	void *tret = NULL;
-	if(!server_flag)
+	if(server_flag)
 	{
-		pthread_cancel(pthread_cli_udp);
-        pthread_cancel(pthread_cli_encode);
-        pthread_join(pthread_cli_udp, &tret);
-        pthread_join(pthread_cli_encode, &tret);
-	}
-	else
-	{
+		pthread_cond_wait(&display_mutex, &display_cond);
 		for(i = 0; i <= display_size; i++)
 		{
 			pthread_cancel(displays[i].pthread_decode);
-			pthread_join(displays[i].pthread_decode, &tret);
-		}	
+            pthread_join(displays[i].pthread_decode, &tret);
+			pthread_mutex_destroy(&displays[i].mtx);
+    		pthread_cond_destroy(&displays[i].cond);
+			DEBUG("server thread vids_buf free 11111111111111111111111111111");
+			if(vids_buf[i])
+            	free(vids_buf[i]);
+			if(displays[i].h264_udp.fd)
+				close_fd(displays[i].h264_udp.fd);
+			vids_buf[i] = NULL;
+		}
+		DEBUG("server thread vids_buf free 22222222222222222222222");
+    	if(displays)
+        	free(displays);
+		if(vids_queue)
+			free(vids_queue);
+		if(vids_buf)
+			free(vids_buf);
+    	displays = NULL;
+		vids_buf = NULL;
+		vids_queue = NULL;
+		pthread_mutex_destroy(&display_mutex);
+    	pthread_cond_destroy(&display_cond);
 	}
+	else
+	{
+        pthread_cancel(pthread_cli_udp);
+        pthread_cancel(pthread_cli_encode);
+        pthread_join(pthread_cli_udp, &tret);
+        pthread_join(pthread_cli_encode, &tret);
+		DEBUG("udp socket %d", cli_display.h264_udp.fd);
+		close_fd(cli_display.h264_udp.fd);
+	}	
+	DEBUG("thread event end !!");
 }
 
-static int send_pipe(char *buf, short cmd, int size, int msg_type)
+static int send_pipe(char *buf, short cmd, int size)
 {
 	int ret = ERROR;
 	set_request_head(buf, 0x0, cmd, size);
-	switch(msg_type)
-	{
-		case CLIENT_MSG:
-			ret = send_msg(pipe_cli[1], buf, size + HEAD_LEN);
-			break;
-		case SERVER_MSG:
-			ret = send_msg(pipe_cli[1], buf, size + HEAD_LEN);
-			break;
-		default:
-			break;
-	}
+	ret = send_msg(pipe_tcp[1], buf, size + HEAD_LEN);
 	return ret;
 }
 
-static int process_ser(char *msg)
+static int process_udp(char *msg)
+{
+
+}
+
+static int process_tcp(char *msg)
 {
 	int ret = ERROR;
-	int index =  *(int *)&msg[HEAD_LEN];
 	void *tret = NULL;
-	
-	if(index < 0 || index > display_size)
-		return ERROR;
-			
+	int index;
 	switch(read_msg_order(msg))
 	{
-		case SER_PLAY_MSG:				//创建解码线程
-			ret = pthread_create(&displays[index].pthread_decode, NULL, thread_decode, &displays[index]);	
-			break;	
-		case SER_DONE_MSG:				//断开连接 销毁解码线程
-			DEBUG("SER_DONE_MSG !!!!!!!!!!!");
+		case SER_PLAY_MSG:
+		{
+			index = *(int *)&msg[HEAD_LEN];
+			if(index < 0 || index > display_size || !displays)
+				break;
+			ret = pthread_create(&displays[index].pthread_decode, NULL, thread_decode, &displays[index]);
+			break;
+		}
+		case SER_DONE_MSG:
+		{
+			index = *(int *)&msg[HEAD_LEN];
+			if(index < 0 || index > display_size || !displays)
+				break;
+			DEBUG("SER_DONE_MSG %d index", index);
 			pthread_cancel(displays[index].pthread_decode);
+			
 			pthread_join(displays[index].pthread_decode, &tret);
-			break;	
+			DEBUG("server decode thread exit");
+			break;
+		}
+
+		case CLI_UDP_MSG:
+		{
+			break;
+		}
+		case CLI_PLAY_MSG:
+		{
+			DEBUG("CLI_PLAY_MSG");
+    		cli_display.h264_udp = create_udp(server_ip, cli_display.fmt.data_port);
+			ret = pthread_create(&pthread_cli_encode, NULL, thread_encode, &cli_display.fmt);
+			ret = pthread_create(&pthread_cli_udp, NULL, thread_client_udp, &cli_display.fmt.data_port);			
+			break;
+		} 
+		case CLI_CONTROL_MSG:
+		{
+			ret = pthread_create(&pthread_cli_udp, NULL, thread_client_udp, &cli_display.fmt.data_port);			
+			break;
+		} 
+		case CLI_DONE_MSG:
+		{
+			DEBUG("CLI_DONE_MSG exit start ----------");
+        	pthread_cancel(pthread_cli_udp);
+        	pthread_cancel(pthread_cli_encode);
+			DEBUG("CLI_DONE_MSG exit middle ===========");
+        	pthread_join(pthread_cli_encode, &tret);
+			DEBUG("CLI_DONE_MSG encode exit end +++++");
+        	pthread_join(pthread_cli_udp, &tret);
+			DEBUG("CLI_DONE_MSG udp exit end +++++");
+			close_fd(cli_display.h264_udp.fd);
+			DEBUG("close cli_display.h264_udp.fd %d", cli_display.h264_udp.fd);
+			break;
+		} 
 		default:
 			break;
 	}
 	return ret;
 }
 
-static int process_cli(char *msg)
-{
-	int ret = ERROR;
-	void *tret = NULL;
-	switch(read_msg_order(msg))
-	{
-		case CLI_PLAY_MSG:
-			ret = pthread_create(&pthread_cli_udp, NULL, thread_client_udp, &cli_display.fmt.data_port);
-			ret = pthread_create(&pthread_cli_encode, NULL, thread_encode, &cli_display.fmt);
-			break;
-		case CLI_DONE_MSG:
-			pthread_cancel(pthread_cli_udp);
-            pthread_cancel(pthread_cli_encode);
-            pthread_join(pthread_cli_udp, &tret);
-            pthread_join(pthread_cli_encode, &tret);
-			break;
-		default:
-			break;
-	}	
-	return ret;
-}
-
-/* 线程的创建和检测释放 */
 void event_loop()
 {
 	int maxfd = 0, ret, nready;
 	struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
 	
 	fd_set reset, allset;
-	
-	FD_ZERO(&allset);
-    FD_SET(pipe_ser[1], &allset);
-    FD_SET(pipe_cli[1], &allset);
+
+    FD_ZERO(&allset);
+    FD_SET(pipe_tcp[1], &allset);
+    FD_SET(pipe_udp[1], &allset);
     FD_SET(pipe_event[0], &allset);
 
-    maxfd = maxfd > pipe_ser[1] ? maxfd : pipe_ser[1];
-    maxfd = maxfd > pipe_cli[1] ? maxfd : pipe_cli[1];
+    maxfd = maxfd > pipe_tcp[1] ? maxfd : pipe_tcp[1];
+    maxfd = maxfd > pipe_udp[1] ? maxfd : pipe_udp[1];
     maxfd = maxfd > pipe_event[0] ? maxfd : pipe_event[0];
 	
 	char buf[DATA_SIZE] = {0};
 	char *tmp = &buf[HEAD_LEN];
-	
+
 	for(;;)
 	{
         reset = allset;
@@ -125,24 +162,26 @@ void event_loop()
                 DEBUG("select error: %s", strerror(errno));
             }
         }
-		/* pipe msg */
-        if(FD_ISSET(pipe_ser[1], &reset))
+		nready = ret;
+
+        /* pipe msg */
+        if(FD_ISSET(pipe_tcp[1], &reset))
         {
-            ret = recv(pipe_ser[1], (void *)buf, sizeof(buf), 0);
+            ret = recv(pipe_tcp[1], (void *)buf, sizeof(buf), 0);
             if(ret >= HEAD_LEN)
             {
-                process_ser(buf);
+                process_tcp(buf);
             }
             if(--nready <= 0)
                 continue;
         }
-		
-		if(FD_ISSET(pipe_cli[1], &reset))
+
+        if(FD_ISSET(pipe_udp[1], &reset))
         {
-            ret = recv(pipe_cli[1], (void *)buf, sizeof(buf), 0);
+            ret = recv(pipe_udp[1], (void *)buf, sizeof(buf), 0);
             if(ret >= HEAD_LEN)
             {
-                process_cli(buf);
+                process_udp(buf);
             }
             if(--nready <= 0)
                 continue;
@@ -155,10 +194,9 @@ void event_loop()
             {
                 if(buf[0] == 'S')
                 {
-                    DEBUG("event thread end");
                     /* 通知其他线程关闭 */
-                    send_msg(pipe_cli[1], &buf[0], 1);
-                    send_msg(pipe_ser[1], &buf[0], 1);
+                    send_msg(pipe_tcp[1], &buf[0], 1);
+                    send_msg(pipe_udp[1], &buf[0], 1);
                     break;
                 }
             }
@@ -171,10 +209,10 @@ void event_loop()
 
 void *thread_event(void *param)
 {
-	int ret;
-	pthread_attr_t st_attr;
-	struct sched_param sched;
-	
+    int ret;
+    pthread_attr_t st_attr;
+    struct sched_param sched;
+
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {
@@ -185,9 +223,10 @@ void *thread_event(void *param)
     {
         DEBUG("Thread Event set SCHED_FIFO error");
     }
-    sched.sched_priority = SCHED_PRIORITY_THRIFT;
+    sched.sched_priority = SCHED_PRIORITY_EVENT;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
     event_loop();
     return (void *)0;
 }
+

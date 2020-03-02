@@ -34,8 +34,9 @@ qtobj = qt_window
 
 libobj = libRemoteMonitor.dll.a
 
-mainobj = main.o inirw.o queue.o  display.o socket.o server.o client.o log.o ffmpeg.o  external.o event.o version.o \
-		  tools.o 
+mainobj = main.o inirw.o log.o version.o tools.o external.o display.o server.o socket.o queue.o event.o client.o ffmpeg.o  \
+		  
+
 cppobj = 
 
 
@@ -54,8 +55,9 @@ CFLAGS += -lX11 -lpthread  -lXtst  -lXext -lXinerama -lXrandr -lXfixes -lXdamage
 			#-I./vpu/include -L./vpu/lib -lvpu -lvpu_avcdec -lion_vpu -lrk_codec -lvpu_avcenc  -lGLESv2  -lUMP \
 			-lpthread #-lvpu -lvpu_avcdec -lvpu_avcenc 
 else ifeq ($(TARGET_ARCH), x86)
-CFLAGS += -I./MediaSDK-master/api/include -lmingw32 -lm -lws2_32 -lpthreadGC2 -lgdi32 
+CFLAGS += -lmingw32 -lm -lws2_32 -lpthreadGC2 -lgdi32 
 else ifeq ($(TARGET_ARCH), x64)
+
 endif
 
 CXXFLAGS = $(CFLAGS)
@@ -85,9 +87,9 @@ $(dllobj):$(mainobj) $(cppobj)
 	rm -f *.o
 	@echo "Version $(VERSION)"
 ifeq ($(TARGET_ARCH), x86)
-	#$(CP) ./lib/*.dll ./bin
-	#$(CP) ./ffmpeg/bin/*.dll ./bin
-    #$(CP) ./SDL/bin/*.dll ./bin
+	$(CP) ./lib/*.dll $(outdir)
+	$(CP) ./$(FFMPEG_DIR)/bin/*.dll $(outdir)
+	$(CP) ./$(SDL_DIR)/bin/*.dll $(outdir)
 endif
 
 dll:$(dllobj)

@@ -1,46 +1,122 @@
-In file included from ./src/external.c:1:0:
+In file included from ./include/msg.h:5:0,
+                 from ./include/global.h:6,
+                 from ./include/base.h:40,
+                 from ./src/main.c:1:
+./include/rbtree.h:133:0: warning: "offsetof" redefined
+ #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+ 
+In file included from c:\program files\git\mingw32\include\inttypes.h:9:0,
+                 from ./ffmpeg/x86/include/libavutil/common.h:34,
+                 from ./ffmpeg/x86/include/libavutil/avutil.h:296,
+                 from ./ffmpeg/x86/include/libavutil/frame.h:31,
+                 from ./include/global.h:5,
+                 from ./include/base.h:40,
+                 from ./src/main.c:1:
+c:\program files\git\mingw32\lib\gcc\mingw32\6.3.0\include\stddef.h:417:0: note: this is the location of the previous definition
+ #define offsetof(TYPE, MEMBER) __builtin_offsetof (TYPE, MEMBER)
+ 
+In file included from ./include/global.h:7:0,
+                 from ./include/base.h:40,
+                 from ./src/main.c:1:
+./include/queue.h:9:14: error: unknown type name 'rfb_request'
+ void dequeue(rfb_request ** head,rfb_request * req);
+              ^~~~~~~~~~~
+./include/queue.h:9:34: error: unknown type name 'rfb_request'
+ void dequeue(rfb_request ** head,rfb_request * req);
+                                  ^~~~~~~~~~~
+./include/queue.h:10:14: error: unknown type name 'rfb_request'
+ void enqueue(rfb_request ** head,rfb_request * req);
+              ^~~~~~~~~~~
+./include/queue.h:10:34: error: unknown type name 'rfb_request'
+ void enqueue(rfb_request ** head,rfb_request * req);
+                                  ^~~~~~~~~~~
+In file included from ./src/main.c:1:0:
 ./include/base.h:56:0: warning: "ERROR" redefined
  #define ERROR  1
  
 In file included from c:\program files\git\mingw32\include\windows.h:46:0,
                  from ./include/base.h:18,
-                 from ./src/external.c:1:
+                 from ./src/main.c:1:
 c:\program files\git\mingw32\include\wingdi.h:348:0: note: this is the location of the previous definition
  #define ERROR       0
  
-In file included from ./src/external.c:1:0:
-./include/base.h:189:0: warning: "max" redefined
+In file included from ./src/main.c:1:0:
+./include/base.h:198:0: warning: "max" redefined
  #define max(a,b)    (((a) > (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:18,
-                 from ./src/external.c:1:
+                 from ./src/main.c:1:
 c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
  #define max(a,b) ((a)>(b)?(a):(b))
  
-In file included from ./src/external.c:1:0:
-./include/base.h:190:0: warning: "min" redefined
+In file included from ./src/main.c:1:0:
+./include/base.h:199:0: warning: "min" redefined
  #define min(a,b)    (((a) < (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:18,
-                 from ./src/external.c:1:
+                 from ./src/main.c:1:
 c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
  #define min(a,b) ((a)<(b)?(a):(b))
  
-In file included from ./src/external.c:2:0:
-./include/external.h:26:49: error: expected declaration specifiers or '...' before '*' token
- CAPTUREANDCAST_API int StartMonitorServer(WINAPI* dc, const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call);
-                                                 ^
-./src/external.c:18:49: error: expected declaration specifiers or '...' before '*' token
- CAPTUREANDCAST_API int StartMonitorServer(WINAPI* dc, const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
-                                                 ^
-./src/external.c: In function 'ExitControl':
-./src/external.c:74:2: warning: implicit declaration of function 'switch_mode' [-Wimplicit-function-declaration]
-  switch_mode(0);
-  ^~~~~~~~~~~
-./src/external.c: In function 'SetPageAttribute':
-./src/external.c:121:1: warning: control reaches end of non-void function [-Wreturn-type]
+./src/main.c: In function 'init_config':
+./src/main.c:27:8: warning: implicit declaration of function 'read_profile_string' [-Wimplicit-function-declaration]
+  ret = read_profile_string(BASE_SECTION, BASE_TYPE_KEY, buf, sizeof(buf), DEFAULT_TYPE, CONFIG_FILE);
+        ^~~~~~~~~~~~~~~~~~~
+./src/main.c:38:23: warning: implicit declaration of function 'read_profile_int' [-Wimplicit-function-declaration]
+         client_port = read_profile_int(SERVER_SECTION, SERVER_CLIENT_PORT_KEY, DEFAULT_CLIENT_PORT_VALUE, CONFIG_FILE);
+                       ^~~~~~~~~~~~~~~~
+./src/main.c: In function 'parse_options':
+./src/main.c:75:9: warning: variable 'ret' set but not used [-Wunused-but-set-variable]
+     int ret = 0;
+         ^~~
+./src/main.c: In function 'init_pipe':
+./src/main.c:104:16: warning: implicit declaration of function 'create_tcp' [-Wimplicit-function-declaration]
+     listenfd = create_tcp();
+                ^~~~~~~~~~
+./src/main.c:105:11: warning: implicit declaration of function 'bind_socket' [-Wimplicit-function-declaration]
+     ret = bind_socket(listenfd, 22001);
+           ^~~~~~~~~~~
+./src/main.c:108:11: warning: implicit declaration of function 'connect_server' [-Wimplicit-function-declaration]
+     ret = connect_server(pipe_event[1], "127.0.0.1", 22001);
+           ^~~~~~~~~~~~~~
+./src/main.c:111:5: warning: implicit declaration of function 'close_fd' [-Wimplicit-function-declaration]
+     close_fd(listenfd);
+     ^~~~~~~~
+./src/main.c: In function 'do_exit':
+./src/main.c:179:3: warning: implicit declaration of function 'exit_server' [-Wimplicit-function-declaration]
+   exit_server();
+   ^~~~~~~~~~~
+./src/main.c:183:3: warning: implicit declaration of function 'exit_client' [-Wimplicit-function-declaration]
+   exit_client();
+   ^~~~~~~~~~~
+./src/main.c:189:1: warning: no return statement in function returning non-void [-Wreturn-type]
  }
  ^
-make: *** [external.o] Error 1
+./src/main.c: In function 'sig_quit_listen':
+./src/main.c:194:2: warning: implicit declaration of function 'send_msg' [-Wimplicit-function-declaration]
+  send_msg(pipe_event[1], &s, 1);
+  ^~~~~~~~
+./src/main.c: In function 'WinMain':
+./src/main.c:218:22: warning: passing argument 2 of 'parse_options' from incompatible pointer type [-Wincompatible-pointer-types]
+  parse_options(argc, argv);
+                      ^~~~
+./src/main.c:73:6: note: expected 'char **' but argument is of type 'PSTR {aka char *}'
+ void parse_options(int argc, char *argv[])
+      ^~~~~~~~~~~~~
+./src/main.c:221:15: warning: implicit declaration of function 'init_server' [-Wimplicit-function-declaration]
+         ret = init_server();
+               ^~~~~~~~~~~
+./src/main.c:225:15: warning: implicit declaration of function 'init_client' [-Wimplicit-function-declaration]
+         ret = init_client();
+               ^~~~~~~~~~~
+./src/main.c: In function 'close_pipe':
+./src/main.c:173:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+At top level:
+./src/main.c:191:13: warning: 'sig_quit_listen' defined but not used [-Wunused-function]
+ static void sig_quit_listen(int e)
+             ^~~~~~~~~~~~~~~
+make: *** [main.o] Error 1

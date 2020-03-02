@@ -27,7 +27,6 @@ void init_logs()
 #endif       
             if(ret < 0)
             {
-				DEBUG("mkdir: %s error %s", LOG_DIR, strerror(errno));
                 return ERROR;
             }
         }

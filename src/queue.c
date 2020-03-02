@@ -2,7 +2,7 @@
 #include "msg.h"
 #include "queue.h"
 
-
+#if 0
 /*
  * Name: dequeue
  *
@@ -39,7 +39,7 @@ void enqueue(rfb_request ** head,rfb_request * req)
 
     *head = req;                /* now we are head */
 }
-
+#endif
      
 
 void init_queue(QUEUE *pQueue,unsigned char *pucBuf,unsigned int uiMaxBufSize)
