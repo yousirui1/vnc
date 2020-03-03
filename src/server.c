@@ -185,7 +185,9 @@ static int recv_login(struct client *cli)
 int close_clients()
 {
 	int c = 'C';
-	send_msg(pipe_tcp[1], &c, 1);
+	if(pipe_tcp[1])
+		send_msg(pipe_tcp[1], &c, 1);
+	
 }
 
 int start_display()

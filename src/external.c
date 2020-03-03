@@ -27,13 +27,14 @@ CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const in
 	
 	DEBUG("window_flag %d", window_flag);
 	DEBUG("window_size %d", window_size);
-    if(!dc || window_size <= 0 || window_size >5)
+    if(window_size <= 0 || window_size >5)
     {
         DEBUG("HDC or callback function is NULL!!");
         return ERROR;
     }
 
-    hwnd = WindowFromDC(dc);
+	if(dc)
+    	hwnd = WindowFromDC(dc);
 
     DEBUG("\nprograme server: \n client_port %d, control_port %d, h264_port %d, window_flag %d, window_size %d,",
                  client_port, control_port, h264_port, window_flag, window_size);

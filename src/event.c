@@ -190,6 +190,7 @@ void event_loop()
         if(FD_ISSET(pipe_event[0], &reset))
         {
             ret = recv(pipe_event[0], (void *)buf, sizeof(buf), 0);
+			DEBUG("pipe_event msg %d ----------", ret);
             if(ret == 1)
             {
                 if(buf[0] == 'S')

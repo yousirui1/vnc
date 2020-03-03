@@ -92,15 +92,24 @@ static int do_exit()
 		SDL_DestroyRenderer(renderer);
 
 	DEBUG("1111111111111");
-#if 0
 #ifdef _WIN32
-        if(!hwnd && window)
-			SDL_DestroyWindow(window);	
+    if(!hwnd && window)
+	{
+		SDL_DestroyWindow(window);	
+        SDL_Quit();
+	}
+#else
+	if(window)
+		SDL_DestroyWindow(window);
+
+	if(SDL_WasInit(SDL_INIT_EVERYTHING) != 0)
+    {
+        DEBUG("SDL_WasInit");
+        SDL_Quit();
+   	}
 #endif
-#endif
-	//if(window)
-		//SDL_DestroyWindow(window);
-	DEBUG("ssssssssssssss111111111111");
+
+   	DEBUG("ssssssssssssss111111111111");
 
 	memset(&rect, 0, sizeof(SDL_Rect));
 	memset(&full_rect, 0, sizeof(SDL_Rect));
@@ -129,15 +138,6 @@ static int do_exit()
 
 	DEBUG("pthread renderer destory");
 	TTF_Quit();
-
-#if 0
-    if(SDL_WasInit(SDL_INIT_EVERYTHING) != 0)
-    {
-        DEBUG("SDL_WasInit");
-        SDL_Quit();
-    }
-#endif
-
 	DEBUG("sdl exit ok !!!!!!!!!!!!!");
 }
 
@@ -340,7 +340,7 @@ static void simulate_keyboard(rfb_keyevent *key)
 				break;
 			case 1073741906: // "up"
 				key->key = 0x26;
-				key->scan_code = 0x48
+				key->scan_code = 0x48;
 				break;
 			case 1073741905: // "down"
 				key->key = 0x28;
@@ -380,7 +380,7 @@ static void simulate_keyboard(rfb_keyevent *key)
 				break;
 			case 1073741895: // "pause break"
 				key->key = 0x13;
-				key->scan_code = 0x37
+				key->scan_code = 0x37;
 				break;
 			case 1073741894: // "scroll lock"
 				key->key = 0x91;

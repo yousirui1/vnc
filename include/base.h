@@ -66,6 +66,8 @@
 #endif
 
 
+#define TTF_DIR "c://font//msyh.ttf"
+
 
 #define MAX_FILENAMELEN 256
 /* config */
