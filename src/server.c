@@ -182,6 +182,12 @@ static int recv_login(struct client *cli)
 	return ERROR;
 }
 
+int close_clients()
+{
+	int c = 'C';
+	send_msg(pipe_tcp[1], &c, 1);
+}
+
 int start_display()
 {
     int i;
@@ -297,7 +303,7 @@ static void do_exit()
 
 	close_fd(server_s);
 	close_pipe();
-	//unload_wsa();
+	unload_wsa();
 	for(i = 0; i < max_connections; i++)
 	{
 		if(clients[i])

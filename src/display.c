@@ -143,7 +143,7 @@ static int do_exit()
 
 static void send_control(char *data, int data_len, int cmd)
 {
-	if(!control_display || status != CONTROL)
+	if(!control_display || !control_display->cli || status != CONTROL)
 		return;
 	char *buf = (char *)malloc(data_len + HEAD_LEN + 1);
 	if(!buf)
@@ -201,6 +201,7 @@ static void simulate_mouse(rfb_pointevent *point)
 
 static void simulate_keyboard(rfb_keyevent *key)
 {
+	key->scan_code = 0;
 	/* a-z */
 	if(key->key >= 97 && key->key <= 122)
 	{
@@ -218,6 +219,55 @@ static void simulate_keyboard(rfb_keyevent *key)
 	}
 	else
 	{
+		if(key->key == 0x51)		//Q
+		{
+			key->scan_code = 0x10;
+		}
+		if(key->key == 0x57)			//W
+		{
+			key->scan_code = 0x11;
+		}
+		if(key->key == 0x45)			//E
+		{
+			key->scan_code = 0x12;
+		}	
+		if(key->key == 0x52)			//R
+		{
+			key->scan_code = 0x13;
+		}
+		if(key->key == 0x41)			//A
+		{
+			key->scan_code = 0x1E;
+		}
+		if(key->key == 0x53)			//S
+		{
+			key->scan_code = 0x1F;
+		}
+		if(key->key == 0x44)			//D
+		{
+			key->scan_code = 0x20;
+		}
+		if(key->key == 0x46)			//F
+		{
+			key->scan_code = 0x21;
+		}
+		if(key->key == 0x5A)			//Z
+		{
+			key->scan_code = 0x2C;
+		}
+		if(key->key == 0x58)			//X
+		{
+			key->scan_code = 0x2D;
+		}
+		if(key->key == 0x43)			//C
+		{
+			key->scan_code = 0x2E;
+		}
+		if(key->key == 0x56)			//V
+		{
+			key->scan_code = 0x2F;
+		}
+
 		switch(key->key)
 		{
 			case 39:   // "'"
@@ -258,67 +308,88 @@ static void simulate_keyboard(rfb_keyevent *key)
 				break;
 			case 1073742048: // "ctrl"
 				key->key = 0x11;
+				key->scan_code = 0x1D;
 				break;
 			case 1073742052: // "ctrl"
 				key->key = 0x11;
+				key->scan_code = 0x1D;
 				break;
 			case 1073742049: // "shift"
 				key->key = 0x10;
+				key->scan_code = 0x2A;
 				break;
 			case 1073742053: // "shift"
 				key->key = 0x10;
+				key->scan_code = 0x2A;
 				break;
 			case 1073742050: // "alt"
 				key->key = 0x12;
+				key->scan_code = 0x38;
 				break;
 			case 1073742054: // "alt"
 				key->key = 0x12;
+				key->scan_code = 0x38;
 				break;
 			case 1073742051: // "win"
 				key->key = 0x5B;
+				key->scan_code = 0x5B;
 				break;
 			case 1073742055: // "win"
 				key->key = 0x5B;
+				key->scan_code = 0x5B;
 				break;
 			case 1073741906: // "up"
 				key->key = 0x26;
+				key->scan_code = 0x48
 				break;
 			case 1073741905: // "down"
 				key->key = 0x28;
+				key->scan_code = 0x50;
 				break;
 			case 1073741903: // "right"
 				key->key = 0x27;
+				key->scan_code = 0x4B;
 				break;
 			case 1073741904: // "left"
 				key->key = 0x25;
+				key->scan_code = 0x4D;
 				break;
 			case 1073741897: // "insert"
 				key->key = 0x2D;
+				key->scan_code = 0x52;
 				break;
 			case 127: 		// "delete"
 				key->key = 0x2E;
+				key->scan_code = 0x53;
 				break;
 			case 1073741898: // "home"
 				key->key = 0x24;
+				key->scan_code = 0x47;
 				break;
 			case 1073741901: // "end"
 				key->key = 0x23;
+				key->scan_code = 0x4F;
 				break;
 			case 1073741899: // "pgup"
 				key->key = 0x21;
+				key->scan_code = 0x49;
 				break;
 			case 1073741902: // "pgdn"
 				key->key = 0x22;
+				key->scan_code = 0x51;
 				break;
 			case 1073741895: // "pause break"
 				key->key = 0x13;
+				key->scan_code = 0x37
 				break;
 			case 1073741894: // "scroll lock"
 				key->key = 0x91;
+				key->scan_code = 0x46;
 				break;
 #if 0
 			case 1073741896: // "ptr scsys rq"
 				key->key = 0x25;
+				key->scan_code = 0x45;
 				break;
 #endif
 			case 1073741907: //"Num Lock"
@@ -326,6 +397,7 @@ static void simulate_keyboard(rfb_keyevent *key)
 				break;
 			case 1073741912: // "Enter"
 				key->key = 13;
+				key->scan_code = 0x1C;
 				break;
 			case 1073741908: //"/"
 				key->key = VK_DIVIDE;
@@ -352,10 +424,10 @@ static void simulate_keyboard(rfb_keyevent *key)
 
 	if(key->down)
     {
-        keybd_event(key->key, 0, 0,0);
+        keybd_event(key->key, key->scan_code, 0,0);
     }
     else
-        keybd_event(key->key, 0,KEYEVENTF_KEYUP,0);
+        keybd_event(key->key, key->scan_code, KEYEVENTF_KEYUP,0);
 }
 #else
 
@@ -678,12 +750,15 @@ void clear_texture()
 
 void switch_mode(int id)
 {
+	int ret = ERROR;
     if(status == PLAY)
     {
         DEBUG(" switch CONTROL status");
         status = CONTROL;
         stop_display();
-        start_control(id);
+        ret = start_control(id);
+		if(ret != SUCCESS)
+			status = PLAY;
     }
     else if(status == CONTROL)
     {

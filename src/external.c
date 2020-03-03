@@ -116,7 +116,7 @@ CAPTUREANDCAST_API int StartMonitorClient(const char* serverIp, const int server
 CAPTUREANDCAST_API int SetPageAttribute(const int pageIndex, const int pageSize, struct StudentInfo *info, const int length)
 {
 	DEBUG("SetPageAttribute pageIndex: %d pageSize: %d length %d", pageIndex, pageSize, length);
-	stop_display();
+	close_clients();
 	int i = 0;
 #if 0
 	for(i = 0; i < length; i++)

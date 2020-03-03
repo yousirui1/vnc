@@ -728,6 +728,19 @@ void server_tcp_loop(int listenfd)
 					DEBUG("event thread send stop msg");
 					break;
 				}
+				if(buf[0] == 'C')
+				{
+					for(i = 0 ; i <= maxi; i++)
+					{
+						if(clients[i] == NULL || clients[i]->fd < 0)			
+							continue;
+
+						FD_CLR(clients[i]->fd, &allset);
+						close_client(clients[i]);
+						clients[i] = NULL;
+						total_connections--;
+					}
+				}
 			}
             if(--nready <= 0)
                 continue;
