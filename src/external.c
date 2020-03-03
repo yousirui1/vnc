@@ -40,8 +40,13 @@ CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const in
                  client_port, control_port, h264_port, window_flag, window_size);
     //call_back = call;
 	
-	run_flag = 1;
-	return init_server();
+	if(run_flag)
+		return ERROR;
+	else
+	{
+		run_flag = 1;
+		return init_server();
+	}
 }
 
 /*
@@ -58,9 +63,10 @@ CAPTUREANDCAST_API int StopMonitorServer()
 	DEBUG("StopMonitorServer end");
 	char s = 'S';
 	send_msg(pipe_event[1], &s, 1);
-	run_flag = 0;
+	//run_flag = 0;
     DEBUG("recv sig stop programe !!");
 	exit_server();
+
 	DEBUG("exit server ok");
 	call_back = NULL;
 	hwnd = NULL;
@@ -74,6 +80,7 @@ CAPTUREANDCAST_API int DisconnectAllClient()
 	DEBUG("DisconnectAllClient");
 	return SUCCESS;		
 }
+
 
 CAPTUREANDCAST_API int ExitControl()
 {

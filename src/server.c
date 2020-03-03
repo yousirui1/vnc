@@ -306,6 +306,8 @@ static void do_exit()
 	close_fd(server_s);
 	close_pipe();
 	unload_wsa();
+if(clients)
+{
 	for(i = 0; i < max_connections; i++)
 	{
 		if(clients[i])
@@ -319,6 +321,7 @@ static void do_exit()
 			clients[i] = NULL;
 		}
 	}
+}
 	display_size = 0;
 	server_s = -1;
 	if(clients)

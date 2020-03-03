@@ -71,33 +71,29 @@ int sfp_refresh_thread(void *opaque)
 static int do_exit()
 {
 	int i ;
-	DEBUG("1111111111111");
 	if(texture)
 		SDL_DestroyTexture(texture);
 
-	DEBUG("1111111111111");
 	if(full_texture)
 		SDL_DestroyTexture(full_texture);	
 
-	DEBUG("1111111111111");
 	if(ttf_texture)
 		SDL_DestroyTexture(ttf_texture);	
 		
-	DEBUG("1111111111111");
 	if(font)
 		TTF_CloseFont(font);
 	
-	DEBUG("1111111111111");
 	if(renderer)
 		SDL_DestroyRenderer(renderer);
 
-	DEBUG("1111111111111");
 #ifdef _WIN32
+#if 0
     if(!hwnd && window)
 	{
 		SDL_DestroyWindow(window);	
         SDL_Quit();
 	}
+#endif
 #else
 	if(window)
 		SDL_DestroyWindow(window);
@@ -108,8 +104,6 @@ static int do_exit()
         SDL_Quit();
    	}
 #endif
-
-   	DEBUG("ssssssssssssss111111111111");
 
 	memset(&rect, 0, sizeof(SDL_Rect));
 	memset(&full_rect, 0, sizeof(SDL_Rect));
