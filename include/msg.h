@@ -135,6 +135,7 @@ typedef struct _rfb_key_event
 {   
     char down;
     int key;			//SDL keycode
+	int scan_code;
 	unsigned short mod;			//组合键	
 }rfb_keyevent;
     

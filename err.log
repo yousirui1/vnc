@@ -1,122 +1,242 @@
 In file included from ./include/msg.h:5:0,
                  from ./include/global.h:6,
                  from ./include/base.h:40,
-                 from ./src/main.c:1:
+                 from ./src/display.c:14:
 ./include/rbtree.h:133:0: warning: "offsetof" redefined
  #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
  
-In file included from c:\program files\git\mingw32\include\inttypes.h:9:0,
-                 from ./ffmpeg/x86/include/libavutil/common.h:34,
-                 from ./ffmpeg/x86/include/libavutil/avutil.h:296,
-                 from ./ffmpeg/x86/include/libavutil/frame.h:31,
-                 from ./include/global.h:5,
-                 from ./include/base.h:40,
-                 from ./src/main.c:1:
+In file included from c:\program files\git\mingw32\include\wctype.h:87:0,
+                 from c:\program files\git\mingw32\include\ctype.h:59,
+                 from ./include/base.h:8,
+                 from ./src/display.c:14:
 c:\program files\git\mingw32\lib\gcc\mingw32\6.3.0\include\stddef.h:417:0: note: this is the location of the previous definition
  #define offsetof(TYPE, MEMBER) __builtin_offsetof (TYPE, MEMBER)
  
-In file included from ./include/global.h:7:0,
-                 from ./include/base.h:40,
-                 from ./src/main.c:1:
-./include/queue.h:9:14: error: unknown type name 'rfb_request'
- void dequeue(rfb_request ** head,rfb_request * req);
-              ^~~~~~~~~~~
-./include/queue.h:9:34: error: unknown type name 'rfb_request'
- void dequeue(rfb_request ** head,rfb_request * req);
-                                  ^~~~~~~~~~~
-./include/queue.h:10:14: error: unknown type name 'rfb_request'
- void enqueue(rfb_request ** head,rfb_request * req);
-              ^~~~~~~~~~~
-./include/queue.h:10:34: error: unknown type name 'rfb_request'
- void enqueue(rfb_request ** head,rfb_request * req);
-                                  ^~~~~~~~~~~
-In file included from ./src/main.c:1:0:
+In file included from ./src/display.c:14:0:
 ./include/base.h:56:0: warning: "ERROR" redefined
  #define ERROR  1
  
 In file included from c:\program files\git\mingw32\include\windows.h:46:0,
                  from ./include/base.h:18,
-                 from ./src/main.c:1:
+                 from ./src/display.c:14:
 c:\program files\git\mingw32\include\wingdi.h:348:0: note: this is the location of the previous definition
  #define ERROR       0
  
-In file included from ./src/main.c:1:0:
-./include/base.h:198:0: warning: "max" redefined
+In file included from ./src/display.c:14:0:
+./include/base.h:199:0: warning: "max" redefined
  #define max(a,b)    (((a) > (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:18,
-                 from ./src/main.c:1:
+                 from ./src/display.c:14:
 c:\program files\git\mingw32\include\windef.h:162:0: note: this is the location of the previous definition
  #define max(a,b) ((a)>(b)?(a):(b))
  
-In file included from ./src/main.c:1:0:
-./include/base.h:199:0: warning: "min" redefined
+In file included from ./src/display.c:14:0:
+./include/base.h:200:0: warning: "min" redefined
  #define min(a,b)    (((a) < (b)) ? (a) : (b))
  
 In file included from c:\program files\git\mingw32\include\windows.h:42:0,
                  from ./include/base.h:18,
-                 from ./src/main.c:1:
+                 from ./src/display.c:14:
 c:\program files\git\mingw32\include\windef.h:165:0: note: this is the location of the previous definition
  #define min(a,b) ((a)<(b)?(a):(b))
  
-./src/main.c: In function 'init_config':
-./src/main.c:27:8: warning: implicit declaration of function 'read_profile_string' [-Wimplicit-function-declaration]
-  ret = read_profile_string(BASE_SECTION, BASE_TYPE_KEY, buf, sizeof(buf), DEFAULT_TYPE, CONFIG_FILE);
-        ^~~~~~~~~~~~~~~~~~~
-./src/main.c:38:23: warning: implicit declaration of function 'read_profile_int' [-Wimplicit-function-declaration]
-         client_port = read_profile_int(SERVER_SECTION, SERVER_CLIENT_PORT_KEY, DEFAULT_CLIENT_PORT_VALUE, CONFIG_FILE);
-                       ^~~~~~~~~~~~~~~~
-./src/main.c: In function 'parse_options':
-./src/main.c:75:9: warning: variable 'ret' set but not used [-Wunused-but-set-variable]
-     int ret = 0;
+./src/display.c: In function 'do_exit':
+./src/display.c:73:6: warning: unused variable 'i' [-Wunused-variable]
+  int i ;
+      ^
+./src/display.c:142:1: warning: no return statement in function returning non-void [-Wreturn-type]
+ }
+ ^
+./src/display.c: In function 'send_control':
+./src/display.c:153:2: warning: implicit declaration of function 'set_request_head' [-Wimplicit-function-declaration]
+  set_request_head(buf, 0, cmd, data_len);
+  ^~~~~~~~~~~~~~~~
+./src/display.c: In function 'simulate_keyboard':
+./src/display.c:204:5: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+  key->scan_code = 0;
+     ^~
+./src/display.c:224:7: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+    key->scan_code = 0x10;
+       ^~
+./src/display.c:228:7: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+    key->scan_code = 0x11;
+       ^~
+./src/display.c:232:7: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+    key->scan_code = 0x12;
+       ^~
+./src/display.c:236:7: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+    key->scan_code = 0x13;
+       ^~
+./src/display.c:240:7: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+    key->scan_code = 0x1E;
+       ^~
+./src/display.c:244:7: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+    key->scan_code = 0x1F;
+       ^~
+./src/display.c:248:7: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+    key->scan_code = 0x20;
+       ^~
+./src/display.c:252:7: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+    key->scan_code = 0x21;
+       ^~
+./src/display.c:256:7: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+    key->scan_code = 0x2C;
+       ^~
+./src/display.c:260:7: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+    key->scan_code = 0x2D;
+       ^~
+./src/display.c:264:7: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+    key->scan_code = 0x2E;
+       ^~
+./src/display.c:268:7: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+    key->scan_code = 0x2F;
+       ^~
+./src/display.c:311:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x1D;
+        ^~
+./src/display.c:315:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x1D;
+        ^~
+./src/display.c:319:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x2A;
+        ^~
+./src/display.c:323:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x2A;
+        ^~
+./src/display.c:327:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x38;
+        ^~
+./src/display.c:331:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x38;
+        ^~
+./src/display.c:335:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x5B;
+        ^~
+./src/display.c:339:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x5B;
+        ^~
+./src/display.c:343:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x48
+        ^~
+./src/display.c:344:5: error: expected ';' before 'break'
+     break;
+     ^~~~~
+./src/display.c:347:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x50;
+        ^~
+./src/display.c:351:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x4B;
+        ^~
+./src/display.c:355:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x4D;
+        ^~
+./src/display.c:359:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x52;
+        ^~
+./src/display.c:363:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x53;
+        ^~
+./src/display.c:367:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x47;
+        ^~
+./src/display.c:371:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x4F;
+        ^~
+./src/display.c:375:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x49;
+        ^~
+./src/display.c:379:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x51;
+        ^~
+./src/display.c:383:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x37
+        ^~
+./src/display.c:384:5: error: expected ';' before 'break'
+     break;
+     ^~~~~
+./src/display.c:387:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x46;
+        ^~
+./src/display.c:400:8: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+     key->scan_code = 0x1C;
+        ^~
+./src/display.c:427:34: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+         keybd_event(key->key, key->scan_code, 0,0);
+                                  ^~
+./src/display.c:430:34: error: 'rfb_keyevent {aka struct _rfb_key_event}' has no member named 'scan_code'
+         keybd_event(key->key, key->scan_code, KEYEVENTF_KEYUP,0);
+                                  ^~
+./src/display.c: In function 'sdl_text_show':
+./src/display.c:703:36: warning: passing argument 3 of 'SDL_UpperBlit' from incompatible pointer type [-Wincompatible-pointer-types]
+     SDL_BlitSurface(surface, NULL, window, &ttf_rect);
+                                    ^~~~~~
+In file included from ./SDL/x86/include/SDL2/SDL_video.h:34:0,
+                 from ./SDL/x86/include/SDL2/SDL_events.h:33,
+                 from ./SDL/x86/include/SDL2/SDL.h:41,
+                 from ./src/display.c:2:
+./SDL/x86/include/SDL2/SDL_surface.h:489:29: note: expected 'SDL_Surface * {aka struct SDL_Surface *}' but argument is of type 'SDL_Window * {aka struct SDL_Window *}'
+ extern DECLSPEC int SDLCALL SDL_UpperBlit
+                             ^~~~~~~~~~~~~
+./src/display.c: In function 'switch_mode':
+./src/display.c:758:9: warning: implicit declaration of function 'stop_display' [-Wimplicit-function-declaration]
+         stop_display();
+         ^~~~~~~~~~~~
+./src/display.c:759:15: warning: implicit declaration of function 'start_control' [-Wimplicit-function-declaration]
+         ret = start_control(id);
+               ^~~~~~~~~~~~~
+./src/display.c:767:9: warning: implicit declaration of function 'stop_control' [-Wimplicit-function-declaration]
+         stop_control();
+         ^~~~~~~~~~~~
+./src/display.c:768:9: warning: implicit declaration of function 'start_display' [-Wimplicit-function-declaration]
+         start_display();
+         ^~~~~~~~~~~~~
+./src/display.c: In function 'control_msg':
+./src/display.c:774:12: warning: implicit declaration of function 'read_msg_order' [-Wimplicit-function-declaration]
+     switch(read_msg_order(buf))
+            ^~~~~~~~~~~~~~
+./src/display.c: In function 'sdl_loop':
+./src/display.c:896:2: warning: implicit declaration of function 'close_window' [-Wimplicit-function-declaration]
+  close_window();
+  ^~~~~~~~~~~~
+./src/display.c: In function 'init_display':
+./src/display.c:965:22: warning: passing argument 1 of 'pthread_cond_signal' from incompatible pointer type [-Wincompatible-pointer-types]
+  pthread_cond_signal(&display_cond);
+                      ^
+In file included from ./include/base.h:10:0,
+                 from ./src/display.c:14:
+c:\program files\git\mingw32\include\pthread.h:1103:31: note: expected 'struct pthread_cond_t_ **' but argument is of type 'struct pthread_mutex_t_ **'
+ PTW32_DLLPORT int PTW32_CDECL pthread_cond_signal (pthread_cond_t * cond);
+                               ^~~~~~~~~~~~~~~~~~~
+./src/display.c:975:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+     if(vids_queue)
+     ^~
+./src/display.c:977:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
+  for(i = 0; i<= display_size; i++)
+  ^~~
+./src/display.c:989:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+     if(full_texture)
+     ^~
+./src/display.c:991:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the 'if'
+  vids_queue = NULL;
+  ^~~~~~~~~~
+./src/display.c:902:9: warning: unused variable 'ret' [-Wunused-variable]
+  int i, ret, x = 0, y = 0;
          ^~~
-./src/main.c: In function 'init_pipe':
-./src/main.c:104:16: warning: implicit declaration of function 'create_tcp' [-Wimplicit-function-declaration]
-     listenfd = create_tcp();
-                ^~~~~~~~~~
-./src/main.c:105:11: warning: implicit declaration of function 'bind_socket' [-Wimplicit-function-declaration]
-     ret = bind_socket(listenfd, 22001);
-           ^~~~~~~~~~~
-./src/main.c:108:11: warning: implicit declaration of function 'connect_server' [-Wimplicit-function-declaration]
-     ret = connect_server(pipe_event[1], "127.0.0.1", 22001);
-           ^~~~~~~~~~~~~~
-./src/main.c:111:5: warning: implicit declaration of function 'close_fd' [-Wimplicit-function-declaration]
-     close_fd(listenfd);
-     ^~~~~~~~
-./src/main.c: In function 'do_exit':
-./src/main.c:179:3: warning: implicit declaration of function 'exit_server' [-Wimplicit-function-declaration]
-   exit_server();
-   ^~~~~~~~~~~
-./src/main.c:183:3: warning: implicit declaration of function 'exit_client' [-Wimplicit-function-declaration]
-   exit_client();
-   ^~~~~~~~~~~
-./src/main.c:189:1: warning: no return statement in function returning non-void [-Wreturn-type]
- }
- ^
-./src/main.c: In function 'sig_quit_listen':
-./src/main.c:194:2: warning: implicit declaration of function 'send_msg' [-Wimplicit-function-declaration]
-  send_msg(pipe_event[1], &s, 1);
+./src/display.c: At top level:
+./src/display.c:1017:6: warning: conflicting types for 'close_window'
+ void close_window()
+      ^~~~~~~~~~~~
+./src/display.c:896:2: note: previous implicit declaration of 'close_window' was here
+  close_window();
+  ^~~~~~~~~~~~
+./src/display.c: In function 'close_window':
+./src/display.c:1020:2: warning: implicit declaration of function 'send_msg' [-Wimplicit-function-declaration]
+  send_msg(pipe_event[1], &stop, 1);
   ^~~~~~~~
-./src/main.c: In function 'WinMain':
-./src/main.c:218:22: warning: passing argument 2 of 'parse_options' from incompatible pointer type [-Wincompatible-pointer-types]
-  parse_options(argc, argv);
-                      ^~~~
-./src/main.c:73:6: note: expected 'char **' but argument is of type 'PSTR {aka char *}'
- void parse_options(int argc, char *argv[])
-      ^~~~~~~~~~~~~
-./src/main.c:221:15: warning: implicit declaration of function 'init_server' [-Wimplicit-function-declaration]
-         ret = init_server();
-               ^~~~~~~~~~~
-./src/main.c:225:15: warning: implicit declaration of function 'init_client' [-Wimplicit-function-declaration]
-         ret = init_client();
-               ^~~~~~~~~~~
-./src/main.c: In function 'close_pipe':
-./src/main.c:173:1: warning: control reaches end of non-void function [-Wreturn-type]
- }
- ^
 At top level:
-./src/main.c:191:13: warning: 'sig_quit_listen' defined but not used [-Wunused-function]
- static void sig_quit_listen(int e)
-             ^~~~~~~~~~~~~~~
-make: *** [main.o] Error 1
+./src/display.c:25:12: warning: 'video_disable' defined but not used [-Wunused-variable]
+ static int video_disable = 0;
+            ^~~~~~~~~~~~~
+make: *** [display.o] Error 1
