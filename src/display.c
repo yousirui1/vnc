@@ -86,15 +86,6 @@ static int do_exit()
 	if(renderer)
 		SDL_DestroyRenderer(renderer);
 
-#ifdef _WIN32
-#if 0
-    if(!hwnd && window)
-	{
-		SDL_DestroyWindow(window);	
-        SDL_Quit();
-	}
-#endif
-#else
 	if(window)
 		SDL_DestroyWindow(window);
 
@@ -102,8 +93,8 @@ static int do_exit()
     {
         DEBUG("SDL_WasInit");
         SDL_Quit();
+		TTF_Quit();
    	}
-#endif
 
 	memset(&rect, 0, sizeof(SDL_Rect));
 	memset(&full_rect, 0, sizeof(SDL_Rect));
@@ -131,7 +122,6 @@ static int do_exit()
 	pthread_mutex_destroy(&renderer_mutex);
 
 	DEBUG("pthread renderer destory");
-	TTF_Quit();
 	DEBUG("sdl exit ok !!!!!!!!!!!!!");
 }
 
@@ -200,6 +190,7 @@ static void simulate_keyboard(rfb_keyevent *key)
 	if(key->key >= 97 && key->key <= 122)
 	{
 		key->key -= 32;
+		//key->scan_code -=;
 	}
 	/* F1-F12 */
 	else if(key->key >= 1073741882 && key->key <=1073741893 )
@@ -639,9 +630,9 @@ void close_X11()
 int get_screen_size(int *temp_w, int *temp_h)
 {
 #ifdef _WIN32
-    SDL_GetWindowSize(window, temp_w, temp_h);
-    //*tmp_x = FFALIGN(*tmp_x, 16);
-    //*tmp_y = FFALIGN(*tmp_y, 16);
+    //SDL_GetWindowSize(window, temp_w, temp_h);
+	*temp_w = GetSystemMetrics (SM_CXSCREEN) ;  // wide
+    *temp_h = GetSystemMetrics (SM_CYSCREEN) ;  // high
     return SUCCESS;
 #else
     int id;
@@ -745,6 +736,12 @@ void clear_texture()
 void switch_mode(int id)
 {
 	int ret = ERROR;
+
+	if(!displays && !displays[id].cli && displays[id].play_flag)
+	{
+		return ERROR;		
+	}
+
     if(status == PLAY)
     {
         DEBUG(" switch CONTROL status");
@@ -761,6 +758,7 @@ void switch_mode(int id)
         stop_control();
         start_display();
     }
+    DEBUG(" switch mode end");
 }
 
 void control_msg(char *buf)
@@ -781,14 +779,26 @@ void control_msg(char *buf)
 }
 
 int run_flag = 0;
+int live = 0;
 
 static void refresh_loop_wait_event(SDL_Event *event)
 {
     //double remaining_time = 0.0;
+
     SDL_PumpEvents();
     while (!SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) && run_flag)
     {
-        //usleep(200000);
+        usleep(200000);
+        //DEBUG("refresh_loop_wait_event");
+	
+		if(live ++ > 10)
+		{
+			//live = 0;
+			//run_flag =0;
+			//switch_mode(0);
+			live = 0;	
+		}
+		
         SDL_PumpEvents();
     }
 }
@@ -868,6 +878,11 @@ void sdl_loop()
             key.mod = event.key.keysym.mod; //*(SDL_GetKeyName(event.key.keysym.sym));
             key.down = 1;
             send_control((char *)&key, sizeof(rfb_keyevent), KEYBOARD);
+            if(event.key.keysym.sym == SDLK_ESCAPE)
+            {
+                //DEBUG("end control");
+                switch_mode(0);
+            }
 		}	
 		if(SDL_KEYUP == event.type)
 		{
@@ -881,11 +896,10 @@ void sdl_loop()
 			run_flag = 0;
 
 #ifdef _WIN32
-			//stop_server();		//通过callback 返回给dll
+			stop_server();		//通过callback 返回给dll
 #endif
 		}
 	}	
-
 	DEBUG("event_loop end");
 	close_window();
 }
@@ -1052,6 +1066,7 @@ int create_window()
     SDL_EventState(SDL_SYSWMEVENT, SDL_IGNORE);
     SDL_EventState(SDL_USEREVENT, SDL_IGNORE);
 
+#if 0
     if(!display_disable)
     {
         int flags = SDL_WINDOW_SHOWN;  //SDL_WINDOW_SHOWN SDL_WINDOW_HIDDEN
@@ -1094,6 +1109,52 @@ int create_window()
         }
 
         DEBUG("screen_width %d screen_height %d", screen_width, screen_height);
+#endif
+  if(!display_disable)
+    {
+        DEBUG("create window ");
+        int flags = SDL_WINDOW_HIDDEN;  //SDL_WINDOW_SHOWN SDL_WINDOW_HIDDEN
+        if(borderless)                  //无边框
+            flags |= SDL_WINDOW_BORDERLESS;
+        else
+            ;//flags |= SDL_WINDOW_RESIZABLE;  //可以缩放暂时不支持
+
+        window = SDL_CreateWindow(program_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, default_width, default_height, flags);
+
+        SDL_GetDisplayBounds(0, &full_rect);
+        //DEBUG("full_width %d full_height %d", full_rect.w, full_rect.h);
+
+        if(!window_flag)
+        {
+            screen_width = full_rect.w;
+            screen_height = full_rect.h;
+            full_rect.x = 0;
+            full_rect.y = 0;
+            //SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+            //SDL_SetWindowSize(window, screen_width, screen_height);
+            SDL_SetWindowPosition(window, 0, 0);
+
+            //SDL_SetWindowPosition(window, 0, 0);
+        }
+        else
+        {
+
+            SDL_SetWindowPosition(window, full_rect.w / 6, full_rect.h /6);
+
+            screen_width = full_rect.w / 3 *2;
+            screen_height = full_rect.h / 3 * 2;
+
+            full_rect.w = screen_width;
+            full_rect.h = screen_height;
+            full_rect.x = 0;
+            full_rect.y = 0;
+
+            DEBUG("screen_width %d screen_height %d", screen_width, screen_height);
+            //SDL_SetWindowPosition(window, fullRect.x, fullRect.y);
+        }
+
+        SDL_SetWindowSize(window, screen_width, screen_height);
+
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
         if(window)
         {
@@ -1115,6 +1176,7 @@ int create_window()
 			goto run_out;
         }
     }
+	show_window();
 	DEBUG("create SDL window ok !");
 	return SUCCESS;
 run_out:

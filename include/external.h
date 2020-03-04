@@ -21,8 +21,9 @@ typedef void(WINAPI *stop_callback)();
 @param pageSize 图像质量0-100
 成功返回0, 否则返回对应错误号
 */
-CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call);
+//CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call);
 
+CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call);
 
 /*
 停止监控服务（教师端调用）

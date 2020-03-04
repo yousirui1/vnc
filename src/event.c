@@ -9,26 +9,24 @@ static void do_exit()
 	if(server_flag)
 	{
 		pthread_cond_wait(&display_mutex, &display_cond);
-		for(i = 0; i <= display_size; i++)
+		for(i = 0; i <= display_size  && display_size != 0; i++)
 		{
-			pthread_cancel(displays[i].pthread_decode);
-            pthread_join(displays[i].pthread_decode, &tret);
-			pthread_mutex_destroy(&displays[i].mtx);
-    		pthread_cond_destroy(&displays[i].cond);
-			DEBUG("server thread vids_buf free 11111111111111111111111111111");
-			if(vids_buf[i])
-            	free(vids_buf[i]);
-			if(displays[i].h264_udp.fd)
-				close_fd(displays[i].h264_udp.fd);
-			vids_buf[i] = NULL;
+				pthread_cancel(displays[i].pthread_decode);
+            	pthread_join(displays[i].pthread_decode, &tret);
+				//pthread_mutex_destroy(&displays[i].mtx);
+    			//pthread_cond_destroy(&displays[i].cond);
+				if(vids_buf[i])
+            		free(vids_buf[i]);
+				if(displays[i].h264_udp.fd)
+					close_fd(displays[i].h264_udp.fd);
+				vids_buf[i] = NULL;
 		}
-		DEBUG("server thread vids_buf free 22222222222222222222222");
     	if(displays)
         	free(displays);
 		if(vids_queue)
 			free(vids_queue);
-		if(vids_buf)
-			free(vids_buf);
+		//if(vids_buf)
+			//free(vids_buf);
     	displays = NULL;
 		vids_buf = NULL;
 		vids_queue = NULL;
@@ -97,7 +95,8 @@ static int process_tcp(char *msg)
 			DEBUG("CLI_PLAY_MSG");
     		cli_display.h264_udp = create_udp(server_ip, cli_display.fmt.data_port);
 			ret = pthread_create(&pthread_cli_encode, NULL, thread_encode, &cli_display.fmt);
-			ret = pthread_create(&pthread_cli_udp, NULL, thread_client_udp, &cli_display.fmt.data_port);			
+			if(cli_display.fmt.play_flag == 2)
+				ret = pthread_create(&pthread_cli_udp, NULL, thread_client_udp, &cli_display.fmt.data_port);			
 			break;
 		} 
 		case CLI_CONTROL_MSG:
@@ -108,12 +107,16 @@ static int process_tcp(char *msg)
 		case CLI_DONE_MSG:
 		{
 			DEBUG("CLI_DONE_MSG exit start ----------");
-        	pthread_cancel(pthread_cli_udp);
+			char s = 'S';
+			send_msg(pipe_udp[1], &s, 1);
+
+				
+        	//pthread_cancel(pthread_cli_udp);
         	pthread_cancel(pthread_cli_encode);
 			DEBUG("CLI_DONE_MSG exit middle ===========");
         	pthread_join(pthread_cli_encode, &tret);
 			DEBUG("CLI_DONE_MSG encode exit end +++++");
-        	pthread_join(pthread_cli_udp, &tret);
+        	pthread_join(pthread_cli_udp, &tret);			//ysr
 			DEBUG("CLI_DONE_MSG udp exit end +++++");
 			close_fd(cli_display.h264_udp.fd);
 			DEBUG("close cli_display.h264_udp.fd %d", cli_display.h264_udp.fd);

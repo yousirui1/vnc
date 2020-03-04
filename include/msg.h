@@ -12,7 +12,7 @@ enum control_msg_type{
 	MOUSE = 0x03,
 	KEYBOARD,
 	COPY_TEXT,
-	COPY_FILE	
+	COPY_FILE
 };
 
 struct sock_udp
@@ -20,8 +20,8 @@ struct sock_udp
 	unsigned int fd;
 	unsigned int port;
 	
-    struct sockaddr_in recv_addr;
-    struct sockaddr_in send_addr;
+	struct sockaddr_in recv_addr;
+	struct sockaddr_in send_addr;
 };
 
 typedef struct _req_head
@@ -115,8 +115,6 @@ typedef struct _rfb_display
 
 }rfb_display;
 
-
-
 typedef struct _rfb_filemsg
 {
     char flags;
@@ -125,27 +123,26 @@ typedef struct _rfb_filemsg
 }rfb_filemsg;
 
 typedef struct _rfb_textmsg
-{   
+{
     short pad1;
     short pad2;
     int length;
 }rfb_textmsg;
-    
+
 typedef struct _rfb_key_event
-{   
+{
     char down;
-    int key;			//SDL keycode
+    int key;            //SDL keycode
 	int scan_code;
-	unsigned short mod;			//组合键	
+    unsigned short mod;         //组合键
 }rfb_keyevent;
-    
+
 typedef struct _rfb_pointer_evnet
-{   
+{
     short mask;
     short x;
     short y;
-	short wheel;
+    short wheel;
 }rfb_pointevent;
-
 
 #endif

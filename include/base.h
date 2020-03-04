@@ -59,6 +59,7 @@
 	#define LOG_DIR  "c://Users//Public//Documents//YZYEduClient//Log"
 	#define LOG_ERR_FILE "c://Users//Public//Documents//YZYEduClient//Log//remote_monitor_err.log"
 	#define TTF_DIR ".//font//msyh.ttf"
+	
 #else
 	#define LOG_DIR  "./log"
 	#define LOG_ERR_FILE "./log/remote_monitor_err.log"
@@ -66,8 +67,7 @@
 #endif
 
 
-#define TTF_DIR "c://font//msyh.ttf"
-
+#define TTF_DIR "c://Program Files//云之翼//YZYEduClient//font/msyh.ttf"
 
 #define MAX_FILENAMELEN 256
 /* config */
@@ -151,14 +151,14 @@
 
 
 /* control */
-#define  MOUSE_LEFT_DOWN  1<<1
-#define  MOUSE_LEFT_UP  1<<2
+#define  MOUSE_LEFT_DOWN  	1<<1
+#define  MOUSE_LEFT_UP  	1<<2
 
-#define  MOUSE_RIGHT_DOWN  1<<3
-#define  MOUSE_RIGHT_UP  1<<4
+#define  MOUSE_RIGHT_DOWN  	1<<3
+#define  MOUSE_RIGHT_UP  	1<<4
 
-#define MOUSE_WHEEL_DOWN 1<<5
-#define MOUSE_WHEEL_UP 	1<<6
+#define MOUSE_WHEEL_DOWN 	1<<5
+#define MOUSE_WHEEL_UP 		1<<6
 
 
 /* msg */

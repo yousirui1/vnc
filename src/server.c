@@ -4,6 +4,8 @@ static int server_s = -1;
 static pthread_t pthread_tcp, pthread_udp, pthread_sdl, pthread_event;
 struct client **clients = NULL;
 
+pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 static int send_pipe(char *buf, short cmd, int size)
 {
 	int ret = ERROR;
@@ -32,7 +34,9 @@ static int send_done(struct client *cli)
 	int ret;
 	set_request_head(cli->head_buf, 0, DONE_MSG, 0);
 	cli->data_size = 0;
+	DEBUG("111111111111  send_done");
 	ret = send_request(cli);
+	DEBUG("2222222222222222 send_done");
 	cli->status = DONE;
 	return ret;
 }
@@ -106,7 +110,7 @@ static int send_options(struct client *cli)
 	{
 		for(i = 0; i <= display_size; i++)   //ready play
         {
-            if(!displays[i].play_flag)      //存在空闲的分屏, 发送play命令
+            if(displays && !displays[i].play_flag)      //存在空闲的分屏, 发送play命令
             {
                 displays[i].cli = cli;
                 displays[i].fmt.play_flag =  displays[i].play_flag = 1;
@@ -121,6 +125,8 @@ static int send_options(struct client *cli)
                 break;
             }
         }
+		DEBUG("fmt->width: %d fmt->height %d fmt->play_flag %d display_size %d", 
+				fmt->width , fmt->height, fmt->play_flag, display_size);
 	}
 	if(status == CONTROL)
 	{
@@ -221,6 +227,7 @@ int stop_display()
     {
         if(displays && displays[i].play_flag == 1)
         {
+			DEBUG("333333333333");
             if(displays[i].cli)
             {
                 send_done(displays[i].cli);
@@ -229,9 +236,12 @@ int stop_display()
                 send_pipe(buf, SER_DONE_MSG, sizeof(int));
             }
             displays[i].play_flag = 0;
+			DEBUG("4444444444444");
+			
         }
     }
     clear_texture();
+	DEBUG("stop display all client ok !!");
 	return SUCCESS;
 }
 
@@ -259,7 +269,9 @@ int stop_control()
     *(int *)&buf[HEAD_LEN] = display_size;
     send_pipe(buf, SER_DONE_MSG, sizeof(int));
     send_done(control_display->cli);
+	DEBUG("stop control  clear start !!!!!!!!!!!!!!");
     clear_texture();
+	DEBUG("stop control  clear end !!!!!!!!!!!!!!");
 }
 
 int process_server_msg(struct client *cli)
@@ -294,6 +306,7 @@ static void do_exit()
 	int i;
 	void *tret = NULL;
 
+	/* ysr */
 	pthread_join(pthread_tcp, &tret);  //等待线程同步
     DEBUG("pthread_exit %d tcp", (int)tret);
     pthread_join(pthread_udp, &tret);  //等待线程同步
@@ -306,27 +319,32 @@ static void do_exit()
 	close_fd(server_s);
 	close_pipe();
 	unload_wsa();
-if(clients)
-{
-	for(i = 0; i < max_connections; i++)
-	{
-		if(clients[i])
-		{
-			close_fd(clients[i]->fd);
-			if(clients[i]->head_buf)
-				free(clients[i]->head_buf);
-			if(clients[i]->data_buf)
-				free(clients[i]->data_buf);
-			free(clients[i]);	
-			clients[i] = NULL;
-		}
-	}
-}
-	display_size = 0;
-	server_s = -1;
+	pthread_mutex_lock(&clients_mutex);
 	if(clients)
+	{
+		for(i = 0; i < max_connections; i++)
+		{
+			if(clients[i])
+			{
+				close_fd(clients[i]->fd);
+				if(clients[i]->head_buf)
+					free(clients[i]->head_buf);
+				if(clients[i]->data_buf)
+					free(clients[i]->data_buf);
+				free(clients[i]);	
+				clients[i] = NULL;
+
+				DEBUG("free client ");
+			}
+		}
+
 		free(clients);
+	}
 	clients = NULL;
+	pthread_mutex_unlock(&clients_mutex);
+	//display_size = 0;
+	server_s = -1;
+	DEBUG("server do_exit is exit !!!!!!!");
 }
 
 
@@ -345,14 +363,6 @@ int init_server()
 		return ERROR;
 	}
 
-	clients = (struct client **)malloc(sizeof(struct client *) * max_connections);
-	if(!clients)
-	{
-		DEBUG("clients malloc error %s", strerror(errno));
-		return ERROR;
-	}
-	memset(clients, 0, sizeof(struct client *) * max_connections);
-
 	ret = load_wsa();
 	if(SUCCESS != ret)
 	{
@@ -360,6 +370,18 @@ int init_server()
 		goto run_out;
 	}
 	
+	pthread_mutex_lock(&clients_mutex);
+	clients = (struct client **)malloc(sizeof(struct client *) * max_connections);
+	if(!clients)
+	{
+		DEBUG("clients malloc error %s", strerror(errno));
+		return ERROR;
+	}
+	memset(clients, 0, sizeof(struct client *) * max_connections);
+	pthread_mutex_unlock(&clients_mutex);
+
+	run_flag = 1;
+
 	ret = init_pipe();
 	if(ret != SUCCESS)
 	{
@@ -395,6 +417,11 @@ int init_server()
 		DEBUG("pthread create server event ret: %d error:%s", ret, strerror(ret));
         goto run_out;
     }
+	
+	pthread_mutex_lock(&display_mutex);	
+	pthread_cond_wait(&display_cond, &display_mutex);
+	pthread_mutex_unlock(&display_mutex);	
+
 	ret = pthread_create(&pthread_tcp, NULL, thread_server_tcp, &server_s);
     if(0 != ret)
     {

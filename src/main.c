@@ -202,6 +202,8 @@ int main(int argc, char *argv[])
 #endif
 {
     int ret;
+
+start:
     (void) time(&current_time);
 #ifndef _WIN32
     signal(SIGPIPE, SIG_IGN);
@@ -226,5 +228,8 @@ int main(int argc, char *argv[])
     }
 	do_exit();
 	close_logs();
+
+	goto start;
+	
     return ret;
 }

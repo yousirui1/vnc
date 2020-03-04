@@ -39,7 +39,7 @@ void simulate_mouse(rfb_pointevent *point)
             wheel_movement = (DWORD)-120;
     }
 
-    /* 璁＄畻鐩稿浣嶇疆 */
+    /* 计算相对位置 */
     unsigned long x = (point->x * 65535) / (vids_width )  * (screen_width / screen_width);
     unsigned long y = (point->y * 65535) / (vids_height ) * (screen_height /screen_height);
     //DEBUG("x %ld y %ld ", x, y);

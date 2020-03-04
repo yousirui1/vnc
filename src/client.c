@@ -147,18 +147,28 @@ static int recv_options(struct client  *req)
         rfb_format *fmt = (rfb_format *)&req->data_buf[0];
 
         cli_display.play_flag = fmt->play_flag;
+
+        DEBUG("fmt->width %d fmt->height %d fmt->data_port %d fmt->control_port %d fmt->play_flag %d  fmt->bps %d fmt->fps%d",
+
+            fmt->width, fmt->height, fmt->data_port, fmt->control_port, fmt->play_flag, fmt->bps, fmt->fps);
         if(fmt->play_flag == 2)
             req->control_udp = create_udp(server_ip, fmt->control_port);
 
-        vids_width = fmt->width;
-        vids_height = fmt->height;
+		if(fmt->play_flag)
+		{
+        	vids_width = fmt->width;
+        	vids_height = fmt->height;
 
-        memcpy(&(cli_display.fmt), fmt, sizeof(rfb_format));
-        cli_display.cli = req;
+        	memcpy(&(cli_display.fmt), fmt, sizeof(rfb_format));
+        	cli_display.cli = req;
 
-        DEBUG("fmt->width %d fmt->height %d fmt->data_port %d fmt->control_port %d fmt->play_flag %d  fmt->bps %d fmt->fps%d",
-             fmt->width, fmt->height, fmt->data_port, fmt->control_port, fmt->play_flag, fmt->bps, fmt->fps);
-        ret = send_options(req);
+        	ret = send_options(req);
+		}
+		else
+		{
+			DEBUG("options error status DONE ");
+			status = DEAD;
+		}
     }
     return ret;
 }
@@ -317,6 +327,7 @@ int init_client()
         DEBUG("pthread create client tcp ret: %d error: %s",ret, strerror(ret));
         goto run_out;
     }
+	run_flag = 1;
     ret = send_login(&m_client);
     if(0 != ret)
     {

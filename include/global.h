@@ -1,10 +1,9 @@
 #ifndef __GLOBAL_H__
-
 #define __GLOBAL_H__
 
-#include <libavutil/frame.h>
-#include "msg.h"
 #include "queue.h"
+#include "msg.h"
+
 
 /* main.c */
 extern int server_flag;
@@ -37,6 +36,7 @@ void *thread_event(void *param);
 
 /* server.c */
 extern struct client **clients;
+extern pthread_mutex_t clients_mutex;
 
 /* client.c */
 extern struct client m_client;
@@ -77,10 +77,6 @@ extern int run_flag;
 /* ffmpeg.c */
 void *thread_decode(void *param);
 void *thread_encode(void *param);
-/* external.c */
-#ifdef _WIN32
-	extern HWND hwnd;
-#endif	//_WIN32
 
-#endif //__GLOBAL_H__
 
+#endif  //__GLOBAL_H__

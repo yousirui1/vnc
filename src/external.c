@@ -14,7 +14,9 @@ static stop_callback call_back;
 @param pageSize 图像质量0-100
 成功返回0, 否则返回对应错误号
 */
-CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
+//CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
+
+CAPTUREANDCAST_API int StartMonitorServer(const int clientPort, const int controlPort, const int dataPort, const int winStyleFlag, const int pageSize, stop_callback call)
 {
 	init_logs();
 	server_flag = 1;
@@ -33,12 +35,12 @@ CAPTUREANDCAST_API int StartMonitorServer(HDC dc, const int clientPort, const in
         return ERROR;
     }
 
-	if(dc)
-    	hwnd = WindowFromDC(dc);
+	//if(dc)
+    	//hwnd = WindowFromDC(dc);
 
     DEBUG("\nprograme server: \n client_port %d, control_port %d, h264_port %d, window_flag %d, window_size %d,",
                  client_port, control_port, h264_port, window_flag, window_size);
-    //call_back = call;
+    call_back = call;
 	
 	if(run_flag)
 		return ERROR;
@@ -63,10 +65,9 @@ CAPTUREANDCAST_API int StopMonitorServer()
 	DEBUG("StopMonitorServer end");
 	char s = 'S';
 	send_msg(pipe_event[1], &s, 1);
-	//run_flag = 0;
+	run_flag = 0;
     DEBUG("recv sig stop programe !!");
 	exit_server();
-
 	DEBUG("exit server ok");
 	call_back = NULL;
 	hwnd = NULL;
@@ -78,15 +79,15 @@ CAPTUREANDCAST_API int StopMonitorServer()
 CAPTUREANDCAST_API int DisconnectAllClient()
 {
 	DEBUG("DisconnectAllClient");
+	close_clients();
 	return SUCCESS;		
 }
-
 
 CAPTUREANDCAST_API int ExitControl()
 {
 	switch_mode(0);
 	DEBUG("ExitControl");
-	sleep(1);
+	//sleep(1);
 	return SUCCESS;
 }
 
@@ -153,10 +154,8 @@ CAPTUREANDCAST_API int GetPageCount()
 
 void stop_server()
 {
-#if 0
 	if(call_back)
 		call_back();
 	call_back = NULL;
-#endif
 }
 #endif	//_WIN32

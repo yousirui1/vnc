@@ -315,9 +315,6 @@ void create_h264_socket()
     fd_set allset;
     FD_ZERO(&allset);
 
-	pthread_mutex_lock(&display_mutex);	
-	pthread_cond_wait(&display_cond, &display_mutex);
-	pthread_mutex_unlock(&display_mutex);	
 
     for(i = 0; i <= display_size; i++)
     {
@@ -401,10 +398,14 @@ void client_udp_loop()
     maxfd = maxfd > control_udp->fd ? maxfd : control_udp->fd;
     maxfd = maxfd > pipe_udp[0] ? maxfd : pipe_udp[0];
 
+    struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
 	for(;;)
     {
-       	
-            ret = select(maxfd + 1, &fds, NULL, NULL, NULL);
+		tv.tv_sec = 1;
+		DEBUG("client upd select !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        ret = select(maxfd + 1, &fds, NULL, NULL, NULL);
 			/* pipe msg */
         	if(FD_ISSET(pipe_udp[0], &fds))
         	{
@@ -420,13 +421,14 @@ void client_udp_loop()
         	}		
             if(FD_ISSET(control_udp->fd, &fds))
             {
-				if(client->play_flag == 2)
-        		{
                 ret = recvfrom(control_udp->fd, buf, DATA_SIZE, 0, (struct sockaddr*)&(control_udp->recv_addr), &socklen);
+				if(client->play_flag == 2)
+				{
                 if(ret > HEAD_LEN)
                 {
                     control_msg(buf);
                 }
+				
 				}
             }
     }
@@ -730,6 +732,7 @@ void server_tcp_loop(int listenfd)
 				}
 				if(buf[0] == 'C')
 				{
+					pthread_mutex_lock(&clients_mutex);
 					for(i = 0 ; i <= maxi; i++)
 					{
 						if(clients[i] == NULL || clients[i]->fd < 0)			
@@ -740,6 +743,7 @@ void server_tcp_loop(int listenfd)
 						clients[i] = NULL;
 						total_connections--;
 					}
+					pthread_mutex_unlock(&clients_mutex);
 				}
 			}
             if(--nready <= 0)
@@ -1028,6 +1032,9 @@ void *thread_client_udp(void *param)
     }
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
+	
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);     //线程可以被取消掉
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//立即退出
 
     client_udp_loop();
     return (void *)0;
