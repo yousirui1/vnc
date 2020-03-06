@@ -36,12 +36,9 @@ libobj = libRemoteMonitor.dll.a
 
 mainobj = main.o inirw.o log.o version.o tools.o external.o display.o server.o socket.o queue.o event.o client.o ffmpeg.o  \
 		  
-
 cppobj = 
 
-
 all: $(exeobj)
-
 
 DEFINES := #-D DLL
 
