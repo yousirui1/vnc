@@ -1,7 +1,7 @@
 #include "base.h"
 
 /* config.ini */
-int server_flag = 0;
+int server_flag = 1;
 int client_port = -1, control_port = -1, h264_port = -1,  window_flag = 0, window_size = 0;
 int default_fps = 12;
 int default_size = 3;
@@ -202,7 +202,6 @@ int main(int argc, char *argv[])
 #endif
 {
     int ret;
-
 start:
     (void) time(&current_time);
 #ifndef _WIN32
@@ -229,7 +228,6 @@ start:
 	do_exit();
 	close_logs();
 
-	goto start;
-	
+	//goto start;
     return ret;
 }

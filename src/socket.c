@@ -314,7 +314,9 @@ void create_h264_socket()
     int i, maxfd = -1;
     fd_set allset;
     FD_ZERO(&allset);
-
+	
+	if(!displays)
+		return;	
 
     for(i = 0; i <= display_size; i++)
     {
@@ -668,8 +670,8 @@ void server_udp_loop(int maxfd, fd_set allset)
         }
 		pthread_mutex_unlock(&display_mutex);
     }
-	DEBUG("server thread udp loop end !!");
-	pthread_cond_signal(&display_cond);
+    DEBUG("server thread udp loop end !!");
+    pthread_cond_signal(&display_cond);
 }
 
 void server_tcp_loop(int listenfd)
@@ -972,12 +974,12 @@ void *thread_server_udp(void *param)
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {
-        DEBUG("ThreadMain attr init error ");
+        DEBUG("ThreadMain attr init warning ");
     }
     ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
     if(ret)
     {
-        DEBUG("ThreadMain set SCHED_FIFO error");
+        DEBUG("ThreadMain set SCHED_FIFO warning");
     }
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
@@ -997,12 +999,12 @@ void *thread_server_tcp(void *param)
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {
-        DEBUG("Thread Server TCP attr init error ");
+        DEBUG("Thread Server TCP attr init warning ");
     }
     ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
     if(ret)
     {
-        DEBUG("Thread Server TCP set SCHED_FIFO error");
+        DEBUG("Thread Server TCP set SCHED_FIFO warning");
     }
     sched.sched_priority = SCHED_PRIORITY_TCP;
     pthread_attr_setschedparam(&st_attr, &sched);
@@ -1023,12 +1025,12 @@ void *thread_client_udp(void *param)
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {
-        DEBUG("ThreadMain attr init error ");
+        DEBUG("ThreadMain attr init warning ");
     }
     ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
     if(ret)
     {
-        DEBUG("ThreadMain set SCHED_FIFO error");
+        DEBUG("ThreadMain set SCHED_FIFO warning");
     }
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
@@ -1050,12 +1052,12 @@ void *thread_client_tcp(void *param)
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {
-        DEBUG("ThreadMain attr init error ");
+        DEBUG("ThreadMain attr init warning ");
     }
     ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
     if(ret)
     {
-        DEBUG("ThreadMain set SCHED_FIFO error");
+        DEBUG("ThreadMain set SCHED_FIFO warning");
     }
     sched.sched_priority = SCHED_PRIORITY_UDP;
     ret = pthread_attr_setschedparam(&st_attr, &sched);

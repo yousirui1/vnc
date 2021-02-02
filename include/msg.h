@@ -42,7 +42,6 @@ typedef struct _rfb_format
     unsigned char play_flag;            // 0 stop 1 play  2 control
     unsigned char fps;
     unsigned int bps;
-
 }rfb_format;
 
 struct client

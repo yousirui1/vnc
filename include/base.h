@@ -66,8 +66,7 @@
 	#define TTF_DIR "./font/msyh.ttf"
 #endif
 
-
-#define TTF_DIR "c://Program Files//云之翼//YZYEduClient//font/msyh.ttf"
+#define TTF_DIR "./font/msyh.ttf"
 
 #define MAX_FILENAMELEN 256
 /* config */
@@ -193,8 +192,6 @@
 #define SER_READY_MSG           0x07
 #define SER_PLAY_MSG            0x08
 #define SER_DONE_MSG            0x09
-
-
 
 
 #ifndef __cplusplus

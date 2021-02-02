@@ -8,30 +8,29 @@ static void do_exit()
 	void *tret = NULL;
 	if(server_flag)
 	{
-		pthread_cond_wait(&display_mutex, &display_cond);
-		for(i = 0; i <= display_size  && display_size != 0; i++)
+		if(displays)
 		{
+			pthread_cond_wait(&display_mutex, &display_cond);
+			for(i = 0; i <= display_size  && display_size != 0; i++)
+			{
 				pthread_cancel(displays[i].pthread_decode);
             	pthread_join(displays[i].pthread_decode, &tret);
-				//pthread_mutex_destroy(&displays[i].mtx);
-    			//pthread_cond_destroy(&displays[i].cond);
 				if(vids_buf[i])
             		free(vids_buf[i]);
 				if(displays[i].h264_udp.fd)
 					close_fd(displays[i].h264_udp.fd);
 				vids_buf[i] = NULL;
-		}
-    	if(displays)
+			}
         	free(displays);
+		}
+
 		if(vids_queue)
 			free(vids_queue);
-		//if(vids_buf)
-			//free(vids_buf);
+		if(vids_buf)
+			free(vids_buf);
     	displays = NULL;
 		vids_buf = NULL;
 		vids_queue = NULL;
-		pthread_mutex_destroy(&display_mutex);
-    	pthread_cond_destroy(&display_cond);
 	}
 	else
 	{
@@ -39,10 +38,9 @@ static void do_exit()
         pthread_cancel(pthread_cli_encode);
         pthread_join(pthread_cli_udp, &tret);
         pthread_join(pthread_cli_encode, &tret);
-		DEBUG("udp socket %d", cli_display.h264_udp.fd);
-		close_fd(cli_display.h264_udp.fd);
-	}	
-	DEBUG("thread event end !!");
+        close_fd(cli_display.h264_udp.fd);
+    }
+    DEBUG("thread event end !!");
 }
 
 static int send_pipe(char *buf, short cmd, int size)
@@ -220,17 +218,17 @@ void *thread_event(void *param)
     ret = pthread_attr_init(&st_attr);
     if(ret)
     {
-        DEBUG("Thread Event attr init error ");
+        DEBUG("Thread Event attr init warning ");
     }
     ret = pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
     if(ret)
     {
-        DEBUG("Thread Event set SCHED_FIFO error");
+        DEBUG("Thread Event set SCHED_FIFO warning");
     }
     sched.sched_priority = SCHED_PRIORITY_EVENT;
     ret = pthread_attr_setschedparam(&st_attr, &sched);
 
     event_loop();
-    return (void *)0;
+    return (void *)SUCCESS;
 }
 

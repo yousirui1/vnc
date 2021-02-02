@@ -306,14 +306,13 @@ static void do_exit()
 	int i;
 	void *tret = NULL;
 
-	/* ysr */
+    pthread_join(pthread_sdl, &tret); //等待线程同步
+    DEBUG("pthread_exit %d display", (int)tret);
 	pthread_join(pthread_tcp, &tret);  //等待线程同步
     DEBUG("pthread_exit %d tcp", (int)tret);
     pthread_join(pthread_udp, &tret);  //等待线程同步
     DEBUG("pthread_exit %d udp", (int)tret);
-    pthread_join(pthread_sdl, &tret);  //等待线程同步
-    DEBUG("pthread_exit %d display", (int)tret);
-    pthread_join(pthread_event, &tret);  //等待线程同步
+    pthread_join(pthread_event, &tret); //等待线程同步
     DEBUG("pthread_exit %d event", (int)tret);
 
 	close_fd(server_s);
@@ -357,6 +356,9 @@ int init_server()
 {
 	int ret = ERROR;
 
+    pthread_mutex_init(&display_mutex, NULL);
+    pthread_cond_init(&display_cond, NULL);
+
 	if(window_size <= 0 || window_size > 5)
 	{
 		DEBUG("window size: %d error", window_size);
@@ -380,8 +382,6 @@ int init_server()
 	memset(clients, 0, sizeof(struct client *) * max_connections);
 	pthread_mutex_unlock(&clients_mutex);
 
-	run_flag = 1;
-
 	ret = init_pipe();
 	if(ret != SUCCESS)
 	{
@@ -402,10 +402,7 @@ int init_server()
         goto run_out;
     }
 
-	pthread_mutex_init(&display_mutex, NULL);
-	pthread_cond_init(&display_cond, NULL);
-
-	ret = pthread_create(&pthread_sdl, NULL, thread_sdl, NULL);
+    ret = pthread_create(&pthread_sdl, NULL, thread_sdl, NULL);
     if(0 != ret)
     {
 		DEBUG("pthread create server sdl ret: %d error:%s", ret, strerror(ret));

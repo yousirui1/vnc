@@ -17,7 +17,7 @@ const char month_tab[48] =
     "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec ";
 const char day_tab[] = "Sun,Mon,Tue,Wed,Thu,Fri,Sat,";
 
-int use_localtime = 1;   //夏时令
+int use_localtime = 0; //夏时令
 
 char network_ip[10][128] = {0};
 int interface_num = 0;
